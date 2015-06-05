@@ -1,0 +1,12 @@
+This directory contains:
+
+10_Markov_chains.R - simulation and estimation of continuous-time Markov chains.
+10_Merton_model.R - illustration of asset value paths in Merton’s model and paths for the value of the firm’s debt.
+10_Merton_implied_credit_spreads.R - calculation of credit spreads implied by Merton’s model.
+10_DD_for_RadioShack.R - illustration of calculation of distance-to-default for RadioShack based on Merton model.
+
+Additional files:
+
+Black_Scholes.R - required for valuing equity and debt in Merton’s model.
+RadioShack.RData - RadioShack stock price data.
+
