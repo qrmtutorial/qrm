@@ -1,4 +1,7 @@
+### By Alexander McNeil
+
 require(Matrix)
+# we will need the matrix exponential fuction
 
 # create a generator matrix for an imaginary rating system
 # time unit is years
@@ -25,24 +28,27 @@ Lambda
 apply(Lambda,1,sum)
 
 # compute annual rating transition probabilities
-(P <- expm(Lambda))
+P <- as.matrix(expm(Lambda))
 
-stayrates <- -diag(Lambda)
-nr <- length(stayrates)
-nms <- dimnames(Lambda)[[1]]
-names(stayrates) <- nms
-(stayrates <- stayrates[-nr])
-(nms <- nms[-nr])
-(transprobs <- Lambda[-nr,]/stayrates)
+# number of rating categories
+nr <- dim(Lambda)[1]
+# sum of migration rates from each non-default rating
+migrates <- -diag(Lambda)[-nr]
+# names of non-default ratings
+nms <- names(migrates)
+# probabilities of transition (off diagonal)
+transprobs <- Lambda[-nr,]/migrates
+# matrix rows sum to zero
 apply(transprobs,1,sum)
 
-
-set.seed(13)
+# generate a random portfolio composition for 5000 firms
+set.seed(17)
 nfirms <- 5000
 fractions <- c(0.1,0.15,0.15,0.2,0.2,0.1,0.1)
 initial.ratings <- sample(nms,size=nfirms,replace=TRUE,prob=fractions)
 table(initial.ratings)
 
+# generate 20 years of migration data
 T <- 20
 rowmax <- nfirms*5
 output <- data.frame(id=numeric(rowmax),starttime=numeric(rowmax),endtime=numeric(rowmax),startrating=rep("",rowmax),endrating=rep("",rowmax),stringsAsFactors=FALSE)
@@ -56,7 +62,7 @@ for (i in 1:nfirms)
 		count <- count + 1
 		starttime <- endtime
 		startrating <- endrating
-		endtime <- starttime + rexp(n=1,rate=stayrates[startrating])		
+		endtime <- starttime + rexp(n=1,rate=migrates[startrating])		
 		if (endtime <= T){
 			pvals <- transprobs[startrating,nms!=startrating]
 			endrating <- sample(names(pvals),size=1,prob=pvals)
@@ -75,9 +81,8 @@ RatingEvents <- output
 
 
 
-
-head(RatingEvents,n=50)
-tail(RatingEvents,n=50)
+# inspect and summarize rating events
+head(RatingEvents,n=8)
 summary(RatingEvents)
 dim(RatingEvents)
 
@@ -88,27 +93,30 @@ dim(RatingEvents)
 
 # The continuous-time Markov chain method
 
-(Njktable = table(RatingEvents$startrating,RatingEvents$endrating))
-(RiskSet = by(RatingEvents$time,RatingEvents$startrating,sum))
-(Jlevels = levels(RatingEvents$startrating))
-(Klevels = levels(RatingEvents$endrating))
-(Njmatrix = matrix(nrow=length(Jlevels),ncol=length(Klevels),as.numeric(RiskSet),byrow=FALSE))
+Njktable <- table(RatingEvents$startrating,RatingEvents$endrating)
+RiskSet <- by(RatingEvents$time,RatingEvents$startrating,sum)
+Jlevels <- levels(RatingEvents$startrating)
+Klevels <- levels(RatingEvents$endrating)
+Njmatrix <- matrix(nrow=length(Jlevels),ncol=length(Klevels),as.numeric(RiskSet),byrow=FALSE)
 
-(Lambda.hat = Njktable/Njmatrix)
-D = rep(0,dim(Lambda.hat)[2])
-(Lambda.hat = rbind(Lambda.hat,D))
-diag(Lambda.hat) = D
-(rowsums = apply(Lambda.hat,1,sum))
-diag(Lambda.hat) = -rowsums
-Lambda.hat
+# Basic form of estimator
+Lambda.hat <- Njktable/Njmatrix
 
+# Add default row and correct diagonal
+D <- rep(0,dim(Lambda.hat)[2])
+Lambda.hat <- rbind(Lambda.hat,D)
+diag(Lambda.hat) <- D
+rowsums <- apply(Lambda.hat,1,sum)
+diag(Lambda.hat) <- -rowsums
+
+# check for valid generator
 apply(Lambda.hat,1,sum)
 
 # The matrix exponential
 # Annual transition probabilities
-(P.hat = expm(Lambda.hat))
+P.hat <- as.matrix(expm(Lambda.hat))
 
-P
+# Now compare P.hat and P
 
 
 
