@@ -1,0 +1,10 @@
+R Scripts for Chapter 3
+
+03_Ljung-Box-correlation_tests.R - reproduces the Ljung-Box tests in Table 3.1.
+03_Univariate_stylized_facts.R - illustrates some univariate stylized facts for risk-factor changes or returns.
+03_Multivariate_stylized_facts.R - illustrates some multivariate stylized facts for returns.
+
+Additional files:
+
+INDEXES-2000-20012.RData - stock index return data.
+
