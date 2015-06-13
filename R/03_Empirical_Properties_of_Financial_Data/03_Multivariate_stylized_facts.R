@@ -1,3 +1,4 @@
+# by Alexander McNeil
 require(QRM)
 load("INDEXES-2000-2012.RData")
 
