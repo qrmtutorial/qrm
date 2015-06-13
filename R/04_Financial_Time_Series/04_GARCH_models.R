@@ -1,3 +1,4 @@
+## by Alexander McNeil
 require(rugarch)
 require(QRM)
 load("INDEXES-2000-2012.RData")
