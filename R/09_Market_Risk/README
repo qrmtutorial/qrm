@@ -1,0 +1,7 @@
+R Scripts for Chapter 9
+
+9_ZCB_yields_Nelson_Siegel.R - factor modelling of the yield curve using the Nelson-Siegel approach
+
+Additional files:
+
+Canadian-ZCB-Yields.RData
