@@ -30,6 +30,8 @@ apply(X.DJ.q,2,shapiro.test)
 qqnorm(X.DJ.q[,1])
 qqline(X.DJ.q[,1],col=2)
 
+# EXERCISE. Try the Jarque Bera test as analternative. It can be found in "tseries" package.
+
 # EXERCISE. Test normality of components of X.INDEXES
 
 X.INDEXES <- returns(INDEXES0012)
