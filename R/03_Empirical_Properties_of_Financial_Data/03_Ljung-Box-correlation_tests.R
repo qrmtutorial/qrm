@@ -14,3 +14,5 @@ DJ.X.monthly <- aggregate(DJ.X,by,sum)
 
 apply(DJ.X.monthly,2,Box.test,lag=10,type="Ljung-Box")
 apply(abs(DJ.X.monthly),2,Box.test,lag=10,type="Ljung-Box")
+
+# Exercise. Try carrying out these tests on other return data.

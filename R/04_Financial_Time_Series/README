@@ -1,5 +1,6 @@
 R Scripts for Chapter 4
 
+04_GARCH_simulation.R - simulation of univariate GARCH models.
 04_GARCH_models.R - simulation and estimation of univariate GARCH models.
 
 Additional files:
