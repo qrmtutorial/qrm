@@ -1,0 +1,9 @@
+R Scripts for Chapter 5
+
+05_SP_block_maxima.R - block maxima analysis of SP daily returns from 1960 to 1987 crash.
+05_SP_rlevels_rperiods_CIs.R - confidence intervals for 05_SP_block_maxima.R.
+
+Additional files:
+
+SP500-1960-2014.RData - SP500 index data from 1960 - 2014.
+
