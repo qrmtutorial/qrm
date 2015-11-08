@@ -1,0 +1,12 @@
+R Scripts for Chapter 6
+
+06_Multivariate_basics.R - summary statistics for multivariate data.
+06_Multivariate_normal.R - simulating and estimating the multivariate normal.
+06_Multivariate_Student.R - simulating and estimating the multivariate Student.
+06_Macroeconomic_factor_model.R - estimating a macroeconomic factor model using regression.
+06_PCA_factor_model.R - using PCA to construct a factor model.
+
+Additional files:
+
+INDEXES-2000-2012.RData - stock market indexes from 2000 - 2012.
+
