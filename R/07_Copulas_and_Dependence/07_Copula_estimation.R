@@ -56,7 +56,6 @@ mod.gauss$ll.max
 set.seed(113)
 t10.cop <- ellipCopula("t", param=0.6, dim=3, df=10) # define t_10 copula
 Udata <-  rCopula(n=1000, copula=t10.cop)
-Udata <- rcopula.t(1000,df=10,Sigma=P)
 mod.t <- fit.tcopula(Udata)
 mod.t
 # How close does Kendall method get to the optimum?
