@@ -3,9 +3,5 @@ R Scripts for Chapter 5
 05_SP_block_maxima.R - block maxima analysis of SP daily returns from 1960 to 1987 crash.
 05_SP_rlevels_rperiods_CIs.R - confidence intervals for 05_SP_block_maxima.R.
 05_GPD_Danish_data - GPD analysis of excess losses over thresholds for Danish data.
-05_GPD_ATT_data - GPD analysis of excess losses over thresholds for ATT weekly losses.
-
-Additional files:
-
-SP500-1960-2014.RData - SP500 index data from 1960 - 2014.
+05_GPD_DJstock_data - GPD analysis of excess losses over thresholds for weekly losses of a DJ stock.
 

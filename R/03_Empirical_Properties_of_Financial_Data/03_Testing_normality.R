@@ -1,45 +1,30 @@
 # REQUIRED LIBRARIES
-require(QRM)
-
-# DATA
-load("INDEXES-2000-2012.RData")
-
+require(xts)
+require(qrmdata)
 
 # Prepare risk factor data
-stocks <- c("KO","MSFT","INTC","DIS")
-DJ.select <- DJ[,stocks]
-X.DJ <- window(returns(DJ.select), "1993-01-01", "2000-12-31")
-by <- timeSequence(from = start(X.DJ),  to = end(X.DJ), by = "week")
-X.DJ.w <- aggregate(X.DJ, by, sum)
-by <- unique(timeLastDayInMonth(time(X.DJ)))
-X.DJ.m <- aggregate(X.DJ, by, sum)
-by <- unique(timeLastDayInQuarter(time(X.DJ)))
-X.DJ.q <- aggregate(X.DJ, by, sum)
+data("DJ_const")
+DJ.X.all <- diff(log(DJ_const))[-1,]
+DJ.X <- DJ.X.all['1993-01-01/2000-12-31',c("KO","MSFT","INTC","DIS")]
+DJ.X.w <- apply.weekly(DJ.X, FUN=colSums)
+DJ.X.m <- apply.monthly(DJ.X, FUN=colSums)
+DJ.X.q <- apply.quarterly(DJ.X, FUN=colSums)
 
 # Are Asset Returns Normally Distributed ?
-apply(X.DJ,2,shapiro.test)
-qqnorm(X.DJ[,1])
-qqline(X.DJ[,1],col=2)
-apply(X.DJ.w,2,shapiro.test)
-qqnorm(X.DJ.w[,1])
-qqline(X.DJ.w[,1],col=2)
-apply(X.DJ.m,2,shapiro.test)
-qqnorm(X.DJ.m[,4])
-qqline(X.DJ.m[,4],col=2)
-apply(X.DJ.q,2,shapiro.test)
-qqnorm(X.DJ.q[,1])
-qqline(X.DJ.q[,1],col=2)
+apply(DJ.X,2,shapiro.test)
+qqnorm(DJ.X[,1])
+qqline(DJ.X[,1],col=2)
+apply(DJ.X.w,2,shapiro.test)
+qqnorm(DJ.X.w[,1])
+qqline(DJ.X.w[,1],col=2)
+apply(DJ.X.m,2,shapiro.test)
+qqnorm(DJ.X.m[,4])
+qqline(DJ.X.m[,4],col=2)
+apply(DJ.X.q,2,shapiro.test)
+qqnorm(DJ.X.q[,1])
+qqline(DJ.X.q[,1],col=2)
 
-# EXERCISE. Try the Jarque Bera test as analternative. It can be found in "tseries" package.
-
-# EXERCISE. Test normality of components of X.INDEXES
-
-X.INDEXES <- returns(INDEXES0012)
-by <- timeSequence(from = start(X.INDEXES),  to = end(X.INDEXES), by = "week")
-X.INDEXES.w <- aggregate(X.INDEXES, by, sum)
-by <- unique(timeLastDayInMonth(time(X.INDEXES)))
-X.INDEXES.m <- aggregate(X.INDEXES, by, sum)
-
+# EXERCISE. Try the Jarque Bera test as an alternative. It can be found in "tseries" package.
 
 # How real normal data should behave (repeat many times)
 data.normal <- rnorm(1000)

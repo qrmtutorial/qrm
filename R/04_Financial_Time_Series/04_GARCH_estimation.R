@@ -1,18 +1,23 @@
 ## by Alexander McNeil
 require(rugarch)
-#require(QRM)
-load("INDEXES-2000-2012.RData")
+require(qrmdata)
+
+
 
 # Load some real data
+data("SP500")
+plot(SP500)
+# Compute log returns
+SP500.r <- diff(log(SP500))[-1]
+# take 4 years of data
+SP500.r <- SP500.r['2006-01-01/2009-12-31']
 
-X.INDEXES <- returns(INDEXES0012)
-X.sp500 <- X.INDEXES[,2]
 
 # Fit an AR(1)-GARCH(1,1) model with normal innovations
 # We first have to create a model specification
 AR.GARCH.N.spec <- ugarchspec(variance.model=list(model="sGARCH", garchOrder=c(1,1)),mean.model=list(armaOrder=c(1,0),include.mean=TRUE),distribution.model="norm")
 
-fit.a <- ugarchfit(spec=AR.GARCH.N.spec,data=X.sp500)
+fit.a <- ugarchfit(spec=AR.GARCH.N.spec,data=SP500.r)
 # The fit contains a lot of information
 # The parameter estimates are the "Optimal Parameters" at the top
 fit.a
@@ -34,7 +39,7 @@ par(mfrow=c(1,1))
 # Fit an AR(1)-GARCH(1,1) model with student innovations
 AR.GARCH.T.spec <- ugarchspec(variance.model=list(model="sGARCH", garchOrder=c(1,1)),mean.model=list(armaOrder=c(1,0),include.mean=TRUE),distribution.model="std")
 
-fit.b <- ugarchfit(spec=AR.GARCH.T.spec,data=X.sp500)
+fit.b <- ugarchfit(spec=AR.GARCH.T.spec,data=SP500.r)
 fit.b
 # The pictures are similar, but QQplot looks "better"
 par(mfrow=c(2,2))
@@ -105,3 +110,5 @@ jarque.test(as.numeric(Z.hat))
 # Things to try:
 # A GARCH model with asymmetric dynamics - GJR-GARCH
 # A GARCH model with asymmetric innovation distribution
+# Different ARMA specifications for the conditional mean
+

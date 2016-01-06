@@ -1,18 +1,23 @@
 library(lattice)
+library(xts)
+library(qrmdata)
 
+data("DJ_const")
 # Take a subset of Dow Jones Data
-stocks <- c("AXP","EK","BA","C","KO","MSFT","HWP","INTC","JPM","DIS")
-DJ.select <- DJ[,stocks]
-X.daily <- window(returns(DJ.select), "1993-01-01", "2000-12-31")
+# We will take stocks with complete record of returns since 1990
+tickers <- names(DJ_const)[-c(5,10,25,26,27)]
+tickers
+DJ_const.select <- DJ_const['1990-01-01/',tickers]
 
-by <- timeSequence(from = start(X.daily),  to = end(X.daily), by = "week")
-Xdata <- aggregate(X.daily, by, sum)
+# Compute log returns
+DJ_const.r <- diff(log(DJ_const.select))[-1,]
+
+# Compute monthly log returns
+Xdata <- apply.monthly(DJ_const.r,FUN=colSums)
 dim(Xdata)
+d <- dim(Xdata)[2]
 head(Xdata)
-
-plot(Xdata)
-times <- time(Xdata)
-Xdata <- series(Xdata)
+plot.zoo(Xdata,type="h")
 
 
 PCA.analysis <- princomp(Xdata)
@@ -22,15 +27,15 @@ loadings(PCA.analysis)
 mu <- PCA.analysis$center
 Y <- PCA.analysis$scores
 PCA.factors <- Y[,1:3]
-ignored.factors <- Y[,4:10]
-PCA.factors <- timeSeries(PCA.factors,times)
-plot(PCA.factors)
+ignored.factors <- Y[,4:d]
+PCA.factors <- xts(PCA.factors,time(Xdata))
+plot.zoo(PCA.factors,type="h")
 cor(PCA.factors)
 
 Gamma <- unclass(loadings(PCA.analysis))
-Gamma %*% t(Gamma)
+levelplot(Gamma %*% t(Gamma))
 Gamma1 <- Gamma[,1:3]
-Gamma2 <- Gamma[,4:10]
+Gamma2 <- Gamma[,4:d]
 
 tmp <- mu + Gamma1 %*% t(PCA.factors) + Gamma2 %*% t(ignored.factors)
 head(t(tmp))

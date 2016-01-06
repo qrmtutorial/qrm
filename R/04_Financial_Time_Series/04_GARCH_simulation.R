@@ -30,9 +30,6 @@ vol <- sigma(path)
 head(vol)
 plot(vol[,1],type="h")
 plot(vol[,2],type="h")
-# To find out about extraction methods:
-# ?ugarchpath
-# Then follow a link to documentation for "uGARCHpath" object
 
 series <- path@path
 # series is a simple list

@@ -1,47 +1,56 @@
-## by Alexander McNeil
+# by Alexander McNeil
+require(xts)
+require(qrmdata)
 
-require(QRM)
+data("SP500")
+summary(SP500)
+plot(SP500)
 
-
-load("SP500-1960-2014.RData")
-losses <- -returns(SP500[,"Adj.Close"],"simple")*100
-SP500 <- cbind(SP500,losses=losses)
-sp500.postcrash <- window(SP500,"1987-10-19","2013-12-31")
-sp500.precrash <- window(SP500,"1960-01-01","1987-10-18")
+sp500.postcrash <- SP500['1987-10-19/2013-12-31']
+sp500.precrash <- SP500['1960-01-01/1987-10-18']
 tail(sp500.precrash)
 head(sp500.postcrash)
 
 n <- dim(sp500.precrash)[1]
-levelMonday <- as.numeric(sp500.precrash[n-4,"Open"])
-levelFriday <- as.numeric(sp500.precrash[n,"Adj.Close"])
-weekreturn <- 100*(levelFriday-levelMonday)/levelMonday
+levelstartofweek <- as.numeric(sp500.precrash[n-5])
+levelFriday <- as.numeric(sp500.precrash[n])
+# compute percentage loss over week
+weekreturn <- 100*(levelstartofweek-levelFriday)/levelstartofweek
 weekreturn
-BlackMonday <- as.numeric(sp500.postcrash[1,"losses"])
+
+levelMonday <- as.numeric(sp500.postcrash[1])
+# compute percentage loss on Black Monday
+BlackMonday <- 100*(levelFriday-levelMonday)/levelFriday
 BlackMonday
 
-date.split <- strsplit(as.character(time(sp500.precrash)), split="-")
-head(date.split)
-year <- as.numeric(unlist(lapply(date.split, `[[`, 1))) # get years
-months <- as.numeric(unlist(lapply(date.split, `[[`, 2))) # get months
-halfyear <- rep(1, length(months))
-halfyear[months >= 7] <- 2 
-
-blocks <- cbind(year, halfyear) 
-colnames(blocks) <- c("year", "halfyear") 
-sp500.precrash <- cbind(sp500.precrash,blocks)
-head(sp500.precrash)
+lreturns <- diff(log(sp500.precrash))[-1]
+losses <- -100*(exp(lreturns)-1)
+plot(losses)
 
 
-M.year <- aggregate(losses ~ year, data=sp500.precrash, FUN=max) 
-colnames(M.year)[2] <- "annual.max" 
-M.halfyear <- aggregate(losses ~ halfyear + year, data=sp500.precrash, FUN=max)
-colnames(M.halfyear)[3] <- "semester.max"
+
+# compute annual maxim
+M.year <- apply.yearly(losses, FUN=max)
+M.year
+# remove date information
+M.year <- as.numeric(M.year)
+
+# there is no half-yearly aggregation function
+# so compute quarterly maxima
+M.quarterly <- apply.quarterly(losses, FUN=max)
+# arrange in a matrix so that each row corresponds to half year
+M.quarterly.mat <- matrix(M.quarterly,ncol=2,byrow=TRUE)
+M.quarterly.mat
+# compute half-yearly maxima by taking maxima within rows
+M.halfyear <- apply(M.quarterly.mat,1,max)
+M.halfyear
+
 
 ########  Yearly analysis
-
+require(QRM)
 ## fit the GEV distribution H_{xi,mu,sigma} to the block maxima
 ?fit.GEV
-fita <- fit.GEV(M.year[,"annual.max"]) # fit a GEV distribution
+fita <- fit.GEV(M.year) # fit a GEV distribution
 fita
 xi.hat.a <- fita$par.ests[["xi"]]
 mu.hat.a <- fita$par.ests[["mu"]]
@@ -57,7 +66,7 @@ rperiodBM.annual
 
 #### Semesterly analysis
 
-fitb <- fit.GEV(M.halfyear[,"semester.max"]) # fit a GEV distribution
+fitb <- fit.GEV(M.halfyear) # fit a GEV distribution
 fitb
 xi.hat.b <- fitb$par.ests[["xi"]]
 mu.hat.b <- fitb$par.ests[["mu"]]
@@ -69,3 +78,4 @@ rperiodBM.semester
 
 # If you are interested in the confidence intervals for these point estimates
 # please see 05_SP_rlevels_rperiods_CIs.R
+

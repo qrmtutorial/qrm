@@ -1,24 +1,31 @@
 library(lattice)
+library(xts)
+library(qrmdata)
 
+data("DJ_const")
+data("DJ")
 # Take a subset of Dow Jones Data
-stocks <- c("AXP","EK","BA","C","KO","MSFT","HWP","INTC","JPM","DIS")
-DJ.select <- DJ[,stocks]
-X.daily <- window(returns(DJ.select), "1993-01-01", "2000-12-31")
-F.daily <- window(returns(dji), "1993-01-01", "2000-12-31")
+# We will take stocks with complete record of returns since 1990
+tickers <- names(DJ_const)[-c(5,10,25,26,27)]
+tickers
+DJ_const.select <- DJ_const['1990-01-01/',tickers]
+DJ.select <- DJ['1990-01-01/']
 
-by <- timeSequence(from = start(X.daily),  to = end(X.daily), by = "week")
-Xdata <- aggregate(X.daily, by, sum)
-Fdata <- aggregate(F.daily, by, sum)
+# Compute log returns
+DJ_const.r <- diff(log(DJ_const.select))[-1,]
+DJ.r <- diff(log(DJ.select))[-1]
+
+# Compute monthly log returns
+Xdata <- apply.monthly(DJ_const.r,FUN=colSums)
+Fdata <- apply.monthly(DJ.r,FUN=colSums)
 dim(Xdata)
 length(Fdata)
 head(Xdata)
 head(Fdata)
 
-plot(Xdata)
-plot(Fdata)
-times <- time(Xdata)
-Xdata <- series(Xdata)
-Fdata <- series(Fdata)
+plot.zoo(Xdata,type="h")
+plot(Fdata,type="h")
+
 
 # Fit Multivariate Regression
 out <- lm(Xdata ~ Fdata)
@@ -50,14 +57,9 @@ Omega <- as.matrix(var(Fdata))
 Sigma <- B %*% Omega %*% t(B) + diag(diag(Psi))
 dimnames(Sigma) <- list(dimnames(par.ests)[[2]],dimnames(par.ests)[[2]])
 R.fact <- cov2cor(Sigma)
-cor.data <- cor(Xdata)
-round(R.fact,2)
-round(cor.data,2)
+
+# look at discrepancies between factor model correlation matrix
+# and sample correlation matrix
+levelplot(R.fact-cor(Xdata))
 
 
-
-# To get the book example rerun analyses with these data
-# stocks <- c("MO","KO","EK","HWP","INTC","MSFT","IBM","MCD","WMT","DIS")
-# DJ.select <- DJ[,stocks]
-# Xdata <- window(returns(DJ.select), "1992-01-01", "1998-12-31")
-# Fdata <- window(returns(dji), "1992-01-01", "1998-12-31")

@@ -1,11 +1,17 @@
 # Library required
+# require(qrmdata)
+library(xts)
+library(mvtnorm)
+library(qrmdata)
 
+# We will use DJ stock to obtain multivariate data
+data("DJ_const")
+Sdata <- DJ_const['2000-01-01/',1:4]
+Xdata <- diff(log(Sdata))[-1,]
+plot.zoo(Xdata)
 
-load("INDEXES-2000-2012.RData")
-plot(INDEXES0012)
-Xdata <- returns(INDEXES0012)
-
-# sample summary statistics
+# First we will estimate the moments of these data
+# sample mean vector, sample covariance and correlation matrices
 colMeans(Xdata)
 cor(Xdata)
 cov(Xdata)
@@ -20,6 +26,7 @@ A <- t(chol(Sigma))
 A %*% t(A)
 
 # Symmetric decomosition
+# This is an alternative way of finding a matrix 'square root'
 eigen(Sigma)
 Gamma <- eigen(Sigma)$vectors
 Lambda <- eigen(Sigma)$values
@@ -31,9 +38,9 @@ B %*% B
 Sigma
 
 
-library(QRM)
+
 # simulation mutivariate normal data
-simdata <- rmnorm(n=1000,mu=mu,Sigma=Sigma)
+simdata <- rmvnorm(n=1000,mean=mu,sigma=Sigma)
 colMeans(simdata)
 mu
 var(simdata)

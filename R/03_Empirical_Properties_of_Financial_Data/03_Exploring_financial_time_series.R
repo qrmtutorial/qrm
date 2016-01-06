@@ -1,86 +1,83 @@
-
+# by Alexander McNeil & Marius Hofert
 # REQUIRED LIBRARIES
-require(QRM)
+require(xts)
+require(qrmdata)
 
-# DATA
-load("INDEXES-2000-2012.RData")
-load("Canadian-ZCB-Yields.RData")
+# STOCK PRICES
+# Dow Jones stock price data
+data("DJ_const")
+class(DJ_const)
+# We extract a time period and take the first 10 stocks
+DJdata <- DJ_const['2006-12-29/2015-12-31',1:10]
+# Use plot for zoo objects to get multiple plots
+plot.zoo(DJdata)
+DJ.X <- diff(log(DJdata))[-1,]
+head(DJ.X)
+plot.zoo(DJ.X)
 
-# Risk Factor Data (Daily)
+# aggregating log returns by summation
+DJ.X.w <- apply.weekly(DJ.X, FUN=colSums)
+dim(DJ.X.w)
+plot.zoo(DJ.X.w,type="h")
+DJ.X.m <- apply.monthly(DJ.X, FUN=colSums)
+dim(DJ.X.m)
+plot.zoo(DJ.X.m,type="h")
+DJ.X.q <- apply.quarterly(DJ.X, FUN=colSums)
+dim(DJ.X.q)
+plot.zoo(DJ.X.q,type="h")
 
-# Stock Prices (in QRM)
-data(DJ)
-class(DJ)
-dim(DJ)
-stocks <- c("KO","MSFT","INTC","DIS")
-DJ.select <- DJ[,stocks]
-plot(DJ.select)
-?returns
-X.DJ <- window(returns(DJ.select), "1993-01-01", "2000-12-31")
-plot(X.DJ)
-summary(X.DJ)
-pairs(X.DJ)
+# STOCK INDEXES
+data("SP500")
+data("FTSE")
+data("SMI")
+class(SP500)
+plot(SP500)
+# merge all the data
+INDEXESall <- merge(SP500,FTSE,SMI,all=TRUE)
+plot.zoo(INDEXESall)
+# merge and retain only days where all indexes have values
+INDEXES <- merge(SP500,FTSE,SMI,all=FALSE)
+plot.zoo(INDEXES)
 
-# Aggregating by week, month, quarter
-by <- timeSequence(from = start(X.DJ),  to = end(X.DJ), by = "week")
-X.DJ.w <- aggregate(X.DJ, by, sum)
-head(X.DJ.w)
-dim(X.DJ.w)
-by <- unique(timeLastDayInMonth(time(X.DJ)))
-X.DJ.m <- aggregate(X.DJ, by, sum)
-head(X.DJ.m)
-dim(X.DJ.m)
-by <- unique(timeLastDayInQuarter(time(X.DJ)))
-X.DJ.q <- aggregate(X.DJ, by, sum)
-head(X.DJ.q)
-dim(X.DJ.q)
-
-
-# Index Data (new data)
-
-class(INDEXES0012)
-plot(INDEXES0012)
-X.INDEXES <- returns(INDEXES0012)
-plot(X.INDEXES)
-pairs(X.INDEXES)
+# compute returns
+SP500.X <- diff(log(SP500))[-1]
+FTSE.X <- diff(log(FTSE))[-1]
+SMI.X <- diff(log(SMI))[-1]
+INDEXES.X <- merge(SP500.X,FTSE.X,SMI.X,all=FALSE)
+plot.zoo(INDEXES.X)
+pairs(as.zoo(INDEXES.X))
 
 # Aggregating by week, month
-by <- timeSequence(from = start(X.INDEXES),  to = end(X.INDEXES), by = "week")
-X.INDEXES.w <- aggregate(X.INDEXES, by, sum)
-head(X.INDEXES.w)
-dim(X.INDEXES.w)
-by <- unique(timeLastDayInMonth(time(X.INDEXES)))
-X.INDEXES.m <- aggregate(X.INDEXES, by, sum)
-head(X.INDEXES.m)
-dim(X.INDEXES.m)
+INDEXES.X.w <- apply.weekly(INDEXES.X,FUN=colSums)
+plot.zoo(INDEXES.X.w,type="h")
+INDEXES.X.m <- apply.monthly(INDEXES.X, FUN=colSums)
+plot.zoo(INDEXES.X.m,type="h")
 
 
-# Exchange Rates (in QRM)
-data(FXGBP)
-class(FXGBP)
-head(FXGBP)
-tail(FXGBP)
-plot(FXGBP)
-FX.select <- window(FXGBP, "1996-01-01", "2003-12-31")
-plot(FX.select)
-X.FX <- returns(FX.select)
-plot(X.FX)
-
-# Aggregating by month
-by <- unique(timeLastDayInMonth(time(X.FX)))
-X.FX.m <- aggregate(X.FX, by, sum)
-head(X.FX.m)
-dim(X.FX.m)
+# EXCHANGE RATES 
+data("GBP_USD")
+data("EUR_USD")
+data("JPY_USD")
+data("CHF_USD")
+FX <- merge(GBP_USD,EUR_USD,JPY_USD,CHF_USD,all=TRUE)
+head(FX)
+plot.zoo(FX)
+FX.X <- diff(log(FX))[-1,]
+plot.zoo(FX.X,col=1:4)
 
 
-# Zero-Coupon-Bond Yields (new data)
-class(ZCB)
-dim(ZCB)
-head(ZCB)
-ZCB <- window(100*ZCB, "2002-01-02", "2011-12-30")
-plot(ZCB[,1:10])
-X.ZCB <- diff(ZCB)
-X.ZCB3 <- X.ZCB[,c(1,8,40)]
-plot(X.ZCB3)
-pairs(X.ZCB3)
+
+# ZERO-COUPON BOND YIELDS
+data("ZCB_CA")
+dim(ZCB_CA)
+head(ZCB_CA)
+# change to percentages and select period
+ZCB <- 100*ZCB_CA['2002-01-02/2011-12-30']
+plot.zoo(ZCB[,1:10],col=1:10)
+# compute simple returns and remove first row
+ZCB.X <- diff(ZCB)[-1,]
+# pick 3 maturities
+ZCB.X.3 <- ZCB.X[,c(1,8,40)]
+plot.zoo(ZCB.X.3,col=1:3)
+pairs(as.zoo(ZCB.X.3))
 
