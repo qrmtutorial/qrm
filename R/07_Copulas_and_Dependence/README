@@ -1,11 +1,10 @@
-R Scripts for Chapter 7
+### R scripts for Chapter 7
 
-07_Copulas_first_principles.R - generate normal and t copula data from first principles.
-07_Meta_copula_models.R - generate some meta models using different copulas.
-07_Spearmans_rho_t_copula.R - calculate Spearman’s rho for the t copula.
-07_Copula_estimation - estimation of various bivariate and multivariate copulas.
-
-Additional files:
-
-INDEXES-2000-2012.RData - stock market indexes from 2000 - 2012.
-
+07_Copulas_first_principles.R
+   Generate normal and t copula data from first principles
+07_Meta_copula_models.R
+   Generate some meta models using different copulas
+07_Spearmans_rho_t_copula.R
+   Calculate Spearman’s rho for the t copula
+07_Copula_estimation
+   Estimation of various bivariate and multivariate copulas
