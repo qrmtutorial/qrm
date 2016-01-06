@@ -1,7 +1,12 @@
-R Scripts for Chapter 3
+### R Scripts for Chapter 3
 
-03_Exploring_financial_time_series.R - exploring and aggregating financial time series.
-03_Testing_normality.R - some univariate tests of normality.
-03_Ljung-Box-correlation_tests.R - reproduces the Ljung-Box tests in Table 3.1.
-03_Univariate_stylized_facts.R - illustrates some univariate stylized facts for risk-factor changes or returns.
-03_Multivariate_stylized_facts.R - illustrates some multivariate stylized facts for returns.
+03_Exploring_financial_time_series.R
+   Exploring and aggregating financial time series
+03_Testing_normality.R
+   Some univariate tests of normality
+03_Ljung-Box-correlation_tests.R
+    Implements Ljung-Box correlation tests
+03_Univariate_stylized_facts.R
+   Illustrates some univariate stylized facts for risk-factor changes or returns
+03_Multivariate_stylized_facts.R
+   Illustrates some multivariate stylized facts for returns
