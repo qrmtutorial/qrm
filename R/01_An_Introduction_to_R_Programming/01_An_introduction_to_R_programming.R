@@ -1,6 +1,6 @@
 ## By Marius Hofert
 
-## Introductory R script and playground
+## Introductory R script and playground for learning R
 
 ## Note:
 ## 1) Appendix A of the manual "An Introduction to R" on
