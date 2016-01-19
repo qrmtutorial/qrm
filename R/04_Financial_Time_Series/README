@@ -1,8 +1,6 @@
-R Scripts for Chapter 4
+### R Scripts for Chapter 4
 
-04_GARCH_models.R - simulation and estimation of univariate GARCH models.
-
-Additional files:
-
-INDEXES-2000-20012.RData - stock index return data.
-
+04_GARCH_simulation.R
+   Simulation of univariate GARCH models
+04_GARCH_models.R
+   Estimation of univariate GARCH models

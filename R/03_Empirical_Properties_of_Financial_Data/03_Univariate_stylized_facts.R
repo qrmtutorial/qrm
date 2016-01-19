@@ -1,61 +1,57 @@
 ## by Alexander McNeil
-require(QRM)
-load("INDEXES-2000-2012.RData")
+require(xts)
+require(qrmdata)
 
-# Some stock index Data 
-class(INDEXES0012)
-plot(INDEXES0012)
-X.INDEXES <- returns(INDEXES0012)
-plot(X.INDEXES)
-pairs(X.INDEXES)
+data("SP500")
+data("FTSE")
+data("SMI")
 
-# Illustration of ggregation by week and month
-by <- timeSequence(from = start(X.INDEXES),  to = end(X.INDEXES), by = "week")
-X.INDEXES.w <- aggregate(X.INDEXES, by, sum)
-head(X.INDEXES.w)
-dim(X.INDEXES.w)
-by <- unique(timeLastDayInMonth(time(X.INDEXES)))
-X.INDEXES.m <- aggregate(X.INDEXES, by, sum)
-head(X.INDEXES.m)
-dim(X.INDEXES.m)
+SP500.X <- diff(log(SP500))[-1]
+FTSE.X <- diff(log(FTSE))[-1]
+SMI.X <- diff(log(SMI))[-1]
+# remove zero returns (caused almost certainly by market closure)
+SP500.X <- SP500.X[SP500.X!=0]
+SMI.X <- SMI.X[SMI.X!=0]
+FTSE.X <- FTSE.X[FTSE.X!=0]
 
-# Plotting
-plot(X.INDEXES)
-dim(X.INDEXES)
-plot(X.INDEXES.w,type="h")
-dim(X.INDEXES.w)
+INDEXES.X <- merge(SP500.X,FTSE.X,SMI.X,all=FALSE)
+# compute weekly log-returns by summing within weeks
+INDEXES.X.w <- apply.weekly(INDEXES.X,FUN=colSums)
+
+plot.zoo(INDEXES.X)
+pairs(as.zoo(INDEXES.X))
+
 
 # Stylized Facts
 
 # Correlation
-acf(X.INDEXES)
-acf(abs(X.INDEXES))
-acf(X.INDEXES.w)
-acf(abs(X.INDEXES.w))
+acf(INDEXES.X)
+acf(abs(INDEXES.X))
+acf(INDEXES.X.w)
+acf(abs(INDEXES.X.w))
 
 # Leptokurtosis - heavy tails
 par(mfrow=c(1,3))
 for (i in 1:3){
-  data <- X.INDEXES.w[,i]
-  nm <- names(X.INDEXES.w)[i]
+  data <- INDEXES.X.w[,i]
+  nm <- names(INDEXES.X.w)[i]
   qqnorm(data,main=nm)
   qqline(data,col=2)
 }
 par(mfrow=c(1,1))
 
 # Clustered extreme values
-tsdata <- X.INDEXES[,1]
-u <- findthreshold(tsdata,ne=100)
-extremedata <- tsdata[tsdata>u,]
+tsdata <- INDEXES.X[,1]
+# pick the 100 largest negative log returns
+extremedata <- tsdata[rank(-as.numeric(tsdata))<=100]
 plot(extremedata,type="h")
 spaces <- as.numeric(diff(time(extremedata)))
 qqplot(qexp(ppoints(length(spaces))), spaces)
 qqline(spaces, distribution = function(p){qexp(p)},col=2)
 
-# Poisson process for simulated strict white noise data 
-tsdata <- timeSeries(rt(length(tsdata),df=5),time(tsdata))
-u <- findthreshold(tsdata,ne=100)
-extremedata <- tsdata[tsdata>u,]
+# Poisson process for simulated iid data 
+tsdata <- xts(rt(length(tsdata),df=5),time(tsdata))
+extremedata <- tsdata[rank(-as.numeric(tsdata))<=100]
 plot(extremedata,type="h")
 spaces <- as.numeric(diff(time(extremedata)))
 qqplot(qexp(ppoints(length(spaces))), spaces)

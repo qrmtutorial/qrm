@@ -1,7 +1,8 @@
 ## By Marius Hofert
 
 ## R is strong on quickly visualizing concepts. We do this here by numerically
-## verifying major limiting theorems in Probability and Extreme Value Theory.
+## verifying major limiting theorems in Probability (SLLN, CLT) and
+## Extreme Value Theory (Gnedenko's Theorem, Pickands--Balkema--de Haan).
 ## Note that we use the same generated data throughout!
 
 
@@ -20,7 +21,7 @@ m <- 500 # number of blocks
 X. <- split(X, f=rep(1:m, each=floor(n/m))) # split data into blocks
 
 
-### 1) Strong Law of Large Numbers (SLLN) ######################################
+### 1 Strong Law of Large Numbers (SLLN) #######################################
 
 ## Building cumulative averages (X_1/1, (X_1+X_2)/2, (X_1+X_2+X_3)/3,...)
 stopifnot(th > 1)
@@ -37,7 +38,7 @@ legend("bottomright", lty=c(1,1), col=c("black", "blue"), bty="n", y.intersp=1.2
                 substitute("true mean"~mu==mu., list(mu.=mu))))
 
 
-### 2) Central Limit Theorem (CLT) #############################################
+### 2 Central Limit Theorem (CLT) ##############################################
 
 ## Standardize blocked data via sqrt(n) * (bar{X}_n - mu) / sigma
 stopifnot(th > 2)
@@ -53,7 +54,7 @@ curve(dnorm, from=min(Z), to=max(Z), add=TRUE, col="blue") # overlay N(0,1) dens
 box()
 
 
-### 3) Gnedenko's Theorem ######################################################
+### 3 Gnedenko's Theorem #######################################################
 
 ## \bar{F}(x) = x^{-\theta} L(x) for L(x) = (1+1/x)^{-\theta} (slowly varying at
 ## infinity). By Gnedenko's Theorem (1943), such F is in MDA(H_{1/\theta}) for
@@ -81,7 +82,7 @@ plot(qGEV., M., xlab="Theoretical quantiles", ylab="Sample quantiles",
 qqline(y=M., distribution=function(p) qGEV(p, xi=1/th))
 
 
-### 4) Pickands--Balkema--de Haan (1974/1975) ##################################
+### 4 Pickands--Balkema--de Haan (1974/1975) ###################################
 
 ## For sufficiently large thresholds u, excesses over u follow a GPD(\xi,\beta)
 ## distribution if and only if F is in MDA(H_\xi). If F is GPD(\xi,\beta)

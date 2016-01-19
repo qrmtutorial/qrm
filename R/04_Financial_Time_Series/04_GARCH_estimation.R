@@ -1,40 +1,23 @@
 ## by Alexander McNeil
 require(rugarch)
-require(QRM)
-load("INDEXES-2000-2012.RData")
+require(qrmdata)
 
 
-# Generate a GARCH model
-GARCHspec <- ugarchspec(variance.model=list(model="sGARCH", garchOrder=c(1,1)),mean.model=list(armaOrder=c(0,0),include.mean=FALSE),distribution.model="norm",fixed.pars=list(omega=0.02,alpha1=0.15,beta1=0.8))
 
-# Generate a realization
-path <- ugarchpath(GARCHspec,n.sim=2000,n.start=50,m.sim=1)
-plot(path,which=1)
-plot(path,which=2)
-plot(path,which=3)
-plot(path,which=4)
+# Load some real data
+data("SP500")
+plot(SP500)
+# Compute log returns
+SP500.r <- diff(log(SP500))[-1]
+# take 4 years of data
+SP500.r <- SP500.r['2006-01-01/2009-12-31']
 
-vol <- sigma(path)
-plot(vol,type="h")
-names(attributes(path))
-names(path@path)
-X <- path@path$seriesSim
-acf(X)
-acf(abs(X))
-qqnorm(X)
-qqline(X,col=2)
-shapiro.test(X)
-
-# In the next section we will analyse real data
-
-X.INDEXES <- returns(INDEXES0012)
-X.sp500 <- X.INDEXES[,2]
 
 # Fit an AR(1)-GARCH(1,1) model with normal innovations
 # We first have to create a model specification
 AR.GARCH.N.spec <- ugarchspec(variance.model=list(model="sGARCH", garchOrder=c(1,1)),mean.model=list(armaOrder=c(1,0),include.mean=TRUE),distribution.model="norm")
 
-fit.a <- ugarchfit(spec=AR.GARCH.N.spec,data=X.sp500)
+fit.a <- ugarchfit(spec=AR.GARCH.N.spec,data=SP500.r)
 # The fit contains a lot of information
 # The parameter estimates are the "Optimal Parameters" at the top
 fit.a
@@ -56,7 +39,7 @@ par(mfrow=c(1,1))
 # Fit an AR(1)-GARCH(1,1) model with student innovations
 AR.GARCH.T.spec <- ugarchspec(variance.model=list(model="sGARCH", garchOrder=c(1,1)),mean.model=list(armaOrder=c(1,0),include.mean=TRUE),distribution.model="std")
 
-fit.b <- ugarchfit(spec=AR.GARCH.T.spec,data=X.sp500)
+fit.b <- ugarchfit(spec=AR.GARCH.T.spec,data=SP500.r)
 fit.b
 # The pictures are similar, but QQplot looks "better"
 par(mfrow=c(2,2))
@@ -90,4 +73,42 @@ qchisq(0.95,1)
 
 (forc <- ugarchforecast(fit.b, n.ahead=10))
 
+# In the next few commands we will explore the structure of the fitted model object
+class(fit.a)
+getClass("uGARCHfit")
+getSlots("uGARCHfit")
+fit.a.fit <- fit.a@fit
+names(fit.a.fit)
+fit.a.model <- fit.a@model
+names(fit.a.model)
+fit.a.model$modeldesc
+fit.a.model$pars
+
+# To find out about extraction methods:
+?ugarchfit
+# Then follow a link to documentation for "uGARCHfit" object
+# Here are some common extractions:
+coef(fit.a)
+plot(sigma(fit.a))
+plot(quantile(fit.a,0.99))
+Z.hat <- residuals(fit.a,standardize=TRUE)
+
+
+# We have a look in more detail at the residuals
+plot(Z.hat)
+# Note how they are left skewed
+hist(Z.hat)
+mean(Z.hat);var(Z.hat)
+shapiro.test(as.numeric(Z.hat))
+
+# For these commands you will need the package "moments"
+require(moments)
+skewness(Z.hat)
+kurtosis(Z.hat)
+jarque.test(as.numeric(Z.hat))
+
+# Things to try:
+# A GARCH model with asymmetric dynamics - GJR-GARCH
+# A GARCH model with asymmetric innovation distribution
+# Different ARMA specifications for the conditional mean
 
