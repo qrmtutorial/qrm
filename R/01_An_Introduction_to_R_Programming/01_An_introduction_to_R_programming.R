@@ -16,8 +16,10 @@
 1+2
 1/2
 1/0 # in R, Inf and -Inf exist and R can often deal with them correctly
-x <- 1/0 # store the result in 'x'
-class(x) # the class/type of 'x'
+0/0 # ... also NaN (= not a number) is available
+x <- 0/0 # store the result in 'x'
+class(x) # the class/type of 'x'; => NaN is still of mode 'numeric'
+class(Inf) # Inf is of mode 'numeric'
 
 ## Vectors (data structure which contains objects of the same mode)
 numeric(0) # the empty numeric vector
@@ -26,7 +28,7 @@ x <- c(1, 2, 3, 4, 5) # numeric vector
 x # print method
 (y <- 1:5) # another way of creating such a vector (and *printing* the output via '()')
 (z <- seq_len(5)) # and another one (see below for the 'why')
-z[6] <- 6 # append to a vector (better than z <- c(z, 6))
+z[6] <- 6 # append to a vector (better than z <- c(z, 6)); (much) more comfortable than in C/C++
 z
 
 ## Note: We can check whether the R objects are the same
@@ -52,21 +54,17 @@ seq_len(n) # better: => empty sequence
 seq_along(c(3,4,2)) # 1:3; helpful to 'go along' objects
 
 ## Watch out
-1:3-1 # ':' has higher priority
+1:3-1 # ':' has higher priority; note also: the '-1' is recycled to the length of 1:3
 1:(3-1)
-
-## Vector arithmetic
-x <- c(1, 2, 3, 4, 5)
-(z <- 2*x - 1) # '*' is component-wise, '-1' is recycled to the length of x
 
 ## Some functions
 (x <- c(3, 4, 2))
+length(x) # as seen above
 rev(x) # change order
 sort(x) # sort in increasing order
 sort(x, decreasing=TRUE) # sort in decreasing order
 o <- order(x) # create indices that sort x
 x[o] # => sorted
-length(x) # length of x
 log(x) # component-wise logarithms
 x^2 # component-wise squares
 sum(x) # sum all numbers
@@ -86,15 +84,11 @@ ind | !ind # vectorized logical OR
 ind & !ind # vectorized logical AND
 ind || !ind # logical OR applied to all values
 ind && !ind # logical AND applied to all values
-y <- c(TRUE, FALSE)
-3*y # TRUE is coerced to 1, FALSE to 0
-class(NA) # NA = 'not available' is 'logical' as well
-
-## Missing values (NA), not a number (NaN)
+3 * c(TRUE, FALSE) # TRUE is coerced to 1, FALSE to 0
+class(NA) # NA = 'not available' is 'logical' as well (used for missing data)
 z <- 1:3; z[5] <- 4 # two statements in one line (';'-separated)
 z # => 4th element 'not available' (NA)
 (z <- c(z, 0/0)) # e.g., 0/0, 0*Inf, Inf-Inf lead to 'not a number' (NaN)
-class(NaN) # not a number but still of mode 'numeric'
 class(z) # still numeric
 is.na(z) # check for NA or NaN
 is.nan(z) # check for just NaN
@@ -156,11 +150,12 @@ P.inv %*% P # (numerically close to) I
 ## Build a grid and work on it
 (grid <- expand.grid(1:3, LETTERS[1:2])[,2:1]) # create a grid containing each variable combination
 class(grid) # a data.frame (containing objects of different mode)
-as.matrix(grid) # coercion to matrix
-data.matrix(grid) # numeric matrix (without quotes)
+as.matrix(grid) # coercion to a character matrix
+data.matrix(grid) # coercion to a numeric matrix
 rowSums(A) # row sums
 apply(A, 1, sum) # the same
 colSums(A) # column sums
+apply(A, 2, sum) # the same
 
 ## Array (data structure which contains objects of the same mode)
 ## Special cases: vectors (1d-arrays) and matrices (2d-arrays)
@@ -187,7 +182,6 @@ str(df) # => first column is a factor; second an integer vector
 ##       can contain pretty much everything, e.g., lists themselves or functions
 ##       or both... (and of different lengths)
 (L <- list(group=LETTERS[1:4], value=1:2, sublist=list(10, function(x) x+1)))
-length(L) # length of the list
 
 ## Extract elements from a list
 ## Version 1:
@@ -201,6 +195,7 @@ L[["group"]]
 L[["sublist"]][[1]]
 
 ## Change a name
+names(L)
 names(L)[3] <- "sub.list"
 str(L)
 
@@ -225,8 +220,7 @@ if(x < 5) y <- 1 else y <- 0 # y is the indicator whether x < 5
 y <- if(x < 5) 1 else 0
 ## ... or even better
 (y <- x < 5) # ... as a logical
-as.numeric(y) # converted to 1, but even without that...
-y+2 # ... y is treated as {0,1} in calculations
+y+2 # ... which is internally again converted to {0,1} in calculations
 
 ## Also, loops of the type...
 x <- numeric(5)
@@ -253,6 +247,7 @@ rexp(4,   rate=2) # draw random variates from Exp(2)
 
 ### Working with additional packages ###########################################
 
+## see ?install.packages()
 library(mvtnorm) # load mvtnorm; library = directory location where *packages* reside
 library(parallel) # needed for nextRNGStream() below
 ## Within functions, use require() (throws a warning and continues if the package
@@ -260,36 +255,39 @@ library(parallel) # needed for nextRNGStream() below
 ## http://yihui.name/en/2014/07/library-vs-require/
 
 packageDescription("mvtnorm") # get a short description of the package
-citation("mvtnorm") # how to cite a package
-## Generate and plot data from the multivariate t_{4.5} distribution
-pairs(rmvt(2000, sigma=diag(3), df=4.5), gap=0, pch=".")
+maintainer("mvtnorm") # see citation("mvtnorm") for how to cite a package
+
+## Generate and plot data from a multivariate t distribution
+X <- rmvt(2000, sigma=P, df=4.5) # generate data from a multivariate t_4.5 distribution
+require(lattice) # for the cloud plot
+cloud(X[,3]~X[,1]+X[,2], scales=list(col=1, arrows=FALSE), col=1, distance=0,
+      xlab=expression(italic(X[1])), ylab=expression(italic(X[2])),
+      zlab=expression(italic(X[3])),
+      par.settings=list(background=list(col="#ffffff00"),
+                axis.line=list(col="transparent"), clip=list(panel="off")))
+## => not much visible; in higher dimensions even impossible ...
+pairs(X, gap=0, pch=".") # ... but we can use a pairs plot
 
 
 ### Random number generation ###################################################
 
-## Remove .Random.seed (just in case it was set)
-rm(.Random.seed) # remove .Random.seed (not existing yet if you started a new R session)
-.Random.seed # => not there anymore; that's also the case in a new R session (try it!)
-
 ## Generate from N(0,1)
 (X <- rnorm(2)) # generate two N(0,1) random variates
 str(.Random.seed)
-## => R generated .Random.seed which encodes the random number generator kind
-##    (lowest two decimals) and the random number generator kind for generating
-##    N(0,1) (highest decimal) in the first integer and then contains the seed
-##    (all other components). The default kind is the "Mersenne Twister"
-##    (which needs an integer(624) as seed and the current position in this
-##    set => 625 numbers).
+## Note:
+## - The first integer in .Random.seed encodes the U(0,1) random number
+##   generator kind (lowest two decimals) and the one for generating N(0,1)
+##   (highest decimal). The remaining integers denote the actual seed.
+## - The default kind is the "Mersenne Twister" (which needs an integer(624)
+##   as seed and the current position in this sequence, so 625 numbers).
 RNGkind() # => Mersenne Twister, Inversion is used for generating N(0,1)
-(Y <- rnorm(2)) # => another two N(0,1) random variates (different from above)
+(Y <- rnorm(2)) # => another two N(0,1) random variates (obviously different)
 
 ## How can we make sure to obtain the same results (for *reproducibility*?)
 all.equal(X, Y) # obviously not equal (here: with probability 1)
 
 ## Set a 'seed' so that computations are reproducible
-rm(.Random.seed) # remove .Random.seed again (for demonstration purposes)
 set.seed(271) # with set.seed() we can set the seed
-str(.Random.seed) # => again .Random.seed now exists
 X <- rnorm(2) # draw two N(0,1) random variates
 set.seed(271) # set the same seed again
 Y <- rnorm(2) # draw another two N(0,1) random variates
@@ -307,9 +305,8 @@ RNGkind() # => L'Ecuyer's CMRG, Inversion is used for generating N(0,1)
 .Random.seed # => now of length 7: first number as above + the seed
 Z <- rnorm(2) # use L'Ecuyer's CMRG for generating random numbers
 .Random.seed <- nextRNGStream(.Random.seed) # advance seed by 2^127; requires 'parallel'
-Z. <- rnorm(2) # generate from next stream
+Z. <- rnorm(2) # generate from next stream => will be 'sufficiently apart' from Z
 RNGkind("Mersenne-Twister") # switch back to Mersenne-Twister
-str(.Random.seed)
 
 
 ### Watch out for numerical issues #############################################
@@ -317,20 +314,18 @@ str(.Random.seed)
 ## How to evaluate choose(500, 200)?
 choose(500, 200)
 factorial(500)/(factorial(200)*factorial(300)) # too large values
-n <- 170 # last n possible
+n <- 500
 x <- 1:n
 y <- sapply(1:n, factorial)
 plot(x, y, type="l", log="y", xlab="n", ylab="n!") # ... always look at plots
-y[length(y)] # close to largest value...
 str(.Machine) # => double.xmax
+summary(y) # => beyond double.xmax, R uses Inf here
 
 ## A numerical trick
 log(factorial(200)) # obviously, same problem here ('mathematical composition' not doable)
 lc <- lfactorial(500) - (lfactorial(200) + lfactorial(300)) # work with 'proper' logs
-stopifnot(all.equal(lc, lchoose(500, 200))) # there is also lchoose()
-c <- exp(lc) # => doable
-choose(500, 200) # => choose() uses the same trick
-stopifnot(all.equal(c, choose(500, 200)))
+c <- exp(lc) # due to the '-/+', the result is of a size representable in computer arithmetic
+stopifnot(all.equal(c, choose(500, 200))) # note: choose(500, 200) uses the same trick
 
 
 ### Misc #######################################################################
