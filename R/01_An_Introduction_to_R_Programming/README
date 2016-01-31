@@ -2,3 +2,5 @@
 
 01_An_introduction_to_R_programming.R
    Covers the elements of R programming including illustration of good practice
+01_Debugging_run_time_and_parallel_computing.R
+   Shows how to debug, measure run time and implement parallel computing in R

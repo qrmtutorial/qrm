@@ -176,39 +176,6 @@ stopifnot(0 < alpha, alpha < 1)
 VaR. <- VaR(L, alpha=alpha) # estimate VaR_alpha for all alpha
 ES.  <-  ES(L, alpha=alpha) # estimate ES_alpha for all alpha
 
-## Some development aspects
-if(FALSE) {
-    ## Q: How can I see what ES.hat() does?
-    ## A: There are several possibilities:
-    ##    1) When a function throws an error, use traceback()
-    ##    2) Put in browser() and call the function then (good to skip for-loops when
-    ##       debugging)
-    ##    3) Use debug(); see below
-    debug(ES) # put ES.hat() in debug mode
-    ES(L, alpha=alpha) # jump inside ES.hat
-    undebug(ES) # ... so that we don't land in debug-mode again the next time
-
-    ## Q: How can I measure run time of my function?
-    ## A: For larger chunks, 'profile' your code (see below). For smaller pieces
-    ##    of source code, use 'microbenchmark' (more reliable than a simple
-    ##    system.time(replicate(1000), <function>) or even just
-    ##    system.time(<function>)). microbenchmark() estimates the run time
-    ##    in one of s, ms (10^{-3}s), us (10^{-6}s) or ns (10^{-9}s).
-    library(microbenchmark)
-    mbm <- microbenchmark(ES(L, alpha=alpha), times=1000)
-    mbm # in ms; see also the argument 'unit'
-    boxplot(mbm, unit="ms") # boxplot in ms; note: the output is still a bit random
-
-    ## Q: My function 'works' but is too slow. How can I find out why?
-    ## A: 'Profile' your code with Rprof()
-    Rprof(profiling <- tempfile(), line.profiling=TRUE) # enable profiling
-    ES.boot <- bootstrap(L, B=1000, alpha=alpha, method="ES") # (length(alpha), B)-matrix
-    Rprof(NULL) # disable profiling
-    (profile <- summaryRprof(profiling, lines="both")) # get a summary
-    str(profile)
-    profile$by.self # profiling output for each relevant function (as 'self' and 'total', in absolute time and %)
-}
-
 ## Plot with logarithmic y-axis and true VaR_alpha and ES_alpha values
 VaR.Par. <- VaR_Par(alpha, theta=th) # theoretical VaR_alpha values
 ES.Par.  <-  ES_Par(alpha, theta=th) # theoretical ES_alpha values
