@@ -1,4 +1,4 @@
-## Copyright Marius Hofert
+## By Marius Hofert
 
 ## Computing and plotting tail probabilities
 
