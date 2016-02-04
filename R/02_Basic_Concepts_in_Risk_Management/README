@@ -1,4 +1,6 @@
 ### R scripts for Chapter 2
 
+02_Evaluating_exp_minus_1.R
+   Illustrating how R's expm1(x) evaluates exp(x)-1 in a numerically more stable way
 02_Nonparametric_VaR_and_ES_estimators.R
    Investigates the classical nonparametric value-at-risk and expected shortfall estimators

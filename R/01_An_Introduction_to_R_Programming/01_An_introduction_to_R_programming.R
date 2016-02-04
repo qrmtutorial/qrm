@@ -333,11 +333,18 @@ stopifnot(all.equal(c, choose(500, 200))) # note: choose(500, 200) uses the same
 getwd() # get the current working directory; set it with setwd()
 
 ## Not discussed here:
-## 1) How to read/write data from/to a file.
-##    This can be done with read.table()/write.table(), for example.
-##    For .csv files, there are the convenience wrappers
-##    read.csv()/write.csv().
-## 2) How to load/save R objects from/to a file.
-##    This can be done using load()/save()
+## - How to read/write data from/to a file.
+##   This can be done with read.table()/write.table(), for example.
+##   For .csv files, there are the convenience wrappers
+##   read.csv()/write.csv().
+## - How to load/save R objects from/to a file.
+##   This can be done using load()/save()
+## - How to retrieve an R plot as a file (for printing, for example). To this
+##   end, use, for example:
+##   doPDF <- TRUE
+##   if(doPDF) pdf(file=(file <- "myfile.pdf"), width=10, height=6)
+##   <do the plotting here>
+##   if(doPDF) dev.off() # or use crop's dev.off.crop(file) here to crop the picture
+##   This also works for png() (plotting to a .png)
 
 q() # quit the R session
