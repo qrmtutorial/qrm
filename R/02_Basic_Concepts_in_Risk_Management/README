@@ -7,3 +7,6 @@
 02_VaR_ES_tail_comparison_for_normal_t.R
    Illustration that VaR (or ES) does not always give larger values for the t
    than the normal distribution
+02_VaR_superadditive_Exp1.R
+   Illustrates superadditivity of VaR for small to moderate alpha for two
+   independent standard exponentials
