@@ -1,12 +1,14 @@
-R Scripts for Chapter 10
+### R scripts for Chapter 10
 
-10_Markov_chains.R - simulation and estimation of continuous-time Markov chains.
-10_Merton_model.R - illustration of asset value paths in Merton’s model and paths for the value of the firm’s debt.
-10_Merton_implied_credit_spreads.R - calculation of credit spreads implied by Merton’s model.
-10_DD_for_RadioShack.R - illustration of calculation of distance-to-default for RadioShack based on Merton model.
-
-Additional files:
-
-Black_Scholes.R - required for valuing equity and debt in Merton’s model.
-RadioShack.RData - RadioShack stock price data.
-
+10_Counterparty_credit_risk_IRS.R
+   Illustration of counterparty credit risk in an interest-rate swap
+10_Markov_chains.R
+   Simulation and estimation of continuous-time Markov chains
+10_Merton_model.R
+   Illustration of asset value paths in Merton’s model and paths for the value of the firm's debt
+10_Merton_implied_credit_spreads.R
+   Calculation of credit spreads implied by Merton’s model
+10_DD_for_RadioShack.R
+   Illustration of calculation of distance-to-default for RadioShack based on Merton model
+10_Rating_embedding.R
+   Illustration of the embedding of default and migration probabilities in a firm-value framework

@@ -1,19 +1,21 @@
 ### By Alexander McNeil
 
-require(timeSeries)
-load("RadioShack.RData")
-source("Black_Scholes.R")
+library(xts)
+library(qrmdata)
+library(qrmtools)
+data(RSHCQ)
+
 
 # Use last couple of years of data
 
-RadioShack = window(RadioShack, start="2010-01-01", end="2012-03-31")
+RadioShack = RSHCQ['2010-01-01/2012-03-31']
 # Number of shares in millions (approximately)
 N.shares <- 100
 Svalues <- RadioShack*N.shares
 # Value of equity in millions of dollars (approx)
 plot(Svalues)
 
-Vvalues <- timeSeries(rep(NA,length(Svalues)),time(Svalues))
+Vvalues <- xts(rep(NA,length(Svalues)),time(Svalues))
 # Value of one-year debt in millions approximately
 B <- 1042
 
@@ -21,12 +23,13 @@ B <- 1042
 # Root finding equation
 rooteqn <- function(V,S,t,r,sigmaV,B,T)
 {
-	S - BlackScholes(t,V,r,sigmaV,B,T,"call")
+	S - Black_Scholes(t,V,r,sigmaV,B,T,"call")
 }
 
 
 # Initial estimate of volatility
-sigmaV <- as.numeric(sd(returns(Svalues)))*sqrt(250)
+Svalues.X <- diff(log(Svalues))[-1]
+sigmaV <- as.numeric(sd(Svalues.X))*sqrt(250)
 
 
 # First iteration
@@ -35,7 +38,9 @@ for (i in 1:length(Svalues)){
 	Vvalues[i] <- tmp$root
 }
 sigmaV.old <- sigmaV
-sigmaV <- as.numeric(sd(returns(Vvalues)))*sqrt(250)
+Vvalues.X <- diff(log(Vvalues))[-1]
+sigmaV <- as.numeric(sd(Vvalues.X)*sqrt(250))
+plot(Vvalues)
 
 
 # Further iterations
@@ -48,7 +53,8 @@ for (i in 1:length(Svalues)){
 	Vvalues[i] <- tmp$root
 }
 sigmaV.old <- sigmaV
-sigmaV <- as.numeric(sd(returns(Vvalues)))*sqrt(250)
+Vvalues.X <- diff(log(Vvalues))[-1]
+sigmaV <- as.numeric(sd(Vvalues.X)*sqrt(250))
 }
 
 sigmaV
@@ -59,6 +65,7 @@ lines(Svalues,col=2)
 
 # Merton Distance to default
 DD <- (log(Vvalues[length(Vvalues)])-log(B))/sigmaV
+DD
 
 # Value given by Moody's
 (log(1834)-log(1042))/0.24

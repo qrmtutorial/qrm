@@ -1,8 +1,8 @@
 ### by Alexander McNeil
 
 ## required packages
-require(qrmtools)
-require(sde)
+library(qrmtools)
+library(sde)
 
 
 ## Parameters for Merton model
