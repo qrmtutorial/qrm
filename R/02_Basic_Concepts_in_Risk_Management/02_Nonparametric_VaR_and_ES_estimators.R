@@ -41,9 +41,9 @@
 ##    when F^-(alpha) is unknown).
 
 
-### 0 Setup ####################################################################
+### Setup ######################################################################
 
-n <- 1300 # sample size (~= 5y of daily data)
+n <- 2500 # sample size (~= 5y of daily data)
 B <- 1000 # number of bootstrap replications (= number or realizations of VaR, ES)
 th <- 2 # parameter of the Pareto distribution
 
@@ -87,7 +87,8 @@ ES_Par <- function(alpha, theta)
 ##'         => less variance.
 ##'       - We use type=1 here as for sufficiently large alpha, type=7
 ##'         (quantile()'s default) would interpolate between the two largest
-##'         losses and thus return a(n even) smaller VaR_alpha estimate.
+##'         losses (to be continuous) and thus return a(n even) smaller
+##'         VaR_alpha estimate.
 VaR <- function(x, alpha, type=1)
     quantile(x, probs=alpha, names=FALSE, type=type) # vectorized in x and alpha
 
@@ -176,9 +177,11 @@ stopifnot(0 < alpha, alpha < 1)
 VaR. <- VaR(L, alpha=alpha) # estimate VaR_alpha for all alpha
 ES.  <-  ES(L, alpha=alpha) # estimate ES_alpha for all alpha
 
-## Plot with logarithmic y-axis and true VaR_alpha and ES_alpha values
+## True values (known here)
 VaR.Par. <- VaR_Par(alpha, theta=th) # theoretical VaR_alpha values
 ES.Par.  <-  ES_Par(alpha, theta=th) # theoretical ES_alpha values
+
+## Plot with logarithmic y-axis and true VaR_alpha and ES_alpha values
 ran <- range(VaR., ES., VaR.Par., ES.Par., na.rm=TRUE)
 plot(alpha, VaR., type="l", ylim=ran, log="y", col="royalblue3",
      xlab=expression(alpha),
@@ -205,15 +208,19 @@ legend("topright", bty="n", y.intersp=1.2, lty=c(1,2,1,2),
        col=rep(c("maroon3", "royalblue3"), each=2),
        legend=c(expression(widehat(ES)[alpha]), expression(ES[alpha]),
                 expression(widehat(VaR)[alpha]), expression(VaR[alpha])))
-## => Already critical for ES_0.99 and certainly for alpha above 1-1e-3.
-##    By using nonparametric estimators we underestimate the risk capital
-##    and this although we have comparably large 'n' here!
+## => Already critical for ES_0.99 and certainly hopeless for alpha above
+##    1-1e-3. By using nonparametric estimators we underestimate the risk
+##    capital and this although we have comparably large 'n' here!
+##    Also note that VaR_alpha is simply the largest max(L) for alpha
+##    sufficiently large.
 
 ## Q: Why do the true VaR_alpha and ES_alpha seem 'linear' in alpha for
 ##    large alpha in log-log scale?
 ## A: - Linearity in log-log scale means that y is a power function in x:
-##      If y = x^beta, then log(y) = beta * log(x), so (log(x), log(y))
-##      is a line with slope beta.
+##
+##         y = x^beta   =>   log(y) = beta * log(x),
+##
+##      so (log(x), log(y)) is a line with slope beta if y = x^beta.
 ##    - For a Pareto distribution,
 ##
 ##         VaR_alpha(L) = (1-alpha)^{-1/theta} - 1,
@@ -269,13 +276,13 @@ ES.boot.CI  <- apply(ES.boot, 1, CI, na.rm=na.rm) # bootstrapped 95% CIs; (2, le
 ## 1) True VaR_alpha
 ## 2) Nonparametrically estimated VaR_alpha (based on the sample L)
 ## 3) The bootstrapped nonparametric estimate of VaR_alpha (mean of the
-##    nonparametric VaR_alpha estimators computed from the bootstrap samples)
+##    bootstrapped nonparametric VaR_alpha estimators)
 ## 4) The bootstrapped 95% confidence intervals
 ## 5) The bootstrapped variance of the nonparametric estimator of VaR_alpha
 ##    (variance of the nonparametric VaR_alpha estimators computed from the
 ##    bootstrap samples)
 ## ... and everything for ES_alpha as well
-library(sfsmisc)
+library(sfsmisc) # for eaxis()
 ran <- range(VaR.Par., # true VaR
              VaR., # nonparametric estimate
              VaR.boot., # bootstrapped estimate (variance sig^2/B for sig^2 = Var(VaR.))
@@ -302,7 +309,7 @@ eaxis(1) # a nicer exponential y-axis
 eaxis(2) # a nicer exponential y-axis
 mtext(substitute(B==B.~~"replications of size"~~n==n.~~"from Par("*th.*")",
                  list(B.=B, n.=n, th.=th)), side=4, line=1, adj=0) # secondary y-axis label
-legend("bottomleft", bty="n", y.intersp=1.2,
+legend("bottomleft", bty="n",
        lty=rep(c("dotdash", "dashed", "solid", "dotted", "4C88C488"), times=2),
        col=rep(c("royalblue3", "maroon3"), each=5),
        legend=c(## VaR_alpha
@@ -328,5 +335,5 @@ legend("bottomleft", bty="n", y.intersp=1.2,
 ##   (there is no observation beyond hat(VaR)_alpha anymore)
 ## - Var(hat(ES)_alpha) > Var(hat(VaR)_alpha)
 ##   (hat(ES)_alpha requires information from the *whole* tail)
-## - Var(hat(VaR)_alpha) and Var(hat(ES)_alpha) increase in alpha
+## - Var(hat(VaR)_alpha) and Var(hat(ES)_alpha) (mostly) increase in alpha
 ##   (less data to the right of VaR_alpha => higher variance)

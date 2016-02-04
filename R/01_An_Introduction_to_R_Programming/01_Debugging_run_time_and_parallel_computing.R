@@ -7,7 +7,7 @@
 ## demonstrate how debugging and run time measurement can be done in R.
 
 
-### 0 Setup ####################################################################
+### Setup ######################################################################
 
 library(parallel) # for parLapply() (multi-node) and mclapply() (multi-core) functionality
 
@@ -70,10 +70,11 @@ if(FALSE)
     ##    a simple system.time(replicate(1000), <function>) or even just
     ##    system.time(<function>)). microbenchmark() estimates the run time
     ##    in one of s, ms (10^{-3}s), us (10^{-6}s) or ns (10^{-9}s).
-    library(microbenchmark)
+    system.time(replicate(1000, err_random_vol(5))) # a simple version
+    library(microbenchmark) # more sophisticated
     mbm <- microbenchmark(err_random_vol(5), times=1000)
     mbm # in ms; see also the argument 'unit'
-    boxplot(mbm, unit="ms") # boxplot in ms; note: the output is still a bit random
+    boxplot(mbm, unit="ms", ylab="Time in ms in log-scale") # boxplot in ms; note: the output is still a bit random
     ## 2) For larger chunks, 'profile' your code with Rprof(). This is also useful
     ##    to figure out where run time is 'lost' and to improve the run time of a
     ##    function.
@@ -102,7 +103,7 @@ if(FALSE)
 ##   done than others (mostly the one dealing with the largest d is occupied then).
 ## => Iterate over B first. We still set the seed (although there's no guarantee that
 ##    the workers do their work in the same order if the computations are repeated).
-multi.core <- TRUE # set to NA (for single-core) or FALSE for multi-node (if a cluster is available)
+multi.core <- NA # set to TRUE (for multi-core) or FALSE for multi-node (if a cluster is available)
 if(is.na(multi.core)) { # single-core case
 
     set.seed(271) # set seed
@@ -142,4 +143,13 @@ res.df. <- res.df[res.df$rel.err > 0,] # remove 0s (to plot y-axis in log-scale)
 boxplot(rel.err~d, data=res.df., boxwex=0.3, outline=FALSE, log="y",
         xlab="d", ylab="Simulated relative error (in log-scale)",
         main=expression(bold("Computing probabilities of"~U(0,1)^d~"of randomly chosen cubes")))
-mtext(substitute(B==B.~"bootstrap replications", list(B.=B)), side=4, line=0.5, adj=0)
+mtext(substitute(B==B.~"replications", list(B.=B)), side=4, line=0.5, adj=0)
+
+## Result:
+## Of course, up to Monte Carlo (MC) error the error gets larger in larger
+## dimensions (there are more corners). In high dimensions, this can lead to
+## the fact that the resulting probability of falling in a cube can be
+## outside [0,1]. This is especially a problem for distributions other than
+## U(0,1)^d as their evaluation might be numerically more demanding, some can
+## even only be evaluated by MC themselves (like the multivariate normal or t
+## distributions in >= 3 dimensions).

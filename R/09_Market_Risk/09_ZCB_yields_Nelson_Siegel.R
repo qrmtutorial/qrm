@@ -1,12 +1,15 @@
-require(QRM)
+### by Alexander J. McNeil
+
+require(xts)
+require(qrmdata)
 require(termstrc)
-load("Canadian-ZCB-Yields.RData")
+data(ZCB_CA)
 
 # NELSON-SIEGEL FACTOR MODEL OF THE YIELD CURVE
 
 # We will start by taking a 100 day excerpt
-head(ZCB)
-ZCBexcerpt <- window(ZCB, "2011-08-08", "2011-12-30")
+head(ZCB_CA)
+ZCBexcerpt <- ZCB_CA['2011-08-08/2011-12-30']
 yields <- 100*as.matrix(ZCBexcerpt)
 dates <- time(ZCBexcerpt)
 maturities = (1:120)*0.25
@@ -20,8 +23,8 @@ summary(NSfit)
 factors <- NSfit$optparam
 factors[,4] <- 1/factors[,4]
 dimnames(factors)[[2]] <- c("Z1","Z2","Z3","eta")
-params <- timeSeries(factors,dates)
-plot(params)
+params <- xts(factors,dates)
+plot.zoo(params)
 
 # Let's have a look at the quality of the fit on a particular day
 day <- 1
@@ -52,7 +55,7 @@ mtext("k3",side=4,line=3)
 par()
 
 # Create a "zero-yields" object with 10 years of data now
-ZCB10yr <- window(ZCB, "2002-01-02", "2011-12-30")
+ZCB10yr <- ZCB_CA['2002-01-02/2011-12-30']
 
 yields <- 100*as.matrix(ZCB10yr)
 dates <- time(ZCB10yr)
@@ -69,20 +72,20 @@ plot(NSfit)
 # Now plot the Nelson-Siegel factors, after first renaming factors
 factors <- NSfit$optparam
 dimnames(factors)[[2]] <- paste("Z",1:3,sep="")
-params <- timeSeries(factors,dates)
-plot(params)
+params <- xts(factors,dates)
+plot.zoo(params)
 
 # The next piece of code shows how we can mark a significant date on all 3 plots
 plotfunc <- function(x, ...)
 	{	
 	lines(x,...)
-	abline(v=timeDate("2008-09-15",format="%Y-%m-%d"),lty=2)
+	abline(v=as.Date("2008-09-15"),lty=2)
 	}                                 
-plot(params,panel=plotfunc,yax.flip=TRUE)
+plot.zoo(params,panel=plotfunc,yax.flip=TRUE)
 
 # These data are now the risk-factor changes
 X <- diff(params)[-1,]
-plot(X)
+plot.zoo(X)
 cor(X)
 
 
