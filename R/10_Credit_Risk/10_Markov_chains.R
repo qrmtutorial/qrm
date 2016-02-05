@@ -1,6 +1,6 @@
 ### By Alexander McNeil
 
-require(Matrix)
+library(Matrix)
 # we will need the matrix exponential fuction
 
 # create a generator matrix for an imaginary rating system

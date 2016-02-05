@@ -1,8 +1,8 @@
 ### by Alexander McNeil
 
 ## required packages
-require(sde)
-source("Black_Scholes.R")
+library(qrmtools)
+library(sde)
 
 
 ## Parameters for Merton model
@@ -52,7 +52,7 @@ abline(v=1)
 # Add default free debt value
 lines(times,B*exp(-r*(T-times)),col=3)
 # Add defaultable debt
-Bt <- B*exp(-r*(T-times)) - BlackScholes(times,Vt,r,sigmaV,B,T,type="put")
+Bt <- B*exp(-r*(T-times)) - Black_Scholes(times,Vt,r,sigmaV,B,T,type="put")
 lines(times,Bt,col=2)
 
 ## Example of a non-default path also showing value of debt
@@ -64,7 +64,7 @@ abline(v=1)
 # Add default free debt value
 lines(times,B*exp(-r*(T-times)),col=3)
 # Add defaultable debt
-Bt <- B*exp(-r*(T-times)) - BlackScholes(times,Vt,r,sigmaV,B,T,type="put")
+Bt <- B*exp(-r*(T-times)) - Black_Scholes(times,Vt,r,sigmaV,B,T,type="put")
 lines(times,Bt,col=2)
 
 par(def.par)
