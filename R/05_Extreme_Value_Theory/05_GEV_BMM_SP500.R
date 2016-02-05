@@ -1,13 +1,13 @@
 ## By Marius Hofert
 
-## Compute the probability of next year's maximal loss exceeding all previous
-## ones via the block maxima method based on S&P 500 data; see
-## McNeil et al. (2015, Example 5.12). Compute a return level and return
-## period; see McNeil et al. (2015, Example 5.15)
+## Compute the probability of next year's maximal risk-factor change
+## exceeding all previous ones via the block maxima method based on
+## S&P 500 data; see McNeil et al. (2015, Example 5.12). Compute a
+## return level and return period; see McNeil et al. (2015, Example 5.15)
 
 ## Note: Different databases can (and indeed do) provide different stock values
 ##       for the S&P 500. The data below (from qrmdata) is from finance.yahoo.com
-##       and thus our computed values slightly differ from the values reported
+##       and thus our computed values differ from the values reported
 ##       in McNeil et al. (2015). Also, we (mostly) work with log-returns
 ##       instead of classical returns here.
 
@@ -21,15 +21,15 @@ library(QRM) # for fit.GEV(), pGEV(), qGEV()
 
 ### 1 Working with the data ####################################################
 
-## Load the data and compute the (classical and log-)returns
+## Load the data and compute the negative (classical and log-)returns
 data(SP500)
 S <- SP500
 X <- -diff(log(S)) # negative log-returns
 date <- index(X)
 
 ## Let's briefly work out some numbers around next Monday (= Black Monday!)
-X[date=="1987-10-16"] # log-return on the Friday before Black Monday
-X[date=="1987-10-19"] # log-return on Black Monday!
+X[date=="1987-10-16"] # risk-factor change on the Friday before Black Monday
+X[date=="1987-10-19"] # risk-factor change on Black Monday!
 
 ## Let's briefly consider classical (instead of log-)returns
 ## A change of beta from yesterday to today is S_t = (1+beta) S_{t-1}
@@ -63,8 +63,8 @@ log(x) # log-return; ~= -0.2290
 ## => drop beta = S_t/S_{t-4} - 1 = exp(sum(X_i, i=t-3,..,t)) - 1
 expm1(sum(X["1987-10-12" <= date & date <= "1987-10-16"])) # => drop by 10.0%
 
-## From now on we only consider the losses from 1960-01-01 until the evening
-## of 1987-10-16
+## From now on we only consider the risk-factor changes from 1960-01-01 until
+## the evening of 1987-10-16
 X. <- X["1960-01-01" <= date & date <= "1987-10-16"]
 
 ## Plot the S&P 500 log-returns
@@ -84,18 +84,21 @@ M.hyear <- period.apply(X., INDEX=endpts, FUN=max) # half-yearly maxima
 ## Yearly maxima
 fit.year <- fit.GEV(M.year)
 (xi.year <- fit.year$par.ests[["xi"]]) # => ~= 0.2971 => Frechet domain with infinite 4th moment
-mu.year  <- fit.year$par.ests[["mu"]]
-sig.year <- fit.year$par.ests[["sigma"]]
+(mu.year  <- fit.year$par.ests[["mu"]])
+(sig.year <- fit.year$par.ests[["sigma"]])
+fit.year$par.ses # standard errors
 ## Half-yearly maxima
 fit.hyear <- fit.GEV(M.hyear)
 (xi.hyear <- fit.hyear$par.ests[["xi"]]) # => ~= 0.3401 => Frechet domain with infinite 3rd moment
-mu.hyear  <- fit.hyear$par.ests[["mu"]]
-sig.hyear <- fit.hyear$par.ests[["sigma"]]
+(mu.hyear  <- fit.hyear$par.ests[["mu"]])
+(sig.hyear <- fit.hyear$par.ests[["sigma"]])
+fit.hyear$par.ses # standard errors
 
 
 ### 3 Compute exceedance probabilities, return levels and return periods #######
 
-## Q: What is the probability that this year's maximum exceeds all previous ones?
+## Q: What is the probability that next year's maximal risk-factor change
+##    exceeds all previous ones?
 prev.max <- max(M.year[-length(M.year)]) # maximum over all previous years
 1-pGEV(prev.max, xi=xi.year, mu=mu.year, sigma=sig.year) # exceedance probability ~= 2.58%
 1-pGEV(prev.max, xi=xi.hyear, mu=mu.hyear, sigma=sig.hyear) # exceedance probability ~= 1.49%
@@ -103,20 +106,20 @@ prev.max <- max(M.year[-length(M.year)]) # maximum over all previous years
 ##       the the exceedance probability based on half-yearly data would be larger
 ##       than the one based on yearly data (as xi is larger => heavier tailed GEV)
 
-## Q: What is the 10-year, 40-year and 50-year return level?
+## Q: What is the 10-year and 50-year return level?
 ##    Recall: k n-block return level = r_{n,k} = H^-(1-1/k) = level which is
 ##            expected to be exceeded in one out of every k n-blocks.
 qGEV(1-1/10, xi=xi.year, mu=mu.year, sigma=sig.year) # r_{n=260, k=10} ~= 4.42%; n ~ 1y
-qGEV(1-1/40, xi=xi.year, mu=mu.year, sigma=sig.year) # r_{n=260, k=40} ~= 6.98%
 qGEV(1-1/50, xi=xi.year, mu=mu.year, sigma=sig.year) # r_{n=260, k=50} ~= 7.49%
-## 20-half-year, 80-half-year and 100-half-year return levels
+## 20-half-year and 100-half-year return levels
 qGEV(1-1/20,  xi=xi.hyear, mu=mu.hyear, sigma=sig.hyear) # r_{n=130, k=20}  ~= 4.56%; n ~ 1/2y
-qGEV(1-1/80,  xi=xi.hyear, mu=mu.hyear, sigma=sig.hyear) # r_{n=130, k=80}  ~= 7.33%
 qGEV(1-1/100, xi=xi.hyear, mu=mu.hyear, sigma=sig.hyear) # r_{n=130, k=100} ~= 7.90%
 
-## Q: What is the return period of a loss as on Black Monday?
+## Q: What is the return period of a risk-factor change at least as large as
+##    on Black Monday?
 ##    Recall: k_{n,u} = 1/\bar{H}(u) = period (= number of n-blocks) in which we
-##            expect to see a single n-block exceeding u (= loss as on Black Monday)
+##            expect to see a single n-block exceeding u (= risk-factor change
+##            as on Black Monday)
 1/(1-pGEV(as.numeric(X[date=="1987-10-19"]),
           xi=xi.year, mu=mu.year, sigma=sig.year)) # ~= 1877 years
 1/(1-pGEV(as.numeric(X[date=="1987-10-19"]),
