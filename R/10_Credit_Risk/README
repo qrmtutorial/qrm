@@ -12,3 +12,7 @@
    Illustration of calculation of distance-to-default for RadioShack based on Merton model
 10_Rating_embedding.R
    Illustration of the embedding of default and migration probabilities in a firm-value framework
+10_Hazard_rate_model_spreads.R
+   Calculation of credit spreads in hazard rate models under RT and RF recovery models
+10_CDS_calibration.R
+   Illustration of the calibration of hazard rate when one CDS spread is available
