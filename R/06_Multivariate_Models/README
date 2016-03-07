@@ -3,8 +3,8 @@
 06_Constructing_and_sampling_multivariate_distributions.R
    Illustrating the construction and sampling of several multivariate
    distributions (mostly elliptical)
-06_Multivariate_basics.R
-   Summary statistics for multivariate data
+06_Fitting_a_multivariate_normal_and_t.R
+   Fitting a multivariate normal and t distribution to -log-returns of five Dow Jones stocks
 06_Multivariate_normal.R
    Simulating and estimating the multivariate normal
 06_Multivariate_Student.R
