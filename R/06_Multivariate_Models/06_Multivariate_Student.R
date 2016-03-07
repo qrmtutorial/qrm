@@ -29,14 +29,14 @@ par(op)
 
 # QQplot of Mahalanobis distances (scaled by dimension d)
 # against an F(d,nu) distribution
-Ddata <- mahalanobis(data,center=FALSE,cov=S)/d
+Ddata <- mahalanobis(data,center=FALSE,cov=var(data))/d
 qqplot(qf(ppoints(Ddata),df1=d,df2=nu),Ddata)
 qqline(Ddata,dist=function(p){qf(p,df1=d,df2=nu)})
 
 # Estimate multivariate Student
 
 # Dow Jones Data
-load("DJ_const.rda")
+data("DJ_const")
 Sdata <- DJ_const['2000-01-01/',1:10]
 Xdata <- diff(log(Sdata))[-1,]
 Xdata.w <- apply.weekly(Xdata,FUN=colSums)

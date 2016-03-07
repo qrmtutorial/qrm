@@ -29,7 +29,7 @@ MardiaTest(data)
 jointnormalTest(data)
 
 # Dow Jones Data
-load("DJ_const.rda")
+data("DJ_const")
 Sdata <- DJ_const['2000-01-01/',1:10]
 Xdata <- diff(log(Sdata))[-1,]
 Xdata.w <- apply.weekly(Xdata,FUN=colSums)
@@ -62,3 +62,4 @@ pairs(data)
 apply(data,2,shapiro.test)
 MardiaTest(data)
 jointnormalTest(data)
+

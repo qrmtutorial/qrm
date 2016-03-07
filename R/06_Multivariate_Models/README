@@ -9,6 +9,8 @@
    Simulating and estimating the multivariate normal
 06_Multivariate_Student.R
    Simulating and estimating the multivariate Student
+06_Multivariate_GH.R
+   Estimating and comparing multivariate generalized hyperbolic models 
 06_Macroeconomic_factor_model.R
    Estimating a macroeconomic factor model using regression
 06_PCA_factor_model.R

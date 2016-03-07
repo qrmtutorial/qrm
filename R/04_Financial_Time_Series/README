@@ -4,3 +4,5 @@
    Simulation of univariate GARCH models
 04_GARCH_models.R
    Estimation of univariate GARCH models
+04_GARCH_EWMA.R
+   Implementation of EWMA volatility estimation and comparison with GARCH
