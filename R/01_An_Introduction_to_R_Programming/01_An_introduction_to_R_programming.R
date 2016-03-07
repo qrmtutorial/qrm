@@ -137,7 +137,7 @@ B * B # Hadamard product, i.e., element-wise product
 L <- matrix(c(2, 0, 0,
               6, 1, 0,
              -8, 5, 3), ncol=3, byrow=TRUE) # Cholesky factor of the ...
-Sigma <- L %*% t(L) # ... real, symmetric, positive definite (covariance) matrix x
+Sigma <- L %*% t(L) # ... real, symmetric, positive definite (covariance) matrix Sigma
 standardize <- Vectorize(function(r, c) Sigma[r,c]/(sqrt(Sigma[r,r])*sqrt(Sigma[c,c])))
 P <- outer(1:3, 1:3, standardize) # construct the corresponding correlation matrix
 ## Alternatively, this could have been done with Matrix::nearPD(Sigma, corr=TRUE)

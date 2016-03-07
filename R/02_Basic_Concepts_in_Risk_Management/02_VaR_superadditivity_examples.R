@@ -1,6 +1,6 @@
 ## By Marius Hofert
 
-## VaR superadditivity examples
+## Selected VaR superadditivity examples
 
 
 ### 1 Example: Skewed loss distributions #######################################

@@ -1,5 +1,8 @@
 ### R scripts for Chapter 6
 
+06_Constructing_and_sampling_multivariate_distributions.R
+   Illustrating the construction and sampling of several multivariate
+   distributions (mostly elliptical)
 06_Multivariate_basics.R
    Summary statistics for multivariate data
 06_Multivariate_normal.R
