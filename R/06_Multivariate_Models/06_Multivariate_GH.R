@@ -1,23 +1,18 @@
 ## By Alexander McNeil
 
-# Libraries required
+## Libraries required
 library(xts)
 library(qrmdata)
 library(ghyp)
 
-
-
-# Dow Jones Data
+## Dow Jones Data
 data("DJ_const")
 Sdata <- DJ_const['2000-01-01/',1:10]
 Xdata <- diff(log(Sdata))[-1,]
-Xdata.w <- apply.weekly(Xdata,FUN=colSums)
+Xdata.w <- apply.weekly(Xdata,FUN=colSums) # weekly data
 plot.zoo(Xdata.w)
 
-
-# Weekly data
-
-# Fit elliptical models
+## Fit elliptical models
 mod.NIG.sym <- fit.NIGmv(Xdata.w,symmetric=TRUE, nit = 10000)
 summary(mod.NIG.sym)
 mod.T.sym <- fit.tmv(Xdata.w,symmetric=TRUE, nit = 10000)
@@ -25,7 +20,7 @@ summary(mod.T.sym)
 mod.GHYP.sym <- fit.ghypmv(Xdata.w,symmetric=TRUE, nit = 10000)
 summary(mod.GHYP.sym)
 
-# Fit skewed models
+## Fit skewed models
 mod.NIG.skew <- fit.NIGmv(Xdata.w,symmetric=FALSE, nit = 10000)
 summary(mod.NIG.skew)
 mod.T.skew <- fit.tmv(Xdata.w,symmetric=FALSE, nit = 10000)
@@ -40,31 +35,27 @@ mod.T.skew@llh
 mod.GHYP.sym@llh
 mod.GHYP.skew@llh
 
-# Hypothesis: elliptical T is good enough
+## Hypothesis: elliptical T is good enough
 LRstat <- 2*(mod.T.skew@llh-mod.T.sym@llh)
-1-pchisq(LRstat,10)
-# Hypothesis not rejected
+1-pchisq(LRstat,10) # => H0 not rejected
 
-# Hypothesis: elliptical ghyp is good enough
+## Hypothesis: elliptical ghyp is good enough
 LRstat <- 2*(mod.GHYP.skew@llh-mod.GHYP.sym@llh)
-1-pchisq(LRstat,10)
-# Hypothesis not rejected
+1-pchisq(LRstat,10) # => H0 not rejected
 
-# Hypothesis: skewed t no worse than skewed ghyp
+## Hypothesis: skewed t no worse than skewed ghyp
 LRstat <- 2*(mod.GHYP.skew@llh-mod.T.skew@llh)
-1-pchisq(LRstat,1)
-# Hypothesis rejected at 5% level
+1-pchisq(LRstat,1) # => H0 rejected at 5% level
 
-# Hypothesis: elliptical t no worse than elliptical ghyp
+## Hypothesis: elliptical t no worse than elliptical ghyp
 LRstat <- 2*(mod.GHYP.sym@llh-mod.T.sym@llh)
-1-pchisq(LRstat,1)
-# Hypothesis rejected at 5% level
+1-pchisq(LRstat,1) # => H0 rejected at 5% level
 
-# Find skewness parameters
+## Find skewness parameters
 getSlots("mle.ghyp")
 mod.GHYP.skew@gamma
 
-# Make picture of two returns
+## Make picture of two returns
 Xdata <-  Xdata.w[,c(5,8)]
 plot(as.numeric(Xdata[,1]),as.numeric(Xdata[,2]),xlab=names(Xdata)[1],ylab=names(Xdata)[2])
 mod <- fit.ghypmv(Xdata,symmetric=FALSE, nit = 10000)
