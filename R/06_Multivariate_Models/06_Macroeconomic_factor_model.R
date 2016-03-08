@@ -4,8 +4,7 @@
 
 library(xts) # for time series manipulation
 library(qrmdata) # for Dow Jones (constituents) data
-library(lattice) # for levelplot()
-library(corrplot) # for displaying correlation matrices with corrplot()
+library(qrmtools) # for plot_NA() and plot_matrix()
 
 ## Load and extract the data we work with (all available since 1990) and plot
 ## Index
@@ -15,7 +14,7 @@ plot.zoo(DJ., xlab="Time t", ylab="Dow Jones Index")
 ## Constituents
 data(DJ_const) # constituents data
 DJ.const <- DJ_const['1990-01-01/',] # all since 1990
-plotNA(DJ.const) # => use all but the two columns with lots of NAs
+plot_NA(DJ.const) # => use all but the two columns with lots of NAs
 DJ.const <- DJ.const[, colSums(is.na(DJ.const)) <= 0.1 * nrow(DJ.const)] # omit columns with more than 10% NA
 DJ.const <- na.fill(DJ.const, fill="extend") # fill the remaining NAs
 plot.zoo(DJ.const, xlab="Time t", main="Dow Jones Constituents")
@@ -38,8 +37,7 @@ F <- apply.monthly(X., FUN=colSums)
 plot(F, type="h", xlab="Time t", ylab=expression(X[t]), main="Monthly risk-factor changes (log-returns) of Dow Jones index")
 
 ## Fit a multivariate regression model X = a + B*F + eps
-res <- lm(X ~ F)
-summary(res)
+(res <- lm(X ~ F)) # more details via summary()
 
 ## Get parameter estimates
 names(res)
@@ -52,8 +50,7 @@ eps <- resid(res) # (312, 28)-matrix
 cor.eps <- cor(eps)
 
 ## Is Cor(eps) (roughly) diagonal?
-palette <- colorRampPalette(c("black", "white", "royalblue3"), space="Lab")
-corrplot(cor.eps, method="color", col=palette(200), tl.col="black") # => yes (as required)
+plot_matrix(cor.eps, at=seq(-1, 1, length.out=200)) # => yes (as required)
 
 ## Are the errors uncorrelated with the factors?
 cor.eps.F <- cor(eps, F) # 28 correlations (idiosyncratic risk)
@@ -69,22 +66,5 @@ P <- cov2cor(Sigma) # Cor(X)
 ## Look at discrepancies between the factor model correlation matrix and the
 ## sample correlation matrix
 err <- P-cor(X)
-corrplot(err, method="color", col=palette(200), tl.col="black", is.corr=FALSE)
+plot_matrix(err, at=seq(-1, 1, length.out=200))
 
-
-levelplot(t(err)[,nrow(t(err)):1], zlim=sym_range(err),
-          xlab="Column", ylab="Row", col.regions=palette(200),
-          scales=list(alternating=c(1,1), tck=c(1,0), x=list(rot=90)))
-
-symmetrize the range!
-TODO: put this plot and plotNA in qrmtools
-
-
-sym_range <- function(x)
-{
-    ran <- range(x)
-    if(ran[1]*ran[2] >= 0)
-        stop("'x' should have negative and positive values")
-    abs.max <- max(abs(range(x)))
-    c(-abs.max, abs.max)
-}
