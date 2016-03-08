@@ -5,13 +5,13 @@
    distributions (mostly elliptical)
 06_Fitting_a_multivariate_normal_and_t.R
    Fitting a multivariate normal and t distribution to -log-returns of five Dow Jones stocks
+06_Macroeconomic_factor_model.R
+   Estimating a macroeconomic factor model using regression
 06_Multivariate_normal.R
    Simulating and estimating the multivariate normal
 06_Multivariate_Student.R
    Simulating and estimating the multivariate Student
 06_Multivariate_GH.R
-   Estimating and comparing multivariate generalized hyperbolic models 
-06_Macroeconomic_factor_model.R
-   Estimating a macroeconomic factor model using regression
+   Estimating and comparing multivariate generalized hyperbolic models
 06_PCA_factor_model.R
    Using PCA to construct a factor model

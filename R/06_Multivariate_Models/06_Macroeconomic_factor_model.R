@@ -2,9 +2,15 @@
 
 ## Fitting a factor model
 
+
+### Setup ######################################################################
+
 library(xts) # for time series manipulation
 library(qrmdata) # for Dow Jones (constituents) data
 library(qrmtools) # for plot_NA() and plot_matrix()
+
+
+### 1 Data preparation #########################################################
 
 ## Load and extract the data we work with (all available since 1990) and plot
 ## Index
@@ -35,6 +41,9 @@ X <- apply.monthly(X.const, FUN=colSums) # (312, 28)-matrix
 plot.zoo(X, type="h", xlab="Time t", main="Monthly risk-factor changes (log-returns) of Dow Jones constituents")
 F <- apply.monthly(X., FUN=colSums)
 plot(F, type="h", xlab="Time t", ylab=expression(X[t]), main="Monthly risk-factor changes (log-returns) of Dow Jones index")
+
+
+### 2 Model fitting ############################################################
 
 ## Fit a multivariate regression model X = a + B*F + eps
 (res <- lm(X ~ F)) # more details via summary()
