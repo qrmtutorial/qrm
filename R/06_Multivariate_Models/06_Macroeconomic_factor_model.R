@@ -1,3 +1,4 @@
+
 library(lattice)
 library(xts)
 library(qrmdata)
@@ -27,6 +28,7 @@ plot.zoo(Xdata,type="h")
 plot(Fdata,type="h")
 
 
+
 # Fit Multivariate Regression
 out <- lm(Xdata ~ Fdata)
 names(out)
@@ -47,19 +49,16 @@ round(cor(epsilon,Fdata),2)
 
 # Colour plot of correlation matrix
 levelplot(cor(epsilon))
-col.l <- colorRampPalette(c('green', 'orange', 'red','purple'))(256)
-levelplot(cor(epsilon),col.regions=col.l)
-
 
 # Construct implied covariance and correlation matrix
 Psi <- var(epsilon)
 Omega <- as.matrix(var(Fdata))
 Sigma <- B %*% Omega %*% t(B) + diag(diag(Psi))
 dimnames(Sigma) <- list(dimnames(par.ests)[[2]],dimnames(par.ests)[[2]])
-R.fact <- cov2cor(Sigma)
+P.fact <- cov2cor(Sigma)
 
 # look at discrepancies between factor model correlation matrix
 # and sample correlation matrix
-levelplot(R.fact-cor(Xdata))
+levelplot(P.fact-cor(Xdata))
 
 

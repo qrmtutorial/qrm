@@ -41,5 +41,4 @@ tmp <- mu + Gamma1 %*% t(PCA.factors) + Gamma2 %*% t(ignored.factors)
 head(t(tmp))
 head(Xdata)
 
-# Could fit a univariate GARCH model to each PCA.factor. This is called PC-GARCH model
-
+## Could fit a univariate GARCH model to each PCA factor. This is called PC-GARCH model.

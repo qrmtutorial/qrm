@@ -7,7 +7,7 @@ library(qrmdata) # for Dow Jones constituents data
 library(QRM) # for fit.mst()
 library(mvtnorm) # for sampling from a multivariate normal or t distribution
 
-## Load and extract the data we work with
+## Load and extract the data we work with and plot
 data(DJ_const)
 str(DJ_const)
 S <- DJ_const['2000-01-01/', c("AAPL", "BA", "INTC", "IBM", "NKE")]
@@ -15,8 +15,7 @@ S <- DJ_const['2000-01-01/', c("AAPL", "BA", "INTC", "IBM", "NKE")]
 plot.zoo(S)
 
 ## Build and plot -log-returns
-X <- -diff(log(S))[-1,] # compute -log-returns 
-
+X <- -diff(log(S))[-1,] # compute -log-returns
 pairs(as.matrix(X), main="Scatter plot matrix of risk-factor changes", gap=0, pch=".")
 plot.zoo(X, xlab="Time", main="")
 ## For illustration purposes, we treat this data as realizations of iid
