@@ -12,12 +12,12 @@ data(DJ_const)
 str(DJ_const)
 S <- DJ_const['2000-01-01/', c("AAPL", "BA", "INTC", "IBM", "NKE")]
 ## => We work with Apple, Boeing, Intel, IBM, Nike since 2000-01-01 here
-plot.zoo(S)
+plot.zoo(S, xlab="Time t")
 
 ## Build and plot -log-returns
 X <- -diff(log(S))[-1,] # compute -log-returns
 pairs(as.matrix(X), main="Scatter plot matrix of risk-factor changes", gap=0, pch=".")
-plot.zoo(X, xlab="Time", main="")
+plot.zoo(X, xlab="Time t", main="")
 ## For illustration purposes, we treat this data as realizations of iid
 ## five-dimensional random vectors.
 

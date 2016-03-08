@@ -1,4 +1,4 @@
-#by Alexander McNeil
+## By Alexander McNeil
 
 # Libraries required
 library(xts)
@@ -50,12 +50,12 @@ LRstat <- 2*(mod.GHYP.skew@llh-mod.GHYP.sym@llh)
 1-pchisq(LRstat,10)
 # Hypothesis not rejected
 
-# Hypothesis: skewed t no worse than skewed ghyp 
+# Hypothesis: skewed t no worse than skewed ghyp
 LRstat <- 2*(mod.GHYP.skew@llh-mod.T.skew@llh)
 1-pchisq(LRstat,1)
 # Hypothesis rejected at 5% level
 
-# Hypothesis: elliptical t no worse than elliptical ghyp 
+# Hypothesis: elliptical t no worse than elliptical ghyp
 LRstat <- 2*(mod.GHYP.sym@llh-mod.T.sym@llh)
 1-pchisq(LRstat,1)
 # Hypothesis rejected at 5% level
