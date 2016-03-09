@@ -2,11 +2,11 @@
 
 03_Exploring_financial_time_series.R
    Exploring and aggregating financial time series
-03_Testing_normality.R
-   Some univariate tests of normality
 03_Ljung-Box-correlation_tests.R
-    Implements Ljung-Box correlation tests
-03_Univariate_stylized_facts.R
-   Illustrates some univariate stylized facts for risk-factor changes or returns
+   Implements Ljung-Box correlation tests
 03_Multivariate_stylized_facts.R
    Illustrates some multivariate stylized facts for returns
+03_Testing_univariate_normality.R
+   Univariate tests of normality, data application and uniformity of p-values
+03_Univariate_stylized_facts.R
+   Illustrates some univariate stylized facts for risk-factor changes or returns
