@@ -104,7 +104,7 @@ qq_plot <-  function(x, quant.fun,
     q <- quant.fun(ppoints(length(x))) # theoretical quantiles of sorted data
     y <- sort(as.vector(x)) # compute order statistics (sample quantiles)
     plot(q, y, xlab=xlab, ylab=ylab, ...)
-    abline(a=0, b=1) # not the same under H1: qqline(y=y, distribution=quant.fun)
+    abline(a=0, b=1)
 }
 
 ## Applied to normal data
