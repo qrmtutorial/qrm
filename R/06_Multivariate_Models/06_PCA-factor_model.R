@@ -68,8 +68,7 @@ plot_matrix(G %*% t(G)) # check orthogonality (G %*% t(G) should be (close to) t
 G1 <- G[,1:nprin] # compute G_1, see McNeil, Frey, Embrechts (2015, (6.65))
 G2 <- G[,(nprin+1):ncol(G)]
 eps <- G2 %*% t(Y2)
-cov.eps <- cov(eps)
-all(cov.eps == t(cov.eps)) # => diagonal *here*
+summary(cov.eps[row(cov.eps) != col(cov.eps)]) # => not perfectly diagonal
 X. <- t(mu + G1 %*% t(Y1) + G2 %*% t(Y2))
 err <- X.-X
 plot_matrix(err, scales=NULL, at=seq(-1, 1, length.out=200)) # => vary close
