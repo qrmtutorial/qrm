@@ -50,7 +50,7 @@ PCA <- princomp(X) # determine the principal components
 PCA. <- prcomp(X) # another option
 summary(PCA)
 plot(PCA) # show important components
-B <- loadings(PCA) # compute the factor loadings (which represent how much a factor explains a variable)
+loadings(PCA) # factor loadings (representing how much a factor explains a variable)
 
 ## Working with the principal components
 mu <- PCA$center # estimated centers
@@ -63,11 +63,14 @@ cor(Y1)
 Y2 <- Y[,(nprin+1):ncol(Y)] # ignored principal components of X
 
 ## Reconstruct X from Y1 and Y2
-Gamma <- unclass(B) # compute Gamma (orthogonal matrix whose columns are eigenvectors of Sigma = Cov(X))
-plot_matrix(Gamma %*% t(Gamma)) # check orthogonality (Gamma %*% t(Gamma) should be (close to) the identity matrix)
-Gamma1 <- Gamma[,1:nprin]
-Gamma2 <- Gamma[,(nprin+1):ncol(Gamma)]
-X. <- t(mu + Gamma1 %*% t(Y1) + Gamma2 %*% t(Y2))
+G <- unclass(loadings(PCA)) # compute G, see McNeil, Frey, Embrechts (2015, (6.64))
+plot_matrix(G %*% t(G)) # check orthogonality (G %*% t(G) should be (close to) the identity matrix)
+G1 <- G[,1:nprin] # compute G_1, see McNeil, Frey, Embrechts (2015, (6.65))
+G2 <- G[,(nprin+1):ncol(G)]
+eps <- G2 %*% t(Y2)
+cov.eps <- cov(eps)
+all(cov.eps == t(cov.eps)) # => diagonal *here*
+X. <- t(mu + G1 %*% t(Y1) + G2 %*% t(Y2))
 err <- X.-X
 plot_matrix(err, scales=NULL, at=seq(-1, 1, length.out=200)) # => vary close
 summary(as.vector(err))
