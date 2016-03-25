@@ -12,15 +12,15 @@ library(qrmdata) # for the data sets used
 library(xts) # for time-series related functions
 
 
-### 1 Generate data from a N(mu, sig^2) and a t_nu(mu, sig^2) distribution #####
+### 1 Generate data from N(mu, sig^2) and t_nu(mu, sig^2) ######################
 
-n <- 1000
-mu <- 1
-sig <- 2
-nu <- 3
-set.seed(271)
-X.norm <- rnorm(n, mean=mu, sd=sig)
-X.t <- mu + sig * rt(n, df=nu) * sqrt((nu-2)/nu) # chosen to have the same variance as N(mu, sig^2)
+n <- 1000 # sample size
+mu <- 1 # location
+sig <- 2 # scale
+nu <- 3 # degrees of freedom
+set.seed(271) # set seed (for reproducibility)
+X.norm <- rnorm(n, mean=mu, sd=sig) # sample from N(mu, sig^2)
+X.t <- mu + sig * rt(n, df=nu) * sqrt((nu-2)/nu) # sample from t_nu(mu, sqrt((nu-2)/nu)*sig^2) (same variance as N(mu, sig^2))
 if(FALSE) {
     var(X.norm)
     var(X.t)
