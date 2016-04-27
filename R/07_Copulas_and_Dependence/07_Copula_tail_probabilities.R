@@ -40,8 +40,8 @@ for(i in seq_along(rho)) { # rho
         k <- length(nu)*(i-1)+j
         ## Create the copula
         cop <- ellipCopula("t", param=rho[i], df=nu[j])
-        ## Evaluate P(U_1 > u, U_2 > u)
-        tail.prob[,k+1] <- 1-2*u+pCopula(cbind(u,u), copula=cop)
+        ## Evaluate P(U_1 > u, U_2 > u) = P(U_1 <= 1-u, U_2 <= 1-u)
+        tail.prob[,k+1] <- pCopula(cbind(1-u, 1-u), copula=cop)
         ## Create plot information
         expr[k] <- as.expression(
             substitute(group("(",list(rho, nu),")")==group("(", list(r., n.), ")"),
@@ -94,7 +94,7 @@ for(i in seq_along(rho)) { # rho
         for(l in seq_along(d)) { # dimension
             ## Create the copula
             cop <- ellipCopula("t", param=rho[i], dim=d[l], df=nu[j])
-            ## Evaluate P(U_1 > u, ..., U_d > u) = P(U_1 <= u, ..., U_d <= u)
+            ## Evaluate P(U_1 > u, ..., U_d > u) = P(U_1 <= 1-u, ..., U_d <= 1-u)
             tail.prob[l,k+1] <- pCopula(rep(1-u, d[l]), copula=cop)
         }
         ## Create plot information
@@ -126,16 +126,16 @@ legend("topleft", inset=0.01, bty="n", lty=ltys, col=cols, legend=expr)
 ##
 ## 'Table 7.2' case:
 ## - Obviously, P(U_1 > u, U_2 > u) is decreasing in u.
-## - The larger rho and the smaller nu, the larger P(U_1 > u, U_2 > u).
+## - The larger rho or the smaller nu, the larger P(U_1 > u, U_2 > u).
 ## - Divided by the tail probability for the Gauss copula, P(U_1 > u, U_2 > u) is...
 ##   + ... increasing in u (the further we are in the tail, the more pronounced the difference);
 ##   + ... larger the smaller nu (the more we deviate from the Gauss copula);
-##   + ... decreasing in rho.
+##   + ... larger the smaller rho.
 ##
 ## 'Table 7.3' case:
 ## - Obviously, P(U_1 > u, ..., U_d > u) is decreasing in d.
-## - The larger rho and the smaller nu, the larger P(U_1 > u, ..., U_d > u).
+## - The larger rho or the smaller nu, the larger P(U_1 > u, ..., U_d > u).
 ## - Divided by the tail probability for the Gauss copula, P(U_1 > u, ..., U_d > u) is...
 ##   + ... increasing in d (the larger the dimension, the more pronounced the difference);
 ##   + ... larger the smaller nu (the more we deviate from the Gauss copula);
-##   + ... decreasing in rho.
+##   + ... larger the smaller rho.
