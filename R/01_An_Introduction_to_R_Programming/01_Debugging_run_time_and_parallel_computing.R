@@ -7,12 +7,24 @@
 ## demonstrate how debugging and run time measurement can be done in R.
 
 
-### Setup ######################################################################
+### In general: Watch out for numerical issues #################################
 
-library(parallel) # for parLapply() (multi-node) and mclapply() (multi-core) functionality
+## How to evaluate choose(500, 200)?
+choose(500, 200)
+factorial(500)/(factorial(200)*factorial(300)) # too large values
+n <- 500
+x <- 1:n
+y <- sapply(1:n, factorial)
+plot(x, y, type = "l", log = "y", xlab = "n", ylab = "n!") # ... always look at plots
+str(.Machine) # => double.xmax
+summary(y) # => beyond double.xmax, R uses Inf here
 
-d <- 8:15 # dimensions in which we compute the volumes
-B <- 100 # number of replications (of measuring the relative error)
+## A numerical trick
+log(factorial(200)) # obviously, same problem here ('mathematical composition' not doable)
+lc <- lfactorial(500) - (lfactorial(200) + lfactorial(300)) # work with 'proper' logs
+c <- exp(lc) # due to the '-/+', the result is of a size representable in computer arithmetic
+c. <- exp(sum(log(1:500)) - sum(log(1:200)) - sum(log(1:300))) # we can mimic this trick
+stopifnot(all.equal(choose(500, 200), c, c.)) # note: choose(500, 200) uses the same trick
 
 
 ### 1 Auxiliary functions ######################################################
@@ -51,6 +63,8 @@ err_random_vol <- function(d)
     log.prob. <- log(sum(Sign * C)) # add the checkerboard-sign-adjusted values together and compute log()
 
     ## Compute relative error in log scale
+    ## Note: |(x-y)/y| = eps => |x-y| = eps*|y| => (+/-)(x-y) = (+/-)*eps*y
+    ##       => (x-y) = (+/-)*eps*y => x = (1 +/- eps) * y
     abs((log.prob. - log.prob) / log.prob)
 }
 
@@ -89,6 +103,11 @@ if(FALSE)
 
 ### 3 Parallel computing #######################################################
 
+## Setup
+library(parallel) # for parLapply() (multi-node) and mclapply() (multi-core) functionality
+d <- 8:15 # dimensions in which we compute the volumes
+B <- 100 # number of replications (of measuring the relative error)
+
 ## Determine the number of cores/nodes to use
 (num.cores <- detectCores()) # detect the number of available cores
 (num.workers <- if(num.cores >= 16) 12 else if(num.cores >= 8) 6 else
@@ -103,7 +122,7 @@ if(FALSE)
 ##   done than others (mostly the one dealing with the largest d is occupied then).
 ## => Iterate over B first. We still set the seed (although there's no guarantee that
 ##    the workers do their work in the same order if the computations are repeated).
-multi.core <- NA # set to TRUE (for multi-core) or FALSE for multi-node (if a cluster is available)
+multi.core <- if(num.cores > 1) TRUE else NA # NA = serial; TRUE = multi-core; FALSE = multi-node
 if(is.na(multi.core)) { # single-core case
 
     set.seed(271) # set seed

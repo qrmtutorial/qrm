@@ -8,7 +8,8 @@
 library(nortest) # for cvm.test()
 library(ADGofTest) # for ad.test()
 library(moments) # for agostino.test(), jarque.test()
-library(qrmdata) # for the data sets used
+library(qrmtools)
+library(qrmdata)
 library(xts) # for time-series related functions
 
 
@@ -19,8 +20,8 @@ mu <- 1 # location
 sig <- 2 # scale
 nu <- 3 # degrees of freedom
 set.seed(271) # set seed (for reproducibility)
-X.norm <- rnorm(n, mean=mu, sd=sig) # sample from N(mu, sig^2)
-X.t <- mu + sig * rt(n, df=nu) * sqrt((nu-2)/nu) # sample from t_nu(mu, sqrt((nu-2)/nu)*sig^2) (same variance as N(mu, sig^2))
+X.norm <- rnorm(n, mean = mu, sd = sig) # sample from N(mu, sig^2)
+X.t <- mu + sig * rt(n, df = nu) * sqrt((nu-2)/nu) # sample from t_nu(mu, sqrt((nu-2)/nu)*sig^2) (same variance as N(mu, sig^2))
 if(FALSE) {
     var(X.norm)
     var(X.t)
@@ -40,15 +41,15 @@ sig.t <- sd(X.t)
 ### 2.1 Tests for general distributions (here applied to the normal) ###########
 
 ## Applied to normal data (with estimated mu and sig^2)
-(ks <- ks.test(X.norm, y="pnorm", mean=mu.norm, sd=sig.norm)) # Kolmogorov--Smirnov
+(ks <- ks.test(X.norm, y = "pnorm", mean = mu.norm, sd = sig.norm)) # Kolmogorov--Smirnov
 (cvm <- cvm.test(X.norm)) # Cramer--von Mises for normality
-(ad <- ad.test(X.norm, distr.fun=pnorm, mean=mu.norm, sd=sig.norm)) # Anderson--Darling
+(ad <- ad.test(X.norm, distr.fun = pnorm, mean = mu.norm, sd = sig.norm)) # Anderson--Darling
 stopifnot(min(ks$p.value, cvm$p.value, ad$p.value) >= 0.05) # => no rejections
 
 ## Applied to t data (with estimated mu and sig^2)
-(ks <- ks.test(X.t, y="pnorm", mean=mu.t, sd=sig.t)) # Kolmogorov--Smirnov
+(ks <- ks.test(X.t, y = "pnorm", mean = mu.t, sd = sig.t)) # Kolmogorov--Smirnov
 (cvm <- cvm.test(X.t)) # Cramer--von Mises for normality
-(ad <- ad.test(X.t, distr.fun=pnorm, mean=mu.t, sd=sig.t)) # Anderson--Darling
+(ad <- ad.test(X.t, distr.fun = pnorm, mean = mu.t, sd = sig.t)) # Anderson--Darling
 stopifnot(max(ks$p.value, cvm$p.value, ad$p.value) < 0.05) # => all rejections based on 5%
 
 
@@ -69,51 +70,13 @@ stopifnot(max(sh$p.value, ag$p.value, jb$p.value) < 0.05) # => all rejections ba
 
 ### 2.3 Graphical tests of normality ###########################################
 
-##' @title P-P plot
-##' @param x Data
-##' @param distr.fun The hypothesized distribution function
-##' @param xlab x-axis label
-##' @param ylab y-axis label
-##' @param ... Additional arguments passed to the underlying plot()
-##' @return invisible()
-##' @author Marius Hofert
-##' @note as.vector() required since sort(x) == x for an 'xts' object!
-pp_plot <-  function(x, distr.fun,
-                     xlab="Theoretical probabilities", ylab="Sample probabilities",
-                     ...)
-{
-    p <- ppoints(length(x)) # theoretical probabilities of sorted data
-    y <- distr.fun(sort(as.vector(x))) # hypothesized quantiles of sorted data
-    plot(p, y, xlab=xlab, ylab=ylab, ...)
-    abline(a=0, b=1)
-}
-
-##' @title Q-Q plot
-##' @param x Data
-##' @param quant.fun The hypothesized quantile function
-##' @param xlab x-axis label
-##' @param ylab y-axis label
-##' @param ... Additional arguments passed to the underlying plot()
-##' @return invisible()
-##' @author Marius Hofert
-##' @note as.vector() required since sort(x) == x for an 'xts' object!
-qq_plot <-  function(x, quant.fun,
-                     xlab="Theoretical quantiles", ylab="Sample quantiles",
-                     ...)
-{
-    q <- quant.fun(ppoints(length(x))) # theoretical quantiles of sorted data
-    y <- sort(as.vector(x)) # compute order statistics (sample quantiles)
-    plot(q, y, xlab=xlab, ylab=ylab, ...)
-    abline(a=0, b=1)
-}
-
 ## Applied to normal data
-pp_plot(X.norm, distr.fun=function(x) pnorm(x, mean=mu.norm, sd=sig.norm))
-qq_plot(X.norm, quant.fun=function(p) qnorm(p, mean=mu.norm, sd=sig.norm))
+pp_plot(X.norm, FUN = function(q) pnorm(q, mean = mu.norm, sd = sig.norm))
+qq_plot(X.norm, FUN = function(p) qnorm(p, mean = mu.norm, sd = sig.norm))
 
 ## Applied to t data
-pp_plot(X.t, distr.fun=function(x) pnorm(x, mean=mu.t, sd=sig.t))
-qq_plot(X.t, quant.fun=function(p) qnorm(p, mean=mu.t, sd=sig.t))
+pp_plot(X.t, FUN = function(q) pnorm(q, mean = mu.t, sd = sig.t))
+qq_plot(X.t, FUN = function(p) qnorm(p, mean = mu.t, sd = sig.t))
 ## => S-shape => Data seems to come from heavier-tailed distribution than
 ##    the normal distribution.
 
@@ -124,11 +87,11 @@ qq_plot(X.t, quant.fun=function(p) qnorm(p, mean=mu.t, sd=sig.t))
 data(DJ_const) # constituents data
 margin <- c("KO","MSFT","INTC","DIS") # margins considered
 DJ.const <- DJ_const['1993-01-01/2000-12-31', margin]
-X <- diff(log(DJ.const))[-1,] # compute -log-returns; daily risk-factor changes
-X. <- list(daily=X, # daily risk-factor changes
-           weekly=apply.weekly(X, FUN=colSums), # weekly risk-factor changes
-           monthly=apply.monthly(X, FUN=colSums), # monthly risk-factor changes
-           quarterly=apply.quarterly(X, FUN=colSums)) # quarterly risk-factor changes
+X <- -log_returns(DJ.const) # compute -log-returns; daily risk-factor changes
+X. <- list(daily = X, # daily risk-factor changes
+           weekly = apply.weekly(X, FUN = colSums), # weekly risk-factor changes
+           monthly = apply.monthly(X, FUN = colSums), # monthly risk-factor changes
+           quarterly = apply.quarterly(X, FUN = colSums)) # quarterly risk-factor changes
 
 ## Are the risk-factor changes normally distributed?
 ## Formal tests
@@ -137,16 +100,16 @@ pvals <- sapply(X., function(x) apply(x, 2, function(data) jarque.test(data)$p.v
 
 ## Q-Q plots
 time <- c("daily", "weekly", "monthly", "quarterly")
-par(ask=TRUE) # ask after each plot
+par(ask = TRUE) # ask after each plot
 for(j in seq_len(ncol(X))) { # for all margins, do...
     for(k in seq_along(time)) { # for daily, weekly, monthly and quarterly data, do...
-        qq_plot(X.[[k]][,j], quant.fun=function(p)
-            qnorm(p, mean=mean(X.[[k]][,j]), sd=sd(X.[[k]][,j])),
-            main=paste("Q-Q plot for margin",margin[j],"based on",time[k],"data"))
-        mtext(paste("p-value:", round(pvals[j,k], 4)), side=4, line=1, adj=0)
+        qq_plot(X.[[k]][,j], FUN = function(p)
+            qnorm(p, mean = mean(X.[[k]][,j]), sd = sd(X.[[k]][,j])),
+            main = paste("Q-Q plot for margin",margin[j],"based on",time[k],"data"))
+        mtext(paste("p-value:", round(pvals[j,k], 4)), side = 4, line = 1, adj = 0)
     }
 }
-par(ask=FALSE)
+par(ask = FALSE)
 
 
 ### 4 Simulation ###############################################################
@@ -154,10 +117,10 @@ par(ask=FALSE)
 ## Under H0, p-values are uniformly distributed. Let's check that for N(0,1) data
 set.seed(271)
 pvals.H0 <- sapply(1:200, function(b) jarque.test(rnorm(n))$p.value)
-qq_plot(pvals.H0, quant.fun=qunif)
+qq_plot(pvals.H0, FUN = qunif)
 
 ## This does not hold under H1
 set.seed(271)
-pvals.H1 <- sapply(1:200, function(b) jarque.test(rt(n, df=nu))$p.value)
-qq_plot(pvals.H1, quant.fun=qunif)
+pvals.H1 <- sapply(1:200, function(b) jarque.test(rt(n, df = nu))$p.value)
+qq_plot(pvals.H1, FUN = qunif)
 all(pvals.H1 == 0) # all p-values 0

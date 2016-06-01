@@ -6,7 +6,7 @@
 
 ### Setup ######################################################################
 
-library(mvtnorm)
+library(mvtnorm) # for sampling from a multivariate t distribution
 library(QRM) # for fit.mst(), fit.GPD()
 
 
@@ -101,7 +101,7 @@ risk_measure <- function(S, lambda, alpha,
     X <- apply(log(S), 2, diff) # compute risk-factor changes
     if(!length(X)) stop("'S' should have more than just one line") # check
     S. <- as.numeric(tail(S, n=1)) # pick out last available stock prices ("today")
-    w <- lambda * S. # weights w
+    w <- lambda * S. # weights w today
 
     ## Method switch (now consider the various methods)
     switch(method,
@@ -167,7 +167,7 @@ risk_measure <- function(S, lambda, alpha,
                ## Now compute semi-parametric VaR and ES estimates
                ## G_{xi,beta}(x) = 1-(1+xi*x/beta)^{-1/xi} if xi != 0
                L.. <- L.[L. > u] - u # compute the excesses over u
-               Fbu <- length(L..) / length(L.) # = N_u/n
+               Fbu <- length(L..) / length(L.) # number of excesses / number of losses = N_u / n
                VaR <- u + (beta/xi)*(((1-alpha)/Fbu)^(-xi)-1) # see McNeil, Frey, Embrechts (2015, Section 5.2.3)
                ES <- (VaR + beta-xi*u) / (1-xi) # see McNeil, Frey, Embrechts (2015, Section 5.2.3)
                if(xi >= 1) ES <- Inf # adjust to be Inf if xi >= 1 (i.e., ES < 0); see Coles (2001, p. 79)
@@ -200,11 +200,11 @@ GPD      <- risk_measure(S, lambda=lambda, alpha=alpha, method="GPD", N=N, q=0.9
 MC.t     <- risk_measure(S, lambda=lambda, alpha=alpha, method="MC.t", N=N)
 
 ## Pick out VaR and ES for all methods
-(rm <- rbind("Var.-cov."   = unlist(var.cov),
-             "MC (normal)" = unlist(MC.N[c("VaR", "ES")]),
-             "Hist. sim."  = unlist(hist.sim),
-             "GPD"         = unlist(GPD [c("VaR", "ES")]),
-             "MC (Student t)"      = unlist(MC.t[c("VaR", "ES")])))
+(rm <- rbind("Var.-cov."      = unlist(var.cov),
+             "MC (normal)"    = unlist(MC.N[c("VaR", "ES")]),
+             "Hist. sim."     = unlist(hist.sim),
+             "GPD"            = unlist(GPD [c("VaR", "ES")]),
+             "MC (Student t)" = unlist(MC.t[c("VaR", "ES")])))
 
 ### Graphical goodness-of-fit check for the GPD
 

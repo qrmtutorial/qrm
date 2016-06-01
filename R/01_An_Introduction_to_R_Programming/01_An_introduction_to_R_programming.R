@@ -19,7 +19,7 @@
 0/0 # ... also NaN (= not a number) is available
 x <- 0/0 # store the result in 'x'
 class(x) # the class/type of 'x'; => NaN is still of mode 'numeric'
-class(Inf) # Inf is of mode 'numeric'
+class(Inf) # Inf is of mode 'numeric' (although mathematically not a number)
 
 ## Vectors (data structure which contains objects of the same mode)
 numeric(0) # the empty numeric vector
@@ -51,7 +51,7 @@ x-y # numerically not 0
 n <- 0
 1:n # not the empty sequence but c(1, 0); caution in 'for loops': for(i in 1:n) ...!
 seq_len(n) # better: => empty sequence
-seq_along(c(3,4,2)) # 1:3; helpful to 'go along' objects
+seq_along(c(3, 4, 2)) # 1:3; helpful to 'go along' objects
 
 ## Watch out
 1:3-1 # ':' has higher priority; note also: the '-1' is recycled to the length of 1:3
@@ -62,7 +62,7 @@ seq_along(c(3,4,2)) # 1:3; helpful to 'go along' objects
 length(x) # as seen above
 rev(x) # change order
 sort(x) # sort in increasing order
-sort(x, decreasing=TRUE) # sort in decreasing order
+sort(x, decreasing = TRUE) # sort in decreasing order
 o <- order(x) # create indices that sort x
 x[o] # => sorted
 log(x) # component-wise logarithms
@@ -70,8 +70,10 @@ x^2 # component-wise squares
 sum(x) # sum all numbers
 cumsum(x) # compute the *cumulative* sum
 prod(x) # multiply all numbers
-seq(1, 7, by=2) # 1, 3, 5, 7
-rep(1:3, each=3, times=2) # 1 1 1 2 2 2 3 3 3  1 1 1 2 2 2 3 3 3
+seq(1, 7, by = 2) # 1, 3, 5, 7
+rep(1:3, each = 3, times = 2) # 1 1 1 2 2 2 3 3 3  1 1 1 2 2 2 3 3 3
+tail(x, n = 1) # get the last element of a vector
+head(x, n = -1) # get all but the last element
 
 ## Logical vectors
 logical(0) # the empty logical vector
@@ -99,11 +101,11 @@ z[(!is.na(z)) && z >= 2] # watch out (indexing by 'FALSE' => empty vector)
 character(0) # the empty character vector
 x <- "apple"
 y <- "orange"
-(z <- paste(x, y)) # paste together; use sep="" or paste0() to paste without space
-paste(1:3, c(x, y), sep=" - ") # recycling ("apple" appears again)
+(z <- paste(x, y)) # paste together; use sep = "" or paste0() to paste without space
+paste(1:3, c(x, y), sep = " - ") # recycling ("apple" appears again)
 
 ## Named vectors
-(x <- c("a"=3, "b"=2)) # named vector of class 'numeric'
+(x <- c("a" = 3, "b" = 2)) # named vector of class 'numeric'
 x["b"] # indexing elements by name (useful!)
 x[["b"]] # drop the name
 
@@ -114,13 +116,13 @@ x[["b"]] # drop the name
 ### Arrays and matrices ########################################################
 
 ## Matrices
-(A  <- matrix(1:12, ncol=4)) # watch out, R operates on/fills by *columns*
-(A. <- matrix(1:12, ncol=4, byrow=TRUE)) # fills matrix row-wise
+(A  <- matrix(1:12, ncol = 4)) # watch out, R operates on/fills by *columns*
+(A. <- matrix(1:12, ncol = 4, byrow = TRUE)) # fills matrix row-wise
 (B <- rbind(1:4, 5:8, 9:12)) # row bind
 (C <- cbind(1:3, 4:6, 7:9, 10:12)) # column bind
 stopifnot(identical(A, C), identical(A., B)) # check whether the constructions are identical
 cbind(1:3, 5) # recycling
-(A <- outer(1:4, 1:5, FUN=pmin)) # build a (4, 5)-matrix with (i,j)th element being min{i, j}
+(A <- outer(1:4, 1:5, FUN = pmin)) # build a (4, 5)-matrix with (i,j)th element being min{i, j}
 ## => Lower triangular matrix contains column number, upper triangular matrix contains row number
 
 ## Some functions
@@ -136,14 +138,14 @@ B * B # Hadamard product, i.e., element-wise product
 ## Build a correlation matrix and invert it
 L <- matrix(c(2, 0, 0,
               6, 1, 0,
-             -8, 5, 3), ncol=3, byrow=TRUE) # Cholesky factor of the ...
+             -8, 5, 3), ncol = 3, byrow = TRUE) # Cholesky factor of the ...
 Sigma <- L %*% t(L) # ... real, symmetric, positive definite (covariance) matrix Sigma
 standardize <- Vectorize(function(r, c) Sigma[r,c]/(sqrt(Sigma[r,r])*sqrt(Sigma[c,c])))
-P <- outer(1:3, 1:3, standardize) # construct the corresponding correlation matrix
-## Alternatively, this could have been done with Matrix::nearPD(Sigma, corr=TRUE)
+(P <- outer(1:3, 1:3, standardize)) # construct the corresponding correlation matrix
+## Alternatively, this could have been done with Matrix::nearPD(Sigma, corr = TRUE)
 ## which works slightly differently though (by finding a correlation matrix
 ## close to the given matrix in the Frobenius norm) and thus gives a different answer.
-P.inv <- solve(P) # compute P^{-1}; solve(A, b) solves Ax=b (if b is omitted, it defaults to I, thus leading to A^{-1})
+P.inv <- solve(P) # compute P^{-1}; solve(A, b) solves Ax = b (if b is omitted, it defaults to I, thus leading to A^{-1})
 P %*% P.inv # (numerically close to) I
 P.inv %*% P # (numerically close to) I
 
@@ -162,26 +164,26 @@ apply(A, 2, sum) # the same
 arr <- array(1:24, dim = c(2,3,4),
              dimnames = list(x = c("x1", "x2"),
                              y = c("y1", "y2", "y3"),
-                             z = paste("z", 1:4, sep=""))) # (2,3,4)-array with dimensions (x,y,z)
+                             z = paste("z", 1:4, sep = ""))) # (2,3,4)-array with dimensions (x,y,z)
 arr # => also filled in the first dimension first, then the second, then the third
 str(arr) # use str() to the *str*ucture of the object arr
 arr[1,2,2] # pick out a value
-arr. <- aperm(arr, perm=c(3,1,2)) # permute the array to dimensions (z,x,y)
+arr. <- aperm(arr, perm = c(3,1,2)) # permute the array to dimensions (z,x,y)
 str(arr.)
-(mat <- apply(arr, 1:2, FUN=sum)) # for each combination of fixed first and second variables, sum over all others (the third dimension)
+(mat <- apply(arr, 1:2, FUN = sum)) # for each combination of fixed first and second variables, sum over all others (the third dimension)
 
 
-### Lists and data frames ######################################################
+### Lists (and data frames) ####################################################
 
 ## data.frame (data structure which contains objects of the same length but
 ## possibly different type)
-(df <- data.frame(group=rep(LETTERS[1:3], each=2), value=1:6))
+(df <- data.frame(group = rep(LETTERS[1:3], each = 2), value = 1:6))
 str(df) # => first column is a factor; second an integer vector
 
 ## Note: Lists are the most general data structures in R in the sense that they
 ##       can contain pretty much everything, e.g., lists themselves or functions
 ##       or both... (and of different lengths)
-(L <- list(group=LETTERS[1:4], value=1:2, sublist=list(10, function(x) x+1)))
+(L <- list(group = LETTERS[1:4], value = 1:2, sublist = list(10, function(x) x+1)))
 
 ## Extract elements from a list
 ## Version 1:
@@ -223,15 +225,17 @@ y <- if(x < 5) 1 else 0
 y+2 # ... which is internally again converted to {0,1} in calculations
 
 ## Also, loops of the type...
-x <- numeric(5)
+x <- integer(5)
 for(i in 1:5) x[i] <- i*i
 ## ... can typically be avoided by something like
-x <- sapply(1:5, function(i) i*i) # of course we know that this is simply (1:5)^2 which is even faster
+x. <- sapply(1:5, function(i) i*i) # of course we know that this is simply (1:5)^2 which is even faster
+stopifnot(identical(x, x.))
 
 ## For efficient R programming, the following functions are useful:
 ## caution, we enter the 'geek zone'...
 lapply(1:5, function(i) i*i) # returns a list
 sapply(1:5, function(i) i*i) # returns a *s*implified version (here: a vector)
+sapply # => calls lapply()
 unlist(lapply(1:5, function(i) i*i)) # a bit faster than sapply()
 vapply(1:5, function(i) i*i, NA_real_) # even faster but we have to know the return value of the function
 
@@ -239,10 +243,10 @@ vapply(1:5, function(i) i*i, NA_real_) # even faster but we have to know the ret
 ### Using implemented distributions ############################################
 
 ## Probability distributions (d/p/q/r*)
-dexp(1.4, rate=2) # density f(x) = 2*exp(-2*x)
-pexp(1.4, rate=2) # distribution function F(x) = 1-exp(-2*x)
-qexp(0.3, rate=2) # quantile function F^-(y) = -log(1-y)/2
-rexp(4,   rate=2) # draw random variates from Exp(2)
+dexp(1.4, rate = 2) # density f(x) = 2*exp(-2*x)
+pexp(1.4, rate = 2) # distribution function F(x) = 1-exp(-2*x)
+qexp(0.3, rate = 2) # quantile function F^-(y) = -log(1-y)/2
+rexp(4,   rate = 2) # draw random variates from Exp(2)
 
 
 ### Working with additional packages ###########################################
@@ -258,15 +262,17 @@ packageDescription("mvtnorm") # get a short description of the package
 maintainer("mvtnorm") # see citation("mvtnorm") for how to cite a package
 
 ## Generate and plot data from a multivariate t distribution
-X <- rmvt(2000, sigma=P, df=4.5) # generate data from a multivariate t_4.5 distribution
-require(lattice) # for the cloud plot
-cloud(X[,3]~X[,1]+X[,2], scales=list(col=1, arrows=FALSE), col=1, distance=0,
-      xlab=expression(italic(X[1])), ylab=expression(italic(X[2])),
-      zlab=expression(italic(X[3])),
-      par.settings=list(background=list(col="#ffffff00"),
-                axis.line=list(col="transparent"), clip=list(panel="off")))
+X <- rmvt(2000, sigma = P, df = 4.5) # generate data from a multivariate t_4.5 distribution
+library(lattice) # for the cloud plot
+cloud(X[,3]~X[,1]+X[,2], scales = list(col = 1, arrows = FALSE), col = 1,
+      distance = 0,
+      xlab = expression(italic(X[1])), ylab = expression(italic(X[2])),
+      zlab = expression(italic(X[3])),
+      par.settings = list(background = list(col = "#ffffff00"),
+                axis.line = list(col = "transparent"), clip = list(panel = "off")))
 ## => not much visible; in higher dimensions even impossible ...
-pairs(X, gap=0, pch=".") # ... but we can use a pairs plot
+
+pairs(X, gap = 0, pch = ".") # ... but we can use a pairs plot
 
 
 ### Random number generation ###################################################
@@ -309,23 +315,40 @@ Z. <- rnorm(2) # generate from next stream => will be 'sufficiently apart' from 
 RNGkind("Mersenne-Twister") # switch back to Mersenne-Twister
 
 
-### Watch out for numerical issues #############################################
+### Writing a function #########################################################
 
-## How to evaluate choose(500, 200)?
-choose(500, 200)
-factorial(500)/(factorial(200)*factorial(300)) # too large values
-n <- 500
-x <- 1:n
-y <- sapply(1:n, factorial)
-plot(x, y, type="l", log="y", xlab="n", ylab="n!") # ... always look at plots
-str(.Machine) # => double.xmax
-summary(y) # => beyond double.xmax, R uses Inf here
+##' @title Nonparametric Expected Shortfall Estimator
+##' @param x The vector of losses
+##' @param alpha The confidence level
+##' @param method
+##' @param ... Additional arguments passed to quantile(); if 'type = 1',
+##'        The quantile of the empirical distribution function is taken.
+##' @return Nonparametric ES_alpha estimate (derived under the assumption of continuity)
+##' @author Marius Hofert
+##' @note - Vectorized in x and alpha
+##'       - ">" : Mathematically correct for discrete dfs, but
+##'               produces NaN for alpha > (n-1)/n (=> F^-(alpha) = x_{(n)} but
+##'               there is no loss strictly beyond x_{(n)})
+##'         ">=": mean() will always include the largest loss (so no NaN appears),
+##'               but might be computed just based on this one loss.
+ES <- function(x, alpha, method = c(">", ">="), ...)
+{
+    stopifnot(0 < alpha, alpha < 1)
+    method <- match.arg(method)
+    VaR <- quantile(x, probs = alpha, names = FALSE, ...) # VaR estimate(s); vectorized in x and alpha
+    vapply(VaR, function(v)  # v = VaR value for one alpha
+        mean(x[if(method == ">") x > v else x >= v]), # mean over all losses >(=) VaR
+    NA_real_)
+}
 
-## A numerical trick
-log(factorial(200)) # obviously, same problem here ('mathematical composition' not doable)
-lc <- lfactorial(500) - (lfactorial(200) + lfactorial(300)) # work with 'proper' logs
-c <- exp(lc) # due to the '-/+', the result is of a size representable in computer arithmetic
-stopifnot(all.equal(c, choose(500, 200))) # note: choose(500, 200) uses the same trick
+## Generate some losses and compute ES_alpha
+set.seed(271)
+L <- rlnorm(1000, meanlog = -1, sdlog = 2) # L ~ LN(mu, sig^2)
+## Note: - meanlog = mean(log(L)) = mu, sdlog = sd(log(L)) = sig
+##       - E(L) = exp(mu + (sig^2)/2), var(L) = (exp(sig^2)-1)*exp(2*mu + sig^2)
+##         To obtain a sample with E(L) = a and var(L) = b, use:
+##         mu = log(a)-log(1+b/a^2)/2 and sig = sqrt(log(1+b/a^2))
+ES(L, alpha = 0.99)
 
 
 ### Misc #######################################################################
@@ -342,7 +365,7 @@ getwd() # get the current working directory; set it with setwd()
 ## - How to retrieve an R plot as a file (for printing, for example). To this
 ##   end, use, for example:
 ##   doPDF <- TRUE
-##   if(doPDF) pdf(file=(file <- "myfile.pdf"), width=10, height=6)
+##   if(doPDF) pdf(file = (file <- "myfile.pdf"), width = 10, height = 6)
 ##   <do the plotting here>
 ##   if(doPDF) dev.off() # or use crop's dev.off.crop(file) here to crop the picture
 ##   This also works for png() (plotting to a .png)

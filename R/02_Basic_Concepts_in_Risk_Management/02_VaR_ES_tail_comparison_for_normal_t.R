@@ -29,13 +29,12 @@ plot(1-alpha, ES.t, type="l", ylim=range(VaR.n, VaR.t, ES.n, ES.t), log="x",
 lines(1-alpha, VaR.t, col="darkorange2")
 lines(1-alpha, ES.n,  col="royalblue3")
 lines(1-alpha, VaR.n, col="black")
-legend("topright", bty="n", lty=rep(1,4), col=c("darkorange2", "black",
-                                                "maroon3", "royalblue3"),
-       legend=c(substitute(VaR[alpha]~~"for "*italic(t[nu.])*" model", list(nu.=nu)),
-                expression(VaR[alpha]~~"for normal model"),
-                substitute(ES[alpha]~~"for "*italic(t[nu.])*" model", list(nu.=nu)),
-                expression(ES[alpha]~~"for normal model")))
-
+legend("topright", bty="n", lty=rep(1,4), col=c("maroon3", "darkorange2",
+                                                "royalblue3", "black"),
+       legend=c(substitute(ES[alpha]~~"for "*italic(t[nu.])*" model", list(nu.=nu)),
+                substitute(VaR[alpha]~~"for "*italic(t[nu.])*" model", list(nu.=nu)),
+                expression(ES[alpha]~~"for normal model"),
+                expression(VaR[alpha]~~"for normal model")))
 ## Results:
 ## This shows that VaR_alpha (or ES_alpha) is not always 'riskier' for the
 ## t distribution than it is for the normal distribution (only for

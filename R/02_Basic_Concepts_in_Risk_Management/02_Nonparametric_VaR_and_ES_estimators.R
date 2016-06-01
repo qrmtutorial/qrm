@@ -1,8 +1,11 @@
 ## By Marius Hofert
 
-## Non-parametrically estimating value-at-risk (VaR_alpha) and expected shortfall
-## (ES_alpha) and providing bootstrapped estimators and confidence intervals (as
-## functions in alpha); also estimate Var(hat{VaR}_alpha) and Var(hat{ES}_alpha)
+## We ...
+## - non-parametrically estimate value-at-risk (VaR_alpha) and expected shortfall (ES_alpha);
+## - compute bootstrapped estimators;
+## - compute bootstrapped confidence intervals;
+## - estimate Var(hat{VaR}_alpha) and Var(hat{ES}_alpha);
+## ... as functions in alpha
 
 ## Note:
 ## 1) This is an actual problem from the realm of Quantitative Risk Management.
@@ -23,95 +26,99 @@
 ##    ceiling() denotes the ceiling function.
 ## 3) Expected shortfall is defined by
 ##
-##       ES_alpha(X) = int_alpha^1 F^-(u) du / (1-alpha)
+##       ES_alpha(X) = (1/(1-alpha)) * int_alpha^1 F^-(u) du
 ##
 ##    (that is, the u-quantile integrated over all u in [alpha, 1] divided by
-##    the length of the integration interval 1-alpha). A substitution leads to
+##    the length of the integration interval 1-alpha). Under continuity,
 ##
-##       ES_alpha(X) = int_{F^-(alpha)}^Inf x dF(x) / (1-alpha)
-##                   = int_{-Inf}^Inf x * I{x > F^-(alpha)} dF(x) / (1-alpha)
+##       ES_alpha(X) = E(X | X > VaR_alpha(X))
+##                   = (1/(1-alpha)) * E(X * I_{X > VaR_alpha(X)})
 ##
-##    where I{} denotes the indicator function of the given event.
-##    We can approximate this by
+##    where I{} denotes the indicator function of the given event. This can be
+##    estimated via
 ##
-##       hat{ES}_alpha(X) = sum_{i=1}^n x_i * I{x_i > F^-(alpha)} / (1-alpha)
+##       hat{ES}_alpha(X) = (1/(1-alpha)) * (1/n) * sum(X_i * I_{X_i > hat{VaR}_alpha(X)})
+##                        = (1 / E(N)) * sum(X_i * I_{X_i > hat{VaR}_alpha(X)})
+##                        = mean(Y_i)
 ##
-##    which we will use as an estimator below. Note that we actually also
-##    estimate the 'F^-(alpha)' in this formula (that's typically the case
-##    when F^-(alpha) is unknown).
+##    where E(N) = (1-alpha) * n = P(X > VaR_alpha(X)) * n is the expected number
+##    of X_i's exceeding VaR_alpha(X) and Y_i are those X_i which exceed
+##    hat{VaR}_alpha(X).
 
 
 ### Setup ######################################################################
 
-n <- 2500 # sample size (~= 5y of daily data)
+n <- 2500 # sample size (~= 10y of daily data)
 B <- 1000 # number of bootstrap replications (= number or realizations of VaR, ES)
-th <- 2 # parameter of the Pareto distribution
+th <- 2 # parameter of the true underlying Pareto distribution
 
 
 ### 1 Auxiliary functions ######################################################
 
 ##' @title Quantile Function of F(x) = 1-(1+x)^{-theta}
-##' @param p probability (in [0,1])
-##' @param theta Pareto distribution parameter
-##' @return p-quantile of the Pareto distribution with parameter theta
+##' @param p The probability (in [0,1])
+##' @param theta The Pareto distribution parameter
+##' @return The p-quantile of the Pareto distribution with parameter theta
 ##' @author Marius Hofert
-qPar <- function(p, theta) (1-p)^(-1/theta) - 1
+qPar <- function(p, theta)
+{
+    stopifnot(0 <= p, p <= 1, theta > 0)
+    (1-p)^(-1/theta) - 1
+}
 
 ##' @title Valut-at-Risk for a Par(theta) Distribution
-##' @param alpha confidence level
-##' @param theta Pareto parameter
-##' @return Theoretical value of VaR_alpha(L)
+##' @param alpha The confidence level
+##' @param theta The Pareto parameter
+##' @return The theoretical value of VaR_alpha(L)
 ##' @author Marius Hofert
-##' @note This is just a convenience wrapper for qPar()
-VaR_Par <- function(alpha, theta) qPar(alpha, theta)
+VaR_Par <- function(alpha, theta)
+{
+    stopifnot(0 <= alpha, alpha <= 1, theta > 0)
+    qPar(alpha, theta)
+}
 
 ##' @title Expected Shortfall for a Par(theta) Distribution
-##' @param alpha confidence level
-##' @param theta Pareto parameter
-##' @return Theoretical value of ES_alpha(L)
+##' @param alpha The confidence level
+##' @param theta The Pareto parameter
+##' @return The theoretical value of ES_alpha(L)
 ##' @author Marius Hofert
 ES_Par <- function(alpha, theta)
 {
-    stopifnot(theta > 1)
-    (theta/(theta-1)) * (1-alpha)^(-1/theta) - 1
+    stopifnot(0 <= alpha, alpha <= 1, theta > 1)
+    (theta / (theta-1)) * (1-alpha)^(-1/theta) - 1
 }
 
 ##' @title Nonparametric VaR Estimator
-##' @param x losses L
-##' @param alpha confidence level
-##' @param type 'type' used (1 = inverse of empirical df)
+##' @param x The vector of losses
+##' @param alpha The confidence level
+##' @param type The 'type' used (1 = inverse of empirical df)
 ##' @return Nonparametric VaR_alpha estimate
 ##' @author Marius Hofert
-##' @note - Vectorized in x and alpha
-##'       - Estimate VaR_alpha for different alpha based on the *same* data x
-##'         => less variance.
-##'       - We use type=1 here as for sufficiently large alpha, type=7
-##'         (quantile()'s default) would interpolate between the two largest
-##'         losses (to be continuous) and thus return a(n even) smaller
-##'         VaR_alpha estimate.
-VaR <- function(x, alpha, type=1)
-    quantile(x, probs=alpha, names=FALSE, type=type) # vectorized in x and alpha
+##' @note We use type = 1 here as for sufficiently large alpha, type = 7
+##'       (quantile()'s default) would interpolate between the two largest
+##'       losses (to be continuous) and thus return a(n even) smaller
+##'       VaR_alpha estimate.
+VaR <- function(x, alpha, type = 1)
+    quantile(x, probs = alpha, names = FALSE, type = type) # vectorized in x and alpha
 
 ##' @title Nonparametric Expected Shortfall Estimator
-##' @param x losses L
-##' @param alpha confidence level
-##' @return Nonparametric ES_alpha estimate
+##' @param x The vector of losses
+##' @param alpha The confidence level
+##' @param method The method. One of:
+##'        ">" : Mathematically correct for discrete dfs, but
+##'              produces NaN for alpha > (n-1)/n (=> F^-(alpha) = x_{(n)} but
+##'              there is no loss strictly beyond x_{(n)})
+##'        ">=": mean() will always include the largest loss (so no NaN appears),
+##'              but might be computed just based on this one loss.
+##' @param ... Additional arguments passed to quantile()
+##' @return Nonparametric ES_alpha estimate (derived under the assumption of continuity)
 ##' @author Marius Hofert
-##' @note - Vectorized in x and alpha
-##'       - Estimate ES_alpha for different alpha based on the *same* data x
-##'         => less variance.
-##'       - If F_L is continuous, then ES_alpha(L) = E(L|L > VaR_alpha(L))
-##'         from which we get the below estimator based on the SLLN
-##'       - ">" : Mathematically correct for discrete dfs, but
-##'               produces NaN for alpha > 1-1/n (=> F^-(alpha) = x_{(n)} but
-##'               there is no loss beyond x_{(n)}) because mean(numeric(0)) = NaN
-##'         ">=": mean() Will always include the largest loss (so no NaN appears),
-##'               but might be computed just based on this one loss.
-ES <- function(x, alpha, method=c(">", ">="))
+##' @note Vectorized in x and alpha
+ES <- function(x, alpha, method = c(">", ">="), ...)
 {
     stopifnot(0 < alpha, alpha < 1)
     method <- match.arg(method)
-    VaR <- VaR(x, alpha=alpha) # length(alpha)-vector
+    VaR <- VaR(x, alpha = alpha, ...) # length(alpha)-vector
     vapply(VaR, function(v) { # v = VaR value for one alpha
         ind <- if(method == ">") x > v else x >= v
         num <- sum(ind)
@@ -122,97 +129,118 @@ ES <- function(x, alpha, method=c(">", ">="))
         } else if(num <= 5) {
             warning("Only ",num," losses ",method," VaR")
         }
-        mean(x[ind])
+        mean(x[ind]) # mean over all losses >(=) VaR
     }, NA_real_)
 }
 
-##' @title Empirically Estimated Confidence Intervals (default: 95%)
-##' @param x losses L
-##' @param beta significance level
+##' @title Empirically Estimate Confidence Intervals (default: 95%)
+##' @param x The values
+##' @param beta The significance level
 ##' @return Estimated (lower, upper) beta confidence interval
 ##' @author Marius Hofert
-CI <- function(x, beta=0.05, na.rm=FALSE)
-    quantile(x, probs=c(beta/2, 1-beta/2), na.rm=na.rm, names=FALSE)
+CI <- function(x, beta = 0.05, na.rm = FALSE)
+    quantile(x, probs = c(beta/2, 1-beta/2), na.rm = na.rm, names = FALSE)
 
 ##' @title Bootstrap the Nonparametric VaR or ES Estimator for all alpha
-##' @param x losses L
-##' @param B number of bootstrap replications
-##' @param alpha confidence level
-##' @param method risk measure used
-##' @return (length(alpha), B)-matrix where the bth column contains the risk
-##'         measure estimates evaluated at each alpha based on the bth bootstrap
-##'         sample of the losses
+##' @param x The vector of losses
+##' @param B The number of bootstrap replications
+##' @param alpha The confidence level
+##' @param method The risk measure used
+##' @return (length(alpha), B)-matrix where the bth column contains the estimated
+##'         risk measure at each alpha based on the bth bootstrap sample of the
+##'         losses
 ##' @author Marius Hofert
-##' @note - Vectorized in x and alpha
-bootstrap <- function(x, B, alpha, method=c("VaR", "ES"))
+##' @note Vectorized in x and alpha
+bootstrap <- function(x, B, alpha, method = c("VaR", "ES"))
 {
-    ## Checks
-    stopifnot(is.numeric(x), (n <- length(x)) >= 1, B >= 1) # sanity checks
+    stopifnot(is.vector(x), (n <- length(x)) >= 1, B >= 1) # sanity checks
     method <- match.arg(method) # check and match 'method'
-
-    ## Bootstrap losses (randomly sampling them B times with replacement)
-    x.boot <- matrix(sample(x, size=n*B, replace=TRUE), ncol=B) # (n, B)-matrix of bootstrap samples
-
-    ## For each of the B samples of length n, estimate VaR or ES (for all alpha)
-    apply(x.boot, 2, if(method=="VaR") VaR else ES, alpha=alpha) # (length(alpha), B)-matrix
+    rm <- if(method == "VaR") VaR else ES # risk measure
+    x.boot <- matrix(sample(x, size = n*B, replace = TRUE), ncol = B) # (n, B)-matrix of bootstrap samples
+    apply(x.boot, 2, rm, alpha = alpha) # (length(alpha), B)-matrix
 }
 
 
 ### 2 Simulate losses and nonparametrically estimate VaR and ES ################
 
-## Simulate losses
-## (as we don't have real ones and we want to investigate the estimators)
+## Simulate losses (as we don't have real ones and we want to investigate
+## the performance of the estimators)
 set.seed(271) # set a seed (for reproducibility)
-L <- qPar(runif(n), theta=th) # simulate losses with the 'inversion method'
+L <- qPar(runif(n), theta = th) # simulate losses with the 'inversion method'
 
-## Nonparametrically estimates of VaR and ES
+
+### 2.1 Nonparametric estimates of VaR_alpha and ES_alpha for a fixed alpha ####
+
 alpha <- 0.99
-(VaR. <- VaR(L, alpha=alpha))
-(ES.  <-  ES(L, alpha=alpha))
-## Just the numbers won't tell us much
+(VaR. <- VaR(L, alpha = alpha))
+(ES.  <-  ES(L, alpha = alpha))
+## ... but single numbers don't tell us much
+## More interesting: The behavior in alpha
 
-## More interesting: behavior in alpha
-alpha <- 1-1/10^seq(0.5, 5, by=0.05) # alphas we investigate (concentrated near 1)
+
+### 2.2 As functions in alpha vs true values ###################################
+
+## Compute the nonparametric VaR_alpha and ES_alpha estimators as functions of alpha
+alpha <- 1-1/10^seq(0.5, 5, by = 0.05) # alphas we investigate (concentrated near 1)
 stopifnot(0 < alpha, alpha < 1)
-VaR. <- VaR(L, alpha=alpha) # estimate VaR_alpha for all alpha
-ES.  <-  ES(L, alpha=alpha) # estimate ES_alpha for all alpha
+VaR. <- VaR(L, alpha = alpha) # estimate VaR_alpha for all alpha
+ES.  <-  ES(L, alpha = alpha) # estimate  ES_alpha for all alpha
+warnings()
 
 ## True values (known here)
-VaR.Par. <- VaR_Par(alpha, theta=th) # theoretical VaR_alpha values
-ES.Par.  <-  ES_Par(alpha, theta=th) # theoretical ES_alpha values
+VaR.Par. <- VaR_Par(alpha, theta = th) # theoretical VaR_alpha values
+ES.Par.  <-  ES_Par(alpha, theta = th) # theoretical ES_alpha values
 
-## Plot with logarithmic y-axis and true VaR_alpha and ES_alpha values
-ran <- range(VaR., ES., VaR.Par., ES.Par., na.rm=TRUE)
-plot(alpha, VaR., type="l", ylim=ran, log="y", col="royalblue3",
-     xlab=expression(alpha),
-     ylab=expression("True"~VaR[alpha]~"and"~ES[alpha]~"and estimates"))
-lines(alpha, ES., type="l", col="maroon3")
-lines(alpha, VaR.Par., type="l", lty=2, col="royalblue3")
-lines(alpha, ES.Par., type="l", lty=2, col="maroon3")
-legend("topleft", bty="n", y.intersp=1.2, lty=c(1,2,1,2),
-       col=rep(c("maroon3", "royalblue3"), each=2),
-       legend=c(expression(widehat(ES)[alpha]), expression(ES[alpha]),
-                expression(widehat(VaR)[alpha]), expression(VaR[alpha])))
+## Plot estimates with true VaR_alpha and ES_alpha values
+ran <- range(ES.Par., ES., VaR.Par., VaR., na.rm = TRUE)
+plot(alpha, ES.Par., type = "l", ylim = ran,
+     xlab = expression(alpha),
+     ylab = expression("True"~VaR[alpha]*","~ES[alpha]~"and estimates")) # true ES_alpha
+lines(alpha, ES., type = "l", col = "maroon3") # ES_alpha estimate
+lines(alpha, VaR.Par., type = "l") # true VaR_alpha
+lines(alpha, VaR., type = "l", col = "royalblue3") # VaR_alpha estimate
+legend("topleft", bty = "n", y.intersp = 1.2, lty = rep(1, 3),
+       col = c("black", "maroon3", "royalblue3"),
+       legend = c(expression(ES[alpha]~"and"~VaR[alpha]),
+                  expression(widehat(ES)[alpha]),
+                  expression(widehat(VaR)[alpha])))
+## => We don't see much
+
+## With logarithmic y-axis
+ran <- range(ES.Par., ES., VaR.Par., VaR., na.rm = TRUE)
+plot(alpha, ES.Par., type = "l", ylim = ran, log = "y",
+     xlab = expression(alpha),
+     ylab = expression("True"~VaR[alpha]*","~ES[alpha]~"and estimates")) # true ES_alpha
+lines(alpha, ES., type = "l", col = "maroon3") # ES_alpha estimate
+lines(alpha, VaR.Par., type = "l") # true VaR_alpha
+lines(alpha, VaR., type = "l", col = "royalblue3") # VaR_alpha estimate
+legend("topleft", bty = "n", y.intersp = 1.2, lty = rep(1, 3),
+       col = c("black", "maroon3", "royalblue3"),
+       legend = c(expression(ES[alpha]~"and"~VaR[alpha]),
+                  expression(widehat(ES)[alpha]),
+                  expression(widehat(VaR)[alpha])))
 ## => We already see that ES_alpha is more difficult to estimate than VaR_alpha
 
-## Plot with logarithmic y- and x-axis and in 1-alpha (this is why we chose
-## an exponential sequence (powers of 10) in alpha concentrated near 1,
-## so that the x-axis points are equidistant when plotted in log-scale)
-plot(1-alpha, VaR., type="l", ylim=ran, log="xy", col="royalblue3",
-     xlab=expression(1-alpha),
-     ylab=expression("True"~VaR[alpha]~"and"~ES[alpha]~"and estimates"))
-lines(1-alpha, ES., type="l", col="maroon3")
-lines(1-alpha, VaR.Par., type="l", lty=2, col="royalblue3")
-lines(1-alpha, ES.Par., type="l", lty=2, col="maroon3")
-legend("topright", bty="n", y.intersp=1.2, lty=c(1,2,1,2),
-       col=rep(c("maroon3", "royalblue3"), each=2),
-       legend=c(expression(widehat(ES)[alpha]), expression(ES[alpha]),
-                expression(widehat(VaR)[alpha]), expression(VaR[alpha])))
-## => Already critical for ES_0.99 and certainly hopeless for alpha above
-##    1-1e-3. By using nonparametric estimators we underestimate the risk
-##    capital and this although we have comparably large 'n' here!
-##    Also note that VaR_alpha is simply the largest max(L) for alpha
-##    sufficiently large.
+## With logarithmic x- and y-axis and in 1-alpha
+## Note: This is why we chose an exponential sequence (powers of 10) in alpha
+##       concentrated near 1, so that the x-axis points are equidistant when
+##       plotted in log-scale)
+plot(1-alpha, ES.Par., type = "l", ylim = ran, log = "xy",
+     xlab = expression(1-alpha),
+     ylab = expression("True"~VaR[alpha]*","~ES[alpha]~"and estimates")) # true ES_alpha
+lines(1-alpha, ES., type = "l", col = "maroon3") # ES_alpha estimate
+lines(1-alpha, VaR.Par., type = "l") # true VaR_alpha
+lines(1-alpha, VaR., type = "l", col = "royalblue3") # VaR_alpha estimate
+legend("topright", bty = "n", y.intersp = 1.2, lty = rep(1, 3),
+       col = c("black", "maroon3", "royalblue3"),
+       legend = c(expression(ES[alpha]~"and"~VaR[alpha]),
+                  expression(widehat(ES)[alpha]),
+                  expression(widehat(VaR)[alpha])))
+## => - Critical for ES_0.99; severely critical for alpha ~ 0.999.
+##    - By using nonparametric estimators we underestimate the risk
+##      capital and this although we have comparably large 'n' here!
+##    - Note that VaR_alpha is simply the largest max(L) for alpha
+##      sufficiently large.
 
 ## Q: Why do the true VaR_alpha and ES_alpha seem 'linear' in alpha for
 ##    large alpha in log-log scale?
@@ -240,100 +268,104 @@ legend("topright", bty="n", y.intersp=1.2, lty=c(1,2,1,2),
 
 ### 3 Bootstrapping confidence intervals for VaR_alpha, ES_alpha ###############
 
+### 3.1 VaR_alpha ##############################################################
+
 ## Bootstrap the VaR estimator
-VaR.boot <- bootstrap(L, B=B, alpha=alpha) # (length(alpha), B)-matrix containing the bootstrapped VaR estimators
-any(is.na(VaR.boot)) # no NA or NaN
+set.seed(271)
+VaR.boot <- bootstrap(L, B = B, alpha = alpha) # (length(alpha), B)-matrix containing the bootstrapped VaR estimators
+stopifnot(all(!is.na(VaR.boot))) # no NA or NaN
 
 ## Compute statistics
-VaR.boot. <- rowMeans(VaR.boot) # bootstrapped mean of the VaR estimator; length(alpha)-vector
+VaR.boot.    <- rowMeans(VaR.boot) # bootstrapped mean of the VaR estimator; length(alpha)-vector
 VaR.boot.var <- apply(VaR.boot, 1, var) # bootstrapped variance of the VaR estimator; length(alpha)-vector
 VaR.boot.CI  <- apply(VaR.boot, 1, CI) # bootstrapped 95% CIs; (2, length(alpha))-matrix
 
+
+### 3.2 ES_alpha ###############################################################
+
 ## Bootstrap the ES estimator
-system.time(ES.boot <- bootstrap(L, B=B, alpha=alpha, method="ES")) # (length(alpha), B)-matrix containing the bootstrapped ES estimators
+system.time(ES.boot <- bootstrap(L, B = B, alpha = alpha, method = "ES")) # (length(alpha), B)-matrix containing the bootstrapped ES estimators
+warnings()
 
 ## Investigate appearing NaNs (due to too few losses exceeding hat(VaR)_alpha)
 isNaN <- is.nan(ES.boot) # => contains some NaN
-image(x=alpha, y=seq_len(B), z=isNaN,
-      col=c("white", "black"), xlab=expression(alpha), ylab="Bootstrap replication")
+image(x = alpha, y = seq_len(B), z = isNaN, col = c("white", "black"),
+      xlab = expression(alpha), ylab = "Bootstrap replication")
 mtext("Black: NaN; White: OK", side=4, line=1, adj=0)
-percNaN <- 100 * apply(isNaN, 1, mean) # % of NaNs for all alpha
-plot(1-alpha, percNaN, type="l", log="x",
-     xlab=expression(1-alpha), ylab=expression("% of NaN when estimating"~ES[alpha]))
-## => Becomes a serious issue for alpha >= 0.999
 
-## Compute statistics
-na.rm <- TRUE # only partially helps (if no data available, still NaN results)
-ES.boot. <- rowMeans(ES.boot, na.rm=na.rm) # bootstrapped mean of the ES estimator; length(alpha)-vector
-ES.boot.var <- apply(ES.boot, 1, var, na.rm=na.rm) # bootstrapped variance of the ES estimator; length(alpha)-vector
-ES.boot.CI  <- apply(ES.boot, 1, CI, na.rm=na.rm) # bootstrapped 95% CIs; (2, length(alpha))-matrix
+## Plot % of NaN
+percNaN <- 100 * apply(isNaN, 1, mean) # % of NaNs for all alpha
+plot(1-alpha, percNaN, type = "l", log = "x",
+     xlab = expression(1-alpha), ylab = expression("% of NaN when estimating"~ES[alpha]))
+## => Becomes a serious issue for alpha >= 0.999 (1-alpha <= 10^{-3})
+
+## Compute statistics with NaNs removed
+na.rm <- TRUE # only partially helps (if no data available, the result is still NaN)
+ES.boot.    <- rowMeans(ES.boot, na.rm = na.rm) # bootstrapped mean of the ES estimator; length(alpha)-vector
+ES.boot.var <- apply(ES.boot, 1, var, na.rm = na.rm) # bootstrapped variance of the ES estimator; length(alpha)-vector
+ES.boot.CI  <- apply(ES.boot, 1, CI, na.rm = na.rm) # bootstrapped 95% CIs; (2, length(alpha))-matrix
 ## => Compute it over the remaining non-NaN values (contains NAs then)
 
 
 ### 4 Plots ####################################################################
 
 ## Plot as a function in alpha:
-## 1) True VaR_alpha
-## 2) Nonparametrically estimated VaR_alpha (based on the sample L)
-## 3) The bootstrapped nonparametric estimate of VaR_alpha (mean of the
-##    bootstrapped nonparametric VaR_alpha estimators)
-## 4) The bootstrapped 95% confidence intervals
-## 5) The bootstrapped variance of the nonparametric estimator of VaR_alpha
-##    (variance of the nonparametric VaR_alpha estimators computed from the
-##    bootstrap samples)
-## ... and everything for ES_alpha as well
+## 1) True VaR_alpha and ES_alpha
+## 2) The nonparametric estimates hat{VaR}_alpha and hat{ES}_alpha
+## 3) The bootstrapped mean of hat{VaR}_alpha and hat{ES}_alpha
+## 4) The bootstrapped variance of hat{VaR}_alpha and hat{ES}_alpha
+## 5) The bootstrapped 95% confidence intervals for VaR_alpha and ES_alpha
 library(sfsmisc) # for eaxis()
 ran <- range(VaR.Par., # true VaR
              VaR., # nonparametric estimate
-             VaR.boot., # bootstrapped estimate (variance sig^2/B for sig^2 = Var(VaR.))
-             VaR.boot.CI, # bootstrapped confidence intervals
+             VaR.boot., # bootstrapped estimate (variance Var(VaR.)/B)
              VaR.boot.var, # bootstrapped variance
-             ES.Par., ES., ES.boot., ES.boot.CI, ES.boot.var, na.rm=TRUE) # same for ES_alpha
+             VaR.boot.CI, # bootstrapped confidence intervals
+             ES.Par., ES., ES.boot., ES.boot.var, ES.boot.CI, na.rm = TRUE) # same for ES_alpha
 ## VaR_alpha
-plot(1-alpha, VaR.Par., type="l", lty="dotdash", log="xy", xaxt="n", yaxt="n",
-     col="royalblue3", ylim=ran, xlab=expression(1-alpha), ylab="") # true VaR_alpha
-lines(1-alpha, VaR., lty="dashed", lwd=1.4, col="royalblue3") # nonparametrically estimated VaR_alpha
-lines(1-alpha, VaR.boot., lty="solid", col="royalblue3") # bootstrapped nonparametric estimate of VaR_alpha
-lines(1-alpha, VaR.boot.CI[1,], lty="dotted", col="royalblue3") # bootstrapped 95% CI
-lines(1-alpha, VaR.boot.CI[2,], lty="dotted", col="royalblue3")
-lines(1-alpha, VaR.boot.var, lty="4C88C488", col="royalblue3") # bootstrapped Var(hat(VaR)_alpha)
+plot(1-alpha, VaR.Par., type = "l", log = "xy", xaxt = "n", yaxt = "n",
+     ylim = ran, xlab = expression(1-alpha), ylab = "") # true VaR_alpha
+lines(1-alpha, VaR., lty = "dashed", lwd = 2, col = "royalblue3") # nonparametrically estimated VaR_alpha
+lines(1-alpha, VaR.boot., lty = "solid", col = "royalblue3") # bootstrapped nonparametric estimate of VaR_alpha
+lines(1-alpha, VaR.boot.var, lty = "dotdash", lwd = 1.4, col = "royalblue3") # bootstrapped Var(hat(VaR)_alpha)
+lines(1-alpha, VaR.boot.CI[1,], lty = "dotted", col = "royalblue3") # bootstrapped 95% CI
+lines(1-alpha, VaR.boot.CI[2,], lty = "dotted", col = "royalblue3")
 ## ES_alpha
-lines(1-alpha, ES.Par., lty="dotdash", col="maroon3") # true ES_alpha
-lines(1-alpha, ES., lty="dashed", lwd=1.4, col="maroon3") # nonparametrically estimated ES_alpha
-lines(1-alpha, ES.boot., lty="solid", col="maroon3") # bootstrapped nonparametric estimate of ES_alpha
-lines(1-alpha, ES.boot.CI[1,], lty="dotted", col="maroon3") # bootstrapped 95% CI
-lines(1-alpha, ES.boot.CI[2,], lty="dotted", col="maroon3")
-lines(1-alpha, ES.boot.var, lty="4C88C488", col="maroon3") # bootstrapped Var(hat(ES)_alpha)
+lines(1-alpha, ES.Par.) # true ES_alpha
+lines(1-alpha, ES., lty = "dashed", lwd = 2, col = "maroon3") # nonparametrically estimated ES_alpha
+lines(1-alpha, ES.boot., lty = "solid", col = "maroon3") # bootstrapped nonparametric estimate of ES_alpha
+lines(1-alpha, ES.boot.var, lty = "dotdash", lwd = 1.4, col = "maroon3") # bootstrapped Var(hat(ES)_alpha)
+lines(1-alpha, ES.boot.CI[1,], lty = "dotted", col = "maroon3") # bootstrapped 95% CI
+lines(1-alpha, ES.boot.CI[2,], lty = "dotted", col = "maroon3")
 ## Misc
 eaxis(1) # a nicer exponential y-axis
 eaxis(2) # a nicer exponential y-axis
-mtext(substitute(B==B.~~"replications of size"~~n==n.~~"from Par("*th.*")",
-                 list(B.=B, n.=n, th.=th)), side=4, line=1, adj=0) # secondary y-axis label
-legend("bottomleft", bty="n",
-       lty=rep(c("dotdash", "dashed", "solid", "dotted", "4C88C488"), times=2),
-       col=rep(c("royalblue3", "maroon3"), each=5),
-       legend=c(## VaR_alpha
-                expression("True"~VaR[alpha]),
-                expression(widehat(VaR)[alpha]),
-                expression("Bootstrapped"~~widehat(VaR)[alpha]),
-                "Bootstrapped 95% CIs",
-                expression("Bootstrapped"~~Var(widehat(VaR)[alpha])),
-                ## ES_alpha
-                expression("True"~ES[alpha]),
-                expression(widehat(ES)[alpha]),
-                expression("Bootstrapped"~~widehat(ES)[alpha]),
-                "Bootstrapped 95% CIs",
-                expression("Bootstrapped"~~Var(widehat(ES)[alpha]))))
-
+mtext(substitute(B == B.~~"replications of size"~~n == n.~~"from Par("*th.*")",
+                 list(B. = B, n. = n, th. = th)), side = 4, line = 1, adj = 0) # secondary y-axis label
+legend("bottomleft", bty = "n", lwd = c(1, rep(c(2, 1, 1.4, 1), 2)),
+       lty = c("solid", rep(c("dashed", "solid", "dotdash", "dotted"), times = 2)),
+       col = c("black", rep(c("royalblue3", "maroon3"), each = 4)),
+       legend = c(## VaR_alpha
+                  expression("True"~VaR[alpha]~"and"~ES[alpha]),
+                  expression(widehat(VaR)[alpha]),
+                  expression("Bootstrapped"~~widehat(VaR)[alpha]),
+                  expression("Bootstrapped"~~Var(widehat(VaR)[alpha])),
+                  "Bootstrapped 95% CIs",
+                  ## ES_alpha
+                  expression(widehat(ES)[alpha]),
+                  expression("Bootstrapped"~~widehat(ES)[alpha]),
+                  expression("Bootstrapped"~~Var(widehat(ES)[alpha])),
+                  "Bootstrapped 95% CIs"))
 ## Results:
 ## - hat(VaR)_alpha < hat(ES)_alpha (clear)
-## - hat(VaR)_alpha and hat(ES)_alpha are wrong for large alpha, hat(ES)_alpha
-##   even a bit more (a non-parametric estimator cannot adequately capture the
-##   tail; this especially applies to hat(ES)_alpha which looks even further
-##   in the tail)
 ## - hat(ES)_alpha (and bootstrapped quantities) are not available for large alpha
 ##   (there is no observation beyond hat(VaR)_alpha anymore)
-## - Var(hat(ES)_alpha) > Var(hat(VaR)_alpha)
-##   (hat(ES)_alpha requires information from the *whole* tail)
+## - hat(VaR)_alpha and hat(ES)_alpha underestimate VaR_alpha and ES_alpha for
+##   large alpha; hat(ES)_alpha even a bit more
+##   (a non-parametric estimator cannot adequately capture the tail)
 ## - Var(hat(VaR)_alpha) and Var(hat(ES)_alpha) (mostly) increase in alpha
 ##   (less data to the right of VaR_alpha => higher variance)
+## - Var(hat(ES)_alpha) > Var(hat(VaR)_alpha)
+##   (hat(ES)_alpha requires information from the *whole* tail)
+## - For not too extreme alpha, the estimated CI for ES_alpha are larger than
+##   those for VaR_alpha
