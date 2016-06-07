@@ -22,27 +22,33 @@ pairs(as.zoo(data))
 dim(data)
 
 ## Specify univariate AR(1)-GARCH(1,1) for both marginal processes
-uspec.norm <- ugarchspec(variance.model=list(model="sGARCH", garchOrder=c(1,1)),
-                       mean.model=list(armaOrder=c(1,0),include.mean=TRUE),
-                    distribution.model="norm")
-uspec.std <- ugarchspec(variance.model=list(model="sGARCH", garchOrder=c(1,1)),
+
+uspec <- ugarchspec(variance.model=list(model="sGARCH", garchOrder=c(1,1)),
                          mean.model=list(armaOrder=c(1,0),include.mean=TRUE),
                          distribution.model="std")
 
 # Check the univariate specification for the two component series
-fit.marg1 <- ugarchfit(spec=uspec.std,data=data[,1])
-fit.marg2 <- ugarchfit(spec=uspec.std,data=data[,2])
+fit.marg1 <- ugarchfit(spec=uspec,data=data[,1])
+fit.marg2 <- ugarchfit(spec=uspec,data=data[,2])
 
 # Combine univariate specs to obtain spec for marginal models
-marginspec.norm <- multispec(replicate(2,uspec.norm))
-marginspec.std <- multispec(replicate(2,uspec.std))
+marginspec <- multispec(replicate(2,uspec))
 
 # Create spec for DCC
-mspec <- dccspec(marginspec.std, dccOrder = c(1,1), model="DCC", distribution="mvt")
+mspec <- dccspec(marginspec, dccOrder = c(1,1), model="DCC", distribution="mvt")
 
 mod <- dccfit(mspec,data)
 mod
 
+# Check marginal coefficients are same in joint model
+coef(mod)
+coef(fit.marg1)
+coef(fit.marg2)
+# Note: a two stage fit is undertaken
+# First univariate GARCH is fitted to each margin
+# The standardized residuals are extracted
+# Then a model with dynamically changing conditional correlation matrix is fitted
+# (Ideally, all parameters should be estimated in one step.)
 
 # Some pictures of fit
 plot(mod,which=2)
@@ -51,28 +57,21 @@ plot(mod,which=4)
 plot(mod,which=5)
 
 
-# Check marginal coefficients are same in joint model
-class(mod)
-class(fit.marg1)
-getSlots("DCCfit")
-modfit <- mod@mfit
-names(modfit)
-modfit$coef
-getSlots("uGARCHfit")
-marg1fit <- fit.marg1@fit
-marg1fit$coef
-
-
 # A model with a changing copula
 
-copspec = cgarchspec(uspec = marginspec.std, 
+copspec = cgarchspec(uspec = marginspec, 
                      distribution.model = list(copula = "mvt", method = "ML", time.varying = TRUE, transformation = "parametric"))
 mod2 <- cgarchfit(copspec,data)
 mod2
 
-# Compare with DCC model
+# The only difference here is that a meta-t model is fitted
+# with marginal parameters given by estimated shape parameters
+# in first step
 
 likelihood(mod2)
 likelihood(mod)
+# Fit is slightly superior
 
 cbind(coef(mod),coef(mod2))
+# Compare coefficients with DCC model
+# Only last 3 are different
