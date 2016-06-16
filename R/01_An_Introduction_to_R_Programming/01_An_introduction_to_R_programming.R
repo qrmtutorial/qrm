@@ -322,7 +322,7 @@ RNGkind("Mersenne-Twister") # switch back to Mersenne-Twister
 ##' @param alpha The confidence level
 ##' @param method
 ##' @param ... Additional arguments passed to quantile(); if 'type = 1',
-##'        The quantile of the empirical distribution function is taken.
+##'        the quantile of the empirical distribution function is taken.
 ##' @return Nonparametric ES_alpha estimate (derived under the assumption of continuity)
 ##' @author Marius Hofert
 ##' @note - Vectorized in x and alpha
