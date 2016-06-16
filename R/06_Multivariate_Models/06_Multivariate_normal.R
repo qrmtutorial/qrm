@@ -1,7 +1,10 @@
+## by Alexander McNeil
+
 # Libraries required
-require(QRM)
-require(xts)
-require(mvtnorm)
+library(QRM)
+library(xts)
+library(mvtnorm)
+library(qrmdata)
 
 # The bivariate normal distribution
 BiDensPlot(func = dmnorm, xpt=c(-4,4), ypts=c(-4,4),mu = c(0, 0), Sigma = equicorr(2, -0.7))
@@ -12,8 +15,14 @@ P <- matrix(rho,ncol=3,nrow=3)+(1-rho)*diag(3)
 P
 data <- rmvnorm(1000, sigma = P)
 
-# Re-estimate the parameters
-fit.norm(data)
+# ML estimation
+n <- dim(data)[1]
+mu.hat <- colMeans(data)
+Sigma.hat <- var(data)*(n-1)/n
+P.hat <- cor(data)
+# Note that var(data) gives unbiased estimator which is not MLE
+ll.max <- sum(dmvnorm(data, mean = mu.hat, sigma = Sigma.hat, log=TRUE))
+ll.max
 
 # Some 10-d simulated data
 rho = 0.6
@@ -32,6 +41,7 @@ jointnormalTest(data)
 data("DJ_const")
 Sdata <- DJ_const['2000-01-01/',1:10]
 Xdata <- diff(log(Sdata))[-1,]
+plot.zoo(Xdata)
 Xdata.w <- apply.weekly(Xdata,FUN=colSums)
 Xdata.m <- apply.monthly(Xdata,FUN=colSums)
 Xdata.q <- apply.quarterly(Xdata,FUN=colSums)
@@ -55,9 +65,13 @@ jointnormalTest(as.matrix(Xdata.m))
 MardiaTest(as.matrix(Xdata.q))
 jointnormalTest(as.matrix(Xdata.q))
 
-# Talking point: data which are only marginally normal
-data = rAC("gumbel", n=1000, d=3, theta=3)
-data = apply(data,2,qnorm)
+# Constructing data which are only marginally normal
+
+library(copula)
+set.seed(133)
+G.cop  <- archmCopula("Gumbel", param=3,  dim=3) 
+U.G  <- rCopula(1000, copula=G.cop)
+data = qnorm(U.G)
 pairs(data)
 apply(data,2,shapiro.test)
 MardiaTest(data)
