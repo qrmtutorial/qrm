@@ -17,7 +17,7 @@
 library(qrmdata) # for the S&P 500 data
 library(qrmtools) # for log_returns
 library(xts) # for functions around time series objects
-library(QRM) # for fit.GEV(), pGEV(), qGEV()
+library(QRM) # for fit.GEV()
 
 
 ### 1 Working with the data ####################################################
@@ -62,7 +62,7 @@ stopifnot(all.equal(log(x), -X[date == "1987-10-19"])) # log-return; ~= -0.2290
 ## Drop from (end of) Mon 1987-10-12 to (end of) Fri 1987-10-16:
 ## Note: S_t/S_{t-4} = S_t/S_{t-1} * S_{t-1}/S_{t-2} ... * S_{t-3}/S_{t-4}
 ##       = exp(-X_t) * exp(-X_{t-1}) * ... * exp(-X_{t-3}) = exp(-sum(X_i, i=t-3,..,t))
-##       => -beta = -(S_t/S_{t-4}-1) = -(exp(-sum(X_i, i=t-3,..,t))-1)
+##       => (Positive drop) -beta = -(S_t/S_{t-4}-1) = -(exp(-sum(X_i, i=t-3,..,t))-1)
 -expm1(-sum(X["1987-10-12" <= date & date <= "1987-10-16"])) # ~= 9.12% (drop)
 
 ## From now on we only consider the risk-factor changes from 1960-01-01 until
@@ -116,6 +116,7 @@ qGEV(1-1/50, xi = xi.year, mu = mu.year, sigma = sig.year) # r_{n=260, k=50} ~= 
 ## 20-half-year and 100-half-year return levels
 qGEV(1-1/20,  xi = xi.hyear, mu = mu.hyear, sigma = sig.hyear) # r_{n=130, k=20}  ~= 4.56%; n ~ 1/2y
 qGEV(1-1/100, xi = xi.hyear, mu = mu.hyear, sigma = sig.hyear) # r_{n=130, k=100} ~= 7.90%
+## => Close to r_{n=260, k=10} and r_{n=260, k=50}, respectively (reassuring).
 
 ## Q: What is the return period of a risk-factor change at least as large as
 ##    on Black Monday?
