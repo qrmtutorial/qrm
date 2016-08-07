@@ -1,57 +1,43 @@
 ## By Marius Hofert
 
 ## Estimating the risk measures VaR and ES with standard methods based on
-## (BMW, Siemens) data from 1985-01-02 to 1994-12-30.
+## (BMW, Siemens) data from 2000-01-03 to 2009-12-31.
 
 
 ### Setup ######################################################################
 
 library(mvtnorm) # for sampling from a multivariate t distribution
 library(QRM) # for fit.mst(), fit.GPD()
+library(xts) # for working with xts objects
+library(qrmdata) # for the data
+library(qrmtools) # for the data analysis
 
 
 ### 1 Working with the (BMW, Siemens) data #####################################
 
-## Download the data; if this fails, download it manually
-file <- "DAX.RAW.txt"
-if(!file.exists(file))
-    download.file(paste0("http://www.ma.hw.ac.uk/~mcneil/ftp/", file),
-                  destfile=file, method="auto") # download the data
-db <- read.table(file, header=TRUE, row.names="Positions", # read the *d*ata *b*ase
-                 encoding="UTF-8") # for 'didactical' reasons
+## Load the data
+data(EURSTX_const)
+db <- EURSTX_const
 str(db) # check the *str*ucture of 'db'
-str(rn <- rownames(db)) # row names contain dates
 
-## Convert dates to *proper* date objects
-date <- as.Date(rn, format="%m/%d/%Y") # convert the dates to *proper* date objects
-str(date)
-rownames(db) <- date # use the newly formatted dates as row names
-
-## Pick out the sub-database of stock prices we work with here
-start.date <- "1985-01-02"
-end.date   <- "1994-12-30"
-S <- db[start.date <= date & date <= end.date, c("BMW", "SIEMENS")] # pick out data (data.frame)
+## Pick out the sub-database of stock prices we work with and fill gaps
+time <- c("2000-01-03", "2009-12-31")
+S <- db[paste0(time, collapse = "/"), c("BMW.DE", "SIE.DE")] # pick out data (data.frame)
 str(S)
 head(S) # show the beginning
-S[1:6,] # the same
 tail(S) # show the end
+S <- na.fill(S, fill = "extend") # fill NAs (see also NA_plot(S))
+colnames(S) <- c("BMW", "SIE")
 
 ## Use scatter plots of each time series to check if anything is 'suspicious'
-rns <- rownames(S) # row names of S (character)
-## BMW
-plot(as.Date(rns), S[,"BMW"], type="l",
-     main="BMW stock data", # title
-     xlab="Date t", # x-axis label
-     ylab=expression(Stock~price~S[t])) # y-axis label
-## Siemens
-plot(as.Date(rns), S[,"SIEMENS"], type="l",
-     main="Siemens stock data", # title
-     xlab="Date t", # x-axis label
-     ylab=expression(Stock~price~S[t])) # y-axis label
+plot(S[,"BMW"], main = "BMW stock data",
+     xlab = "Date t", ylab = expression(Stock~price~S[t]))
+plot(S[,"SIE"], main = "SIEMENS stock data",
+     xlab = "Date t", ylab = expression(Stock~price~S[t]))
 
 ## Compute the risk-factor changes and plot them (here: against each other)
-ran <- range(X <- apply(log(S), 2, diff)) # compute log-returns and range
-plot(X, xlim=ran, ylim=ran, main="Risk-factor changes", cex=0.2)
+ran <- range(X <- as.matrix(log_returns(S))) # compute log-returns and range (sign-adjustment below)
+plot(X, xlim = ran, ylim = ran, main = "Risk-factor changes", cex = 0.2)
 
 
 ### 2 Implement (and document) some auxiliary functions ########################
@@ -62,21 +48,21 @@ plot(X, xlim=ran, ylim=ran, main="Risk-factor changes", cex=0.2)
 ##' @return Losses
 ##' @author Marius Hofert
 loss_operator <- function(x, weights)
-    -rowSums(expm1(x) * matrix(weights, nrow=nrow(x), ncol=length(weights), byrow=TRUE))
+    -rowSums(expm1(x) * matrix(weights, nrow = nrow(x), ncol = length(weights), byrow = TRUE))
 
 ##' @title Non-parametric VaR estimator
 ##' @param L Losses
 ##' @param alpha Confidence level
 ##' @return Non-parametric estimate of VaR at level alpha
 ##' @author Marius Hofert
-VaR_hat <- function(L, alpha) quantile(L, probs=alpha, names=FALSE)
+VaR_hat <- function(L, alpha) quantile(L, probs = alpha, names = FALSE)
 
 ##' @title Non-parametric ES estimator
 ##' @param L Losses
 ##' @param alpha Confidence level
 ##' @return Non-parametric estimate of ES at level alpha
 ##' @author Marius Hofert
-ES_hat  <- function(L, alpha) mean(L[L > VaR_hat(L, alpha=alpha)])
+ES_hat  <- function(L, alpha) mean(L[L > VaR_hat(L, alpha = alpha)])
 
 ##' @title Estimate VaR and ES
 ##' @param S Stock data, an (n, d)-matrix
@@ -92,15 +78,15 @@ risk_measure <- function(S, lambda, alpha,
                          ...)
 {
     ## Input checks and conversions
-    if(!is.matrix(S)) S <- rbind(S, deparse.level=0L) # guarantees that ncol() works
+    if(!is.matrix(S)) S <- rbind(S, deparse.level = 0L) # guarantees that ncol() works
     stopifnot(0 < alpha, alpha < 1, # check whether alpha is in (0,1)
               length(lambda) == ncol(S), lambda > 0) # check length and sign of lambda
     method <- match.arg(method) # match correct method if not fully provided
 
     ## Ingredients required for *all* methods
-    X <- apply(log(S), 2, diff) # compute risk-factor changes
+    X <- as.matrix(apply(log(S), 2, diff)) # compute risk-factor changes
     if(!length(X)) stop("'S' should have more than just one line") # check
-    S. <- as.numeric(tail(S, n=1)) # pick out last available stock prices ("today")
+    S. <- as.numeric(tail(S, n = 1)) # pick out last available stock prices ("today")
     w <- lambda * S. # weights w today
 
     ## Method switch (now consider the various methods)
@@ -122,18 +108,18 @@ risk_measure <- function(S, lambda, alpha,
            },
            "hist.sim" = { # historical simulation method
                ## Using nonparametrically estimated risk measures
-               L <- loss_operator(X, weights=w) # compute historical losses
+               L <- loss_operator(X, weights = w) # compute historical losses
                ## Nonparametrically estimate VaR and ES and return
                list(VaR = VaR_hat(L, alpha),
-                    ES =   ES_hat(L, alpha))
+                    ES  =  ES_hat(L, alpha))
            },
            "MC.N" = { # Monte Carlo based on a fitted multivariate normal
                stopifnot(hasArg(N)) # check if the number 'N' of MC replications has been provided (via '...')
                N <- list(...)$N # pick out N from '...'
                mu.hat <- colMeans(X) # estimate the mean vector mu
                Sigma.hat  <- var(X) # estimate the covariance matrix Sigma
-               X. <- rmvnorm(N, mean=mu.hat, sigma=Sigma.hat) # simulate risk-factor changes
-               L <- loss_operator(X., weights=w) # compute corresponding (simulated) losses
+               X. <- rmvnorm(N, mean = mu.hat, sigma = Sigma.hat) # simulate risk-factor changes
+               L <- loss_operator(X., weights = w) # compute corresponding (simulated) losses
                ## Compute VaR and ES and return
                list(VaR = VaR_hat(L, alpha), # nonparametrically estimate VaR
                     ES  =  ES_hat(L, alpha), # nonparametrically estimate ES
@@ -145,11 +131,11 @@ risk_measure <- function(S, lambda, alpha,
                stopifnot(hasArg(N)) # check if the number 'N' of MC replications has been provided (via '...')
                N <- list(...)$N # pick out N from '...'
                fit <- fit.mst(X, method = "BFGS") # fit a multivariate t distribution
-               X. <- rmvt(N, sigma=as.matrix(fit$Sigma), df=fit$df, delta=fit$mu) # simulate risk-factor changes
-               L <- loss_operator(X., weights=w) # compute corresponding (simulated) losses
+               X. <- rmvt(N, sigma = as.matrix(fit$Sigma), df = fit$df, delta = fit$mu) # simulate risk-factor changes
+               L <- loss_operator(X., weights = w) # compute corresponding (simulated) losses
                ## Compute VaR and ES and return
                list(VaR = VaR_hat(L, alpha), # nonparametrically estimate VaR
-                    ES =   ES_hat(L, alpha), # nonparametrically estimate ES
+                    ES  =  ES_hat(L, alpha), # nonparametrically estimate ES
                     ## Additional quantities returned here
                     mu    = fit$mu, # fitted location vector
                     sigma = fit$Sigma, # fitted dispersion matrix
@@ -158,9 +144,9 @@ risk_measure <- function(S, lambda, alpha,
            },
            "GPD" = { # simulate losses from a fitted Generalized Pareto distribution (GPD); this is underlying the peaks-over-threshold method
                stopifnot(hasArg(q)) # check if the quantile-threshold 'q' has been provided
-               L. <- loss_operator(X, weights=w) # historical losses
-               u <- quantile(L., probs=list(...)$q, names=FALSE) # determine the threshold as the q-quantile of the historical losses
-               fit <- fit.GPD(L., threshold=u) # fit a GPD to the excesses
+               L. <- loss_operator(X, weights = w) # historical losses
+               u <- quantile(L., probs = list(...)$q, names = FALSE) # determine the threshold as the q-quantile of the historical losses
+               fit <- fit.GPD(L., threshold = u) # fit a GPD to the excesses (note: fit.GPD() requires the losses)
                xi <- fit$par.ests[["xi"]] # fitted xi
                beta <- fit$par.ests[["beta"]] # fitted beta
                if(xi <= 0) stop("Risk measures only implemented for xi > 0.")
@@ -193,15 +179,15 @@ N <- 1e4 # Monte Carlo sample size
 
 ## Estimate VaR and ES with the various methods
 set.seed(271) # set a seed so that all simulation results are reproducible; see ?set.seed
-var.cov  <- risk_measure(S, lambda=lambda, alpha=alpha, method="Var.Cov")
-hist.sim <- risk_measure(S, lambda=lambda, alpha=alpha, method="hist.sim")
-MC.N     <- risk_measure(S, lambda=lambda, alpha=alpha, method="MC.N", N=N)
-GPD      <- risk_measure(S, lambda=lambda, alpha=alpha, method="GPD", N=N, q=0.9)
-MC.t     <- risk_measure(S, lambda=lambda, alpha=alpha, method="MC.t", N=N)
+var.cov  <- risk_measure(S, lambda = lambda, alpha = alpha, method = "Var.Cov")
+hist.sim <- risk_measure(S, lambda = lambda, alpha = alpha, method = "hist.sim")
+MC.N     <- risk_measure(S, lambda = lambda, alpha = alpha, method = "MC.N", N = N)
+GPD      <- risk_measure(S, lambda = lambda, alpha = alpha, method = "GPD", N = N, q = 0.9)
+MC.t     <- risk_measure(S, lambda = lambda, alpha = alpha, method = "MC.t", N = N)
 
 ## Pick out VaR and ES for all methods
-(rm <- rbind("Var.-cov."      = unlist(var.cov),
-             "MC (normal)"    = unlist(MC.N[c("VaR", "ES")]),
+(rm <- rbind("MC (normal)"    = unlist(MC.N[c("VaR", "ES")]),
+             "Var.-cov."      = unlist(var.cov),
              "Hist. sim."     = unlist(hist.sim),
              "GPD"            = unlist(GPD [c("VaR", "ES")]),
              "MC (Student t)" = unlist(MC.t[c("VaR", "ES")])))
@@ -213,50 +199,50 @@ MC.t     <- risk_measure(S, lambda=lambda, alpha=alpha, method="MC.t", N=N)
 excess <- GPD$excess # excesses over the threshold
 xi.hat <- GPD$xi # estimated xi
 beta.hat <- GPD$beta # estimated beta
-z <- pGPD(excess, xi=xi.hat, beta=beta.hat) # should be U[0,1]
-plot(z, ylab="Fitted GPD applied to the excesses") # looks fine
+z <- pGPD(excess, xi = xi.hat, beta = beta.hat) # should be U[0,1]
+plot(z, ylab = "Fitted GPD applied to the excesses") # looks fine
 
 ## We can also consider a (more sophisticated) Q-Q plot for this task.
-excess. <- sort(excess) # sorted data
-qF <- function(p) qGPD(p, xi=xi.hat, beta=beta.hat)
-qF. <- qF(ppoints(length(excess.))) # theoretical quantiles
-plot(qF., excess., xlab="Theoretical quantiles",
-     ylab="Sample quantiles", main=paste0("Q-Q plot for the fitted GPD(",
-     round(xi.hat, 2),", ",round(beta.hat, 2),") distribution"))
-qqline(y=excess., distribution=qF) # looks fine
+qq_plot(excess, FUN = function(p) qGPD(p, xi = xi.hat, beta = beta.hat),
+        main = paste0("Q-Q plot for the fitted GPD(", round(xi.hat, 2),", ",
+                      round(beta.hat, 2),") distribution")) # looks fine
 
 
 ### 4 Graphical analysis #######################################################
 
 ## Compute historical losses (for creating a histogram); see risk.measure()
-S. <- as.numeric(tail(S, n=1)) # pick out last available stock prices ("today")
+S. <- as.numeric(tail(S, n = 1)) # pick out last available stock prices ("today")
 w <- lambda * S. # weights w
-L <- loss_operator(X, weights=w) # historical losses
+L <- loss_operator(X, weights = w) # historical losses
 summary(L) # get important statistics about the losses
 
 ## Plot a histogram of the losses including the VaR and ES estimates
-hist(L, breaks="Scott", probability=TRUE, xlim=c(0, max(L, rm)), main="",
-     xlab=substitute("Losses L > 0 from"~sd~"to"~ed~"with"~
-                     widehat(VaR)[a]<=widehat(ES)[a],
-                     list(sd=start.date, ed=end.date, a=alpha)), col="gray90") # histogram
+hist(L, breaks = "Scott", probability = TRUE, xlim = c(0, max(L, rm)), main = "",
+     xlab = substitute("Losses L > 0 from"~sd~"to"~ed~"with"~
+                                         widehat(VaR)[a] <= widehat(ES)[a],
+                       list(sd = time[1], ed = time[2], a = alpha)), col = "gray90") # histogram
 box() # box around histogram
-lty <- c(3,1,2,4,5)
-lwd <- c(2.2,1,1.4,1,1.2)
-for(k in seq_len(nrow(rm))) abline(v=rm[k,], lty=lty[k], lwd=lwd[k]) # colored vertical lines indicating VaR and ES
-legend("topright", bty="n", inset=0.02, lty=lty, lwd=lwd, legend=rownames(rm),
-       title=as.expression(substitute(widehat(VaR)[a]<=widehat(ES)[a], list(a=alpha)))) # legend
+lty <- c(3, 2, 1, 4, 5)
+lwd <- c(1.2, 1.6, 1, 1.2, 1.2)
+cols <- c("maroon3", "black", "black", "royalblue3", "darkorange2")
+for(k in seq_len(nrow(rm))) abline(v = rm[k,], lty = lty[k], lwd = lwd[k],
+                                   col = cols[k]) # colored vertical lines indicating VaR and ES
+legend("topright", bty = "n", inset = 0.02, lty = lty, lwd = lwd,
+       col = cols, legend = rownames(rm),
+       title = as.expression(substitute(widehat(VaR)[a] <= widehat(ES)[a], list(a = alpha)))) # legend
 
 ## Results:
-## 1) The variance-covariance method and the Monte Carlo method based
-##    on a fitted multivariate normal distribution lead to similar results
-##    (they both assume multivariate normal distributed risk-factor changes).
-## 2) The historical simulation method, however, implies that the loss
-##    distribution is more heavy-tailed. This is captured quite well by the
-##    risk measure estimates based on the Monte Carlo method for multivariate t
-##    distributed risk-factor changes (degrees of freedom are MC.t$df ~= 3.02);
-## 3) Also the GPD-based EVT approach leads results comparable to the Monte Carlo
-##    method based on a fitted t distribution and the historical simulation method.
-## It's overall reassuring that several methods (historical simulation,
-## MC (Student t) and GPD-based EVT approach) lead to similar results. Somewhere
-## in this range, upper management can then determine an adequate amount of
-## risk capital.
+## - The Monte Carlo method based on a fitted multivariate normal distribution
+##   and the variance-covariance method lead to similar results
+##   (they both assume multivariate normal distributed risk-factor changes),
+##   both underestimating VaR and ES in comparison to the historical simulation
+##   method.
+## - The historical simulation method, however, implies that the loss
+##   distribution is more heavy-tailed. This is captured quite well by
+##   GPD-based method and (possibly too well by) the Monte Carlo method for
+##   multivariate t distributed risk-factor changes
+##   (degrees of freedom are MC.t$df ~= 2.4).
+## - It's overall reassuring that several methods (historical simulation,
+##   GPD-based EVT approach and -- with slight departure for ES --
+##   MC for a Student t) lead to similar results. Somewhere in this range,
+##   upper management can then determine an adequate amount of risk capital.

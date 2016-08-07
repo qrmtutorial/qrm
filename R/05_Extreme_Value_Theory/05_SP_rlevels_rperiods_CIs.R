@@ -1,8 +1,10 @@
+# by Alexander McNeil
+
 # This script should be run immediately after the script 05_SP_block_maxima.R
 # It calculates confidence intervals by the profile likelihood method
 
 # The objects fit.a, fit.b and the
-##### for CIs 
+##### for CIs
 alpha <- 0.05
 ##############
 

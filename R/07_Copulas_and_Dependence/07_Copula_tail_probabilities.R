@@ -5,7 +5,7 @@
 
 ### 0 Setup ####################################################################
 
-require(copula)
+library(copula)
 
 set.seed(271) # due to the Monte Carlo (MC) error for evaluating Ga/t copulas
 
