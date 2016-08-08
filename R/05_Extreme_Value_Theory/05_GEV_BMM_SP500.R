@@ -70,8 +70,8 @@ stopifnot(all.equal(log(x), -X[date == "1987-10-19"])) # log-return; ~= -0.2290
 X. <- X["1960-01-01" <= date & date <= "1987-10-16"]
 
 ## Plot the S&P 500 log-returns
-plot(X., main = "S&P 500 risk-factor changes (-log-returns)",
-     xlab = "Time t", ylab = expression(X[t] == -log(S[t]/S[t-1])))
+plot.zoo(X., main = "S&P 500 risk-factor changes (-log-returns)",
+         xlab = "Time t", ylab = expression(X[t] == -log(S[t]/S[t-1])))
 
 
 ### 2 Block Maxima Method (BMM) and fitting the GEV ############################

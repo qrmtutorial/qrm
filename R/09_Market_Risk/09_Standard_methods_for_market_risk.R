@@ -8,7 +8,7 @@
 
 library(mvtnorm) # for sampling from a multivariate t distribution
 library(QRM) # for fit.mst(), fit.GPD()
-library(xts) # for working with xts objects
+library(xts) # for na.fill()
 library(qrmdata) # for the data
 library(qrmtools) # for the data analysis
 
@@ -30,14 +30,14 @@ S <- na.fill(S, fill = "extend") # fill NAs (see also NA_plot(S))
 colnames(S) <- c("BMW", "SIE")
 
 ## Use scatter plots of each time series to check if anything is 'suspicious'
-plot(S[,"BMW"], main = "BMW stock data",
-     xlab = "Date t", ylab = expression(Stock~price~S[t]))
-plot(S[,"SIE"], main = "SIEMENS stock data",
-     xlab = "Date t", ylab = expression(Stock~price~S[t]))
+plot.zoo(S[,"BMW"], main = "BMW stock data",
+         xlab = "Date t", ylab = expression(Stock~price~S[t]))
+plot.zoo(S[,"SIE"], main = "SIEMENS stock data",
+         xlab = "Date t", ylab = expression(Stock~price~S[t]))
 
 ## Compute the risk-factor changes and plot them (here: against each other)
-ran <- range(X <- as.matrix(log_returns(S))) # compute log-returns and range (sign-adjustment below)
-plot(X, xlim = ran, ylim = ran, main = "Risk-factor changes", cex = 0.2)
+X <- as.matrix(log_returns(S)) # compute log-returns and range (sign-adjustment below)
+plot(X, cex = 0.4)
 
 
 ### 2 Implement (and document) some auxiliary functions ########################
@@ -245,4 +245,4 @@ legend("topright", bty = "n", inset = 0.02, lty = lty, lwd = lwd,
 ## - It's overall reassuring that several methods (historical simulation,
 ##   GPD-based EVT approach and -- with slight departure for ES --
 ##   MC for a Student t) lead to similar results. Somewhere in this range,
-##   upper management can then determine an adequate amount of risk capital.
+##   one can then determine an adequate amount of risk capital.
