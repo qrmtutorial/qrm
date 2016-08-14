@@ -50,20 +50,6 @@ plot(X, cex = 0.4)
 loss_operator <- function(x, weights)
     -rowSums(expm1(x) * matrix(weights, nrow = nrow(x), ncol = length(weights), byrow = TRUE))
 
-##' @title Non-parametric VaR estimator
-##' @param L Losses
-##' @param alpha Confidence level
-##' @return Non-parametric estimate of VaR at level alpha
-##' @author Marius Hofert
-VaR_hat <- function(L, alpha) quantile(L, probs = alpha, names = FALSE)
-
-##' @title Non-parametric ES estimator
-##' @param L Losses
-##' @param alpha Confidence level
-##' @return Non-parametric estimate of ES at level alpha
-##' @author Marius Hofert
-ES_hat  <- function(L, alpha) mean(L[L > VaR_hat(L, alpha = alpha)])
-
 ##' @title Estimate VaR and ES
 ##' @param S Stock data, an (n, d)-matrix
 ##' @param lambda Number of shares of each stock
@@ -110,8 +96,8 @@ risk_measure <- function(S, lambda, alpha,
                ## Using nonparametrically estimated risk measures
                L <- loss_operator(X, weights = w) # compute historical losses
                ## Nonparametrically estimate VaR and ES and return
-               list(VaR = VaR_hat(L, alpha),
-                    ES  =  ES_hat(L, alpha))
+               list(VaR = VaR_np(L, alpha),
+                    ES  =  ES_np(L, alpha))
            },
            "MC.N" = { # Monte Carlo based on a fitted multivariate normal
                stopifnot(hasArg(N)) # check if the number 'N' of MC replications has been provided (via '...')
@@ -121,8 +107,8 @@ risk_measure <- function(S, lambda, alpha,
                X. <- rmvnorm(N, mean = mu.hat, sigma = Sigma.hat) # simulate risk-factor changes
                L <- loss_operator(X., weights = w) # compute corresponding (simulated) losses
                ## Compute VaR and ES and return
-               list(VaR = VaR_hat(L, alpha), # nonparametrically estimate VaR
-                    ES  =  ES_hat(L, alpha), # nonparametrically estimate ES
+               list(VaR = VaR_np(L, alpha), # nonparametrically estimate VaR
+                    ES  =  ES_np(L, alpha), # nonparametrically estimate ES
                     ## Additional quantities returned here
                     mu    = mu.hat, # fitted mean vector
                     Sigma = Sigma.hat) # fitted covariance matrix
@@ -134,8 +120,8 @@ risk_measure <- function(S, lambda, alpha,
                X. <- rmvt(N, sigma = as.matrix(fit$Sigma), df = fit$df, delta = fit$mu) # simulate risk-factor changes
                L <- loss_operator(X., weights = w) # compute corresponding (simulated) losses
                ## Compute VaR and ES and return
-               list(VaR = VaR_hat(L, alpha), # nonparametrically estimate VaR
-                    ES  =  ES_hat(L, alpha), # nonparametrically estimate ES
+               list(VaR = VaR_np(L, alpha), # nonparametrically estimate VaR
+                    ES  =  ES_np(L, alpha), # nonparametrically estimate ES
                     ## Additional quantities returned here
                     mu    = fit$mu, # fitted location vector
                     sigma = fit$Sigma, # fitted dispersion matrix

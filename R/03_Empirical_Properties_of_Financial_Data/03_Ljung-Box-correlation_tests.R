@@ -1,7 +1,7 @@
 # By Alexander McNeil
 
-require(xts)
-require(qrmdata)
+library(xts)
+library(qrmdata)
 
 data("DJ_const")
 # We extract a time period and take 29 of 30 DJ stocks
@@ -26,7 +26,7 @@ round(cbind(LBraw.d,LBabs.d,LBraw.m,LBabs.m),2)
 # This section gives exactly the Ljung-Box tests in the book
 # It user older DJ data in the QRM library
 
-require(QRM)
+library(QRM)
 
 DJold <- as.xts(DJ)
 DJold.X <- diff(log(DJold))[-1,]

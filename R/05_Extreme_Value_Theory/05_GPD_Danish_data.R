@@ -1,46 +1,53 @@
-## by Alexander McNeil
+## By Alexander McNeil and Marius Hofert
 
-require(QRM)
 
+### Setup ######################################################################
+
+library(QRM)
+
+
+### EVT related plots ##########################################################
+
+## Sample mean excess plot
 plot(danish)
-MEplot(danish)
-abline(v=10)
-abline(v=20)
+MEplot(danish) # sample mean excess plot
+u10 <- 10 # threshold 1
+u20 <- 20 # threshold 2
+abline(v = u10)
+abline(v = u20)
 
-# Digression: a little comparison of mean excess plots
-data1 <- abs(rt(5000,df=4))
-MEplot(data1)
-data2 <- rexp(5000)
-data3 <- abs(rnorm(5000))
-MEplot(data2)
-MEplot(data3)
-data4 <- runif(5000)
-MEplot(data4)
+## Fit GPD model
+str(fit.GPD)
+(mod.u10 <- fit.GPD(danish, threshold = u10))
 
-# Fit GPD model above 10
-?fit.GPD
-mod1 <- fit.GPD(danish,threshold=10)
-mod1
-plotFittedGPDvsEmpiricalExcesses(danish, threshold = 10)
+## Risk measure estimates
+(RM.u10 <- RiskMeasures(mod.u10, c(0.99, 0.995)))
 
-RMs1 <- RiskMeasures(mod1, c(0.99,0.995))
-RMs1
-plotTail(mod1)
-showRM(mod1, alpha = 0.99, RM = "VaR", method = "BFGS")
-abline(h=0.01)
-showRM(mod1, alpha = 0.99, RM = "ES", method = "BFGS")
+## Plot the sample excess df and the theoretical excess df (GPD)
+plotFittedGPDvsEmpiricalExcesses(danish, threshold = u10) # hat{F}_{u,n}(x-u) vs G_{hat{xi},hat{beta}}(x-u)
 
-# Effect of changing threshold on xi
-xiplot(danish)
+## Semi-parametric Smith/tail estimator and implied risk measures
+plotTail(mod.u10, main = "Semi-parametric Smith/tail estimator") # hat(bar(F))(x), x >= u
+showRM(mod.u10, alpha = 0.99, RM = "VaR", method = "BFGS") # with VaR estimate and CIs
+showRM(mod.u10, alpha = 0.99, RM = "ES",  method = "BFGS") # with ES estimate and CIs
 
-# Fit GPD model above 20
-mod2 <- fit.GPD(danish,threshold=20)
-mod2
-plotFittedGPDvsEmpiricalExcesses(danish, threshold = 20)
+## Effect of changing the threshold on xi
+xiplot(danish) # => variance increases for larger thresholds
 
-RMs2 <- RiskMeasures(mod2, c(0.99,0.995))
-RMs2
-plotTail(mod2)
-showRM(mod2, alpha = 0.99, RM = "VaR", method = "BFGS")
 
+### 2nd threshold analysis #####################################################
+
+## Fit GPD model
+(mod.u20 <- fit.GPD(danish, threshold = u20))
+
+## Risk measure estimates
+(RM.u20 <- RiskMeasures(mod.u20, c(0.99, 0.995)))
+
+## Plot the sample excess df and the theoretical excess df (GPD)
+plotFittedGPDvsEmpiricalExcesses(danish, threshold = u20)
+
+## Semi-parametric Smith/tail estimator and implied risk measures
+plotTail(mod.u20, main = "Semi-parametric Smith/tail estimator") # hat(bar(F))(x), x >= u
+showRM(mod.u20, alpha = 0.99, RM = "VaR", method = "BFGS") # with VaR estimate and CIs
+showRM(mod.u20, alpha = 0.99, RM = "ES",  method = "BFGS") # with ES estimate and CIs
 

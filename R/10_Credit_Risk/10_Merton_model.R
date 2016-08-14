@@ -23,10 +23,8 @@ for (i in 1:npaths)
 
 ## plot paths
 
-def.par <- par(no.readonly = TRUE)
-
 times <- (1:(N+1))/(N+1)
-par(mar=c(3,3,2,1),mgp=c(2,1,0))
+opar <- par(mar = c(3,3,2,1), mgp = c(2,1,0))
 plot(times,paths[,1],type="l",xlab="t",ylab=expression(V[t]),ylim=range(paths))
 for (i in 1:npaths){
 	lines(times,paths[,i],col=sample(1:20,1))

@@ -1,0 +1,12 @@
+### R scripts for Chapter 8
+
+08_RA.R
+   Presenting a basic implementation of the RA and the more sophisticated RA(),
+   ARA() plus the underlying rearrange()
+08_Visual_intuition_RA.R
+   Visually explaining the intuition behind the (Adaptive) Rearrangement Algorithm ((A)RA)
+
+
+### Additional files
+
+DNBdata.RData

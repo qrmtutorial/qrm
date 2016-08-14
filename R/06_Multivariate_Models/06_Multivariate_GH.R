@@ -9,23 +9,23 @@ library(ghyp)
 data("DJ_const")
 Sdata <- DJ_const['2000-01-01/',1:10]
 Xdata <- diff(log(Sdata))[-1,]
-Xdata.w <- apply.weekly(Xdata,FUN=colSums) # weekly data
+Xdata.w <- apply.weekly(Xdata, FUN = colSums) # weekly data
 plot.zoo(Xdata.w)
 
 ## Fit elliptical models
-mod.NIG.sym <- fit.NIGmv(Xdata.w,symmetric=TRUE, nit = 10000)
+mod.NIG.sym <- fit.NIGmv(Xdata.w, symmetric = TRUE, nit = 10000)
 summary(mod.NIG.sym)
-mod.T.sym <- fit.tmv(Xdata.w,symmetric=TRUE, nit = 10000)
+mod.T.sym <- fit.tmv(Xdata.w, symmetric = TRUE, nit = 10000)
 summary(mod.T.sym)
-mod.GHYP.sym <- fit.ghypmv(Xdata.w,symmetric=TRUE, nit = 10000)
+mod.GHYP.sym <- fit.ghypmv(Xdata.w, symmetric = TRUE, nit = 10000)
 summary(mod.GHYP.sym)
 
 ## Fit skewed models
-mod.NIG.skew <- fit.NIGmv(Xdata.w,symmetric=FALSE, nit = 10000)
+mod.NIG.skew <- fit.NIGmv(Xdata.w, symmetric = FALSE, nit = 10000)
 summary(mod.NIG.skew)
-mod.T.skew <- fit.tmv(Xdata.w,symmetric=FALSE, nit = 10000)
+mod.T.skew <- fit.tmv(Xdata.w, symmetric = FALSE, nit = 10000)
 summary(mod.T.skew)
-mod.GHYP.skew <- fit.ghypmv(Xdata.w,symmetric=FALSE, nit = 10000)
+mod.GHYP.skew <- fit.ghypmv(Xdata.w, symmetric = FALSE, nit = 10000)
 summary(mod.GHYP.skew)
 
 mod.NIG.sym@llh
@@ -57,13 +57,15 @@ mod.GHYP.skew@gamma
 
 ## Make picture of two returns
 Xdata <-  Xdata.w[,c(5,8)]
-plot(as.numeric(Xdata[,1]),as.numeric(Xdata[,2]),xlab=names(Xdata)[1],ylab=names(Xdata)[2])
-mod <- fit.ghypmv(Xdata,symmetric=FALSE, nit = 10000)
+plot(as.numeric(Xdata[,1]), as.numeric(Xdata[,2]),
+     xlab = names(Xdata)[1], ylab = names(Xdata)[2])
+mod <- fit.ghypmv(Xdata, symmetric = FALSE, nit = 10000)
 summary(mod)
-xvals <- seq(from=min(Xdata[,1]),to=max(Xdata[,2]),length=50)
-yvals <- seq(from=min(Xdata[,2]),to=max(Xdata[,2]),length=50)
-outer.func <- function(x,y){dghyp(cbind(x,y),mod)}
-zvals <- outer(xvals,yvals,outer.func)
+xvals <- seq(from = min(Xdata[,1]), to = max(Xdata[,2]), length.out = 50)
+yvals <- seq(from = min(Xdata[,2]), to = max(Xdata[,2]), length.out = 50)
+outer.func <- function(x,y) dghyp(cbind(x,y), mod)
+zvals <- outer(xvals, yvals, outer.func)
 zvals.un <- unique(as.numeric(zvals))
-contour(xvals,yvals,zvals,add=TRUE,col=2,levels=seq(from=quantile(zvals.un,0.6),to=quantile(zvals.un,0.9),length=10))
+contour(xvals, yvals, zvals, add = TRUE, col = 2,
+        levels = seq(from = quantile(zvals.un,0.6), to = quantile(zvals.un,0.9), length = 10))
 

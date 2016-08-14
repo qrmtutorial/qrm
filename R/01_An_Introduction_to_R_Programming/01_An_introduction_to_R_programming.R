@@ -2,12 +2,78 @@
 
 ## Introductory R script and playground for learning R
 
-## Note:
-## - Appendix A of the manual "An Introduction to R" on
-##   http://cran.r-project.org/manuals.html contains another R script which
-##   you can work through
-## - There are several 'good practices' mentioned on
-##   http://www.math.uwaterloo.ca/~mhofert/contents/guidelines.pdf
+
+### Comments ###################################################################
+
+## Q: Why R?
+## A: - R is a free programming language (based on S)
+##    - Computations (mostly: statistical, data handling)
+##    - Graphics
+##    - High(er) level (optimization, run time measurement, debugging,
+##      parallel computing etc.)
+##    - Packages
+
+## Q: Where to find R?
+## A: - Main site: https://www.r-project.org/
+##    - CRAN: https://cran.r-project.org/
+##      + Task Views (=> Finance -> rugarch; => Multivariate -> copula)
+##      + Packages (~ 9000; => qrmtools: 'Published', 'Reference manual',
+##        'Vignettes', 'Package source')
+##      + Manuals ("An Introduction to R", "Writing R Extensions")
+##      + FAQ
+
+## Q: Where to find help?
+## A: Externally (outside R):
+##    - See R FAQ 2.7 http://cran.r-project.org/doc/FAQ/R-FAQ.html#What-documentation-exists-for-R_003f
+##    - Manuals and task views (see above)
+##    - Google ('r-help') or http://finzi.psych.upenn.edu/
+##    - R mailing lists; see https://stat.ethz.ch/mailman/listinfo/r-help or http://tolstoy.newcastle.edu.au/R/
+##    - Stackoverflow (tag 'R'); see http://stackoverflow.com/questions/tagged/r
+##    - R graph gallery; see http://www.r-graph-gallery.com/
+##    - R blog; see http://www.r-bloggers.com/
+##    Internally (from within R)
+##    - help.start() -> Search Engine & Keywords
+##    - '?' or 'help("[[")' for specific functions (e.g., ?uniroot)
+##      => Study the examples on the help files!
+##    - Look at the source code
+##
+
+## Q: How can I work with R?
+## A: - RStudio; see http://www.rstudio.com/
+##      (or R-GUI, Tinn-R (on Windows))
+##    - Emacs + ESS
+##    Idea: Write an R script (.R file) containing the source code and execute
+##          it line by line (paragraph by paragraph etc.) or the whole script
+##          at once (if in batch mode).
+
+## Q: How to install (the latest version of) 'qrmtools'?
+## A: - From CRAN:
+##      install.packages("qrmtools")
+##    - From R-Forge (latest version; most up-to-date):
+##      install.packages("qrmtools", repos = "http://R-Forge.R-project.org")
+
+## Q: Where to find these R scripts?
+## A: On http://qrmtutorial.org/r-code -> Link "complete GitHub repository"
+##    => https://github.com/qrmtutorial/qrm -> 'Clone or download'
+
+## Q: What to watch out for when programming?
+## A: - Design errors (code correct, but model wrong)
+##    - Theoretical challenges (e.g., curse of dimensionality; computing
+##      P(a < X <= b) in high dimensions)
+##    - Programming language related issues
+##    - Syntactic errors (code does not run; easily detected; useful tools:
+##      traceback(), debug() or browser())
+##    - Semantic errors (code correct, but does not what expected;
+##      test your code, use plots!)
+##    - Numerical errors (often undetected)
+##    - Measure run time (can be a way of detecting a flaw)
+##    - Warnings (are useful, e.g., if the optimum in an optimization procedure
+##      has not been reached)
+##    - Scaling (use parallel's mclappy() and parLapply() for multi-core and
+##      multi-node computations)
+
+## Note: The code below is a medley of Appendix A of the manual
+##       "An Introduction to R" on http://cran.r-project.org/manuals.html
 
 
 ### Simple manipulations; numbers and vectors ##################################

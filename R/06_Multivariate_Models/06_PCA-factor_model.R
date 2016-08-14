@@ -16,31 +16,34 @@ library(qrmtools) # for plot_NA() and plot_matrix()
 ## Index
 data(DJ) # index data
 DJ. <- DJ['1990-01-01/'] # all since 1990
-plot.zoo(DJ., xlab="Time t", ylab="Dow Jones Index")
+plot.zoo(DJ., xlab = "Time t", ylab = "Dow Jones Index")
 ## Constituents
 data(DJ_const) # constituents data
 DJ.const <- DJ_const['1990-01-01/',] # all since 1990
 plot_NA(DJ.const) # => use all but the two columns with lots of NAs
 DJ.const <- DJ.const[, colSums(is.na(DJ.const)) <= 0.1 * nrow(DJ.const)] # omit columns with more than 10% NA
-DJ.const <- na.fill(DJ.const, fill="extend") # fill the remaining NAs
-plot.zoo(DJ.const, xlab="Time t", main="Dow Jones Constituents")
+DJ.const <- na.fill(DJ.const, fill = "extend") # fill the remaining NAs
+plot.zoo(DJ.const, xlab = "Time t", main = "Dow Jones Constituents")
 
 ## Build and plot log-returns
 ## Index
 X. <- diff(log(DJ.))[-1,] # compute -log-returns
-plot.zoo(X., xlab="Time t", ylab=expression(X[t]), main="Risk-factor changes (log-returns) of Dow Jones index")
+plot.zoo(X., xlab = "Time t", ylab = expression(X[t]),
+         main = "Risk-factor changes (log-returns) of Dow Jones index")
 ## Constituents
 X.const <- diff(log(DJ.const))[-1,] # compute -log-returns
 if(FALSE) # more time-consuming
-    pairs(as.matrix(X.const), gap=0, pch=".",
-          main="Scatter plot matrix of risk-factor changes (log-returns) of Dow Jones constituents")
-plot.zoo(X.const, xlab="Time t", main="Risk-factor changes (log-returns) of Dow Jones constituents")
+    pairs(as.matrix(X.const), gap = 0, pch = ".",
+          main = "Scatter plot matrix of risk-factor changes (log-returns) of Dow Jones constituents")
+plot.zoo(X.const, xlab = "Time t", main = "Risk-factor changes (log-returns) of Dow Jones constituents")
 
 ## We use monthly data here as basis (and compute monthly log-returns)
-X <- apply.monthly(X.const, FUN=colSums) # (312, 28)-matrix
-plot.zoo(X, type="h", xlab="Time t", main="Monthly risk-factor changes (log-returns) of Dow Jones constituents")
-F <- apply.monthly(X., FUN=colSums)
-plot(F, type="h", xlab="Time t", ylab=expression(X[t]), main="Monthly risk-factor changes (log-returns) of Dow Jones index")
+X <- apply.monthly(X.const, FUN = colSums) # (312, 28)-matrix
+plot.zoo(X, type = "h", xlab = "Time t",
+         main = "Monthly risk-factor changes (log-returns) of Dow Jones constituents")
+F <- apply.monthly(X., FUN = colSums)
+plot(F, type = "h", xlab = "Time t", ylab = expression(X[t]),
+     main = "Monthly risk-factor changes (log-returns) of Dow Jones index")
 
 
 ### 2 Model fitting ############################################################
@@ -57,8 +60,8 @@ mu <- PCA$center # estimated centers
 Y <- PCA$scores # estimated principal components of X
 nprin <- 3 # number of important principal components
 Y1 <- xts(Y[,1:nprin], time(X)) # grab out the first so-many important principal components of X
-plot.zoo(Y1, type="h", xlab="Time", ylab=paste("Component", 1:nprin),
-         main="Principal components of X")
+plot.zoo(Y1, type = "h", xlab = "Time", ylab = paste("Component", 1:nprin),
+         main = "Principal components of X")
 cor(Y1)
 Y2 <- Y[,(nprin+1):ncol(Y)] # ignored principal components of X
 
@@ -71,7 +74,7 @@ eps <- G2 %*% t(Y2)
 summary(cov.eps[row(cov.eps) != col(cov.eps)]) # => not perfectly diagonal
 X. <- t(mu + G1 %*% t(Y1) + G2 %*% t(Y2))
 err <- X.-X
-plot_matrix(err, scales=NULL, at=seq(-1, 1, length.out=200)) # => vary close
+plot_matrix(err, scales = NULL, at = seq(-1, 1, length.out = 200)) # => vary close
 summary(as.vector(err))
 ## Note: We could fit a univariate GARCH model to each PCA factor.
 ##       This is called PC-GARCH model.

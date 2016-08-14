@@ -8,7 +8,7 @@
 
 ### Generate the data ##########################################################
 
-require(qrmtools)
+library(qrmtools)
 
 ## Data from a Par(theta) distribution
 n <- 50000 # sample size = number of i.i.d. random variables
@@ -104,7 +104,7 @@ qq_plot(M, FUN = function(p) qGEV(p, xi = 1/th, mu = 1, sigma = 1/th),
 
 ## Determine excesses
 u <- quantile(X, 0.9) # use the 90% quantile (rule of thumb)
-Y <- X[X>u]-u # excesses over u
+Y <- X[X>u] - u # excesses over u
 
 ## Histogram (note: true density peaks near 0)
 dens <- density(Y) # density estimate

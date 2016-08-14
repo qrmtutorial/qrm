@@ -48,92 +48,16 @@
 
 ### Setup ######################################################################
 
+library(qrmtools)
+
 n <- 2500 # sample size (~= 10y of daily data)
 B <- 1000 # number of bootstrap replications (= number or realizations of VaR, ES)
-th <- 2 # parameter of the true underlying Pareto distribution
+th <- 2 # Pareto parameter (true underlying distribution)
 
 
 ### 1 Auxiliary functions ######################################################
 
-##' @title Quantile Function of F(x) = 1-(1+x)^{-theta}
-##' @param p The probability (in [0,1])
-##' @param theta The Pareto distribution parameter
-##' @return The p-quantile of the Pareto distribution with parameter theta
-##' @author Marius Hofert
-qPar <- function(p, theta)
-{
-    stopifnot(0 <= p, p <= 1, theta > 0)
-    (1-p)^(-1/theta) - 1
-}
-
-##' @title Valut-at-Risk for a Par(theta) Distribution
-##' @param alpha The confidence level
-##' @param theta The Pareto parameter
-##' @return The theoretical value of VaR_alpha(L)
-##' @author Marius Hofert
-VaR_Par <- function(alpha, theta)
-{
-    stopifnot(0 <= alpha, alpha <= 1, theta > 0)
-    qPar(alpha, theta)
-}
-
-##' @title Expected Shortfall for a Par(theta) Distribution
-##' @param alpha The confidence level
-##' @param theta The Pareto parameter
-##' @return The theoretical value of ES_alpha(L)
-##' @author Marius Hofert
-ES_Par <- function(alpha, theta)
-{
-    stopifnot(0 <= alpha, alpha <= 1, theta > 1)
-    (theta / (theta-1)) * (1-alpha)^(-1/theta) - 1
-}
-
-##' @title Nonparametric VaR Estimator
-##' @param x The vector of losses
-##' @param alpha The confidence level
-##' @param type The 'type' used (1 = inverse of empirical df)
-##' @return Nonparametric VaR_alpha estimate
-##' @author Marius Hofert
-##' @note We use type = 1 here as for sufficiently large alpha, type = 7
-##'       (quantile()'s default) would interpolate between the two largest
-##'       losses (to be continuous) and thus return a(n even) smaller
-##'       VaR_alpha estimate.
-VaR <- function(x, alpha, type = 1)
-    quantile(x, probs = alpha, names = FALSE, type = type) # vectorized in x and alpha
-
-##' @title Nonparametric Expected Shortfall Estimator
-##' @param x The vector of losses
-##' @param alpha The confidence level
-##' @param method The method. One of:
-##'        ">" : Mathematically correct for discrete dfs, but
-##'              produces NaN for alpha > (n-1)/n (=> F^-(alpha) = x_{(n)} but
-##'              there is no loss strictly beyond x_{(n)})
-##'        ">=": mean() will always include the largest loss (so no NaN appears),
-##'              but might be computed just based on this one loss.
-##' @param ... Additional arguments passed to quantile()
-##' @return Nonparametric ES_alpha estimate (derived under the assumption of continuity)
-##' @author Marius Hofert
-##' @note Vectorized in x and alpha
-ES <- function(x, alpha, method = c(">", ">="), ...)
-{
-    stopifnot(0 < alpha, alpha < 1)
-    method <- match.arg(method)
-    VaR <- VaR(x, alpha = alpha, ...) # length(alpha)-vector
-    vapply(VaR, function(v) { # v = VaR value for one alpha
-        ind <- if(method == ">") x > v else x >= v
-        num <- sum(ind)
-        if(num == 0) {
-            warning("No loss ",method," VaR; NaN returned instead")
-        } else if(num == 1){
-            warning("Only ",num," loss ",method," VaR")
-        } else if(num <= 5) {
-            warning("Only ",num," losses ",method," VaR")
-        }
-        mean(x[ind]) # mean over all losses >(=) VaR
-    }, NA_real_)
-}
-
-##' @title Empirically Estimate Confidence Intervals (default: 95%)
+##' @title Empirically estimate confidence intervals (default: 95%)
 ##' @param x The values
 ##' @param beta The significance level
 ##' @return Estimated (lower, upper) beta confidence interval
@@ -141,7 +65,7 @@ ES <- function(x, alpha, method = c(">", ">="), ...)
 CI <- function(x, beta = 0.05, na.rm = FALSE)
     quantile(x, probs = c(beta/2, 1-beta/2), na.rm = na.rm, names = FALSE)
 
-##' @title Bootstrap the Nonparametric VaR or ES Estimator for all alpha
+##' @title Bootstrap the nonparametric VaR or ES estimator for all alpha
 ##' @param x The vector of losses
 ##' @param B The number of bootstrap replications
 ##' @param alpha The confidence level
@@ -155,7 +79,11 @@ bootstrap <- function(x, B, alpha, method = c("VaR", "ES"))
 {
     stopifnot(is.vector(x), (n <- length(x)) >= 1, B >= 1) # sanity checks
     method <- match.arg(method) # check and match 'method'
-    rm <- if(method == "VaR") VaR else ES # risk measure
+    rm <- if(method == "VaR") { # risk measure
+        VaR_np
+    } else {
+        function(x, alpha) ES_np(x, alpha = alpha, verbose = TRUE)
+    }
     x.boot <- matrix(sample(x, size = n*B, replace = TRUE), ncol = B) # (n, B)-matrix of bootstrap samples
     apply(x.boot, 2, rm, alpha = alpha) # (length(alpha), B)-matrix
 }
@@ -172,8 +100,8 @@ L <- qPar(runif(n), theta = th) # simulate losses with the 'inversion method'
 ### 2.1 Nonparametric estimates of VaR_alpha and ES_alpha for a fixed alpha ####
 
 alpha <- 0.99
-(VaR. <- VaR(L, alpha = alpha))
-(ES.  <-  ES(L, alpha = alpha))
+(VaR. <- VaR_np(L, alpha = alpha))
+(ES.  <-  ES_np(L, alpha = alpha, verbose = TRUE))
 ## ... but single numbers don't tell us much
 ## More interesting: The behavior in alpha
 
@@ -183,8 +111,8 @@ alpha <- 0.99
 ## Compute the nonparametric VaR_alpha and ES_alpha estimators as functions of alpha
 alpha <- 1-1/10^seq(0.5, 5, by = 0.05) # alphas we investigate (concentrated near 1)
 stopifnot(0 < alpha, alpha < 1)
-VaR. <- VaR(L, alpha = alpha) # estimate VaR_alpha for all alpha
-ES.  <-  ES(L, alpha = alpha) # estimate  ES_alpha for all alpha
+VaR. <- VaR_np(L, alpha = alpha) # estimate VaR_alpha for all alpha
+ES.  <-  ES_np(L, alpha = alpha, verbose = TRUE) # estimate  ES_alpha for all alpha
 warnings()
 
 ## True values (known here)
@@ -291,7 +219,7 @@ warnings()
 isNaN <- is.nan(ES.boot) # => contains some NaN
 image(x = alpha, y = seq_len(B), z = isNaN, col = c("white", "black"),
       xlab = expression(alpha), ylab = "Bootstrap replication")
-mtext("Black: NaN; White: OK", side=4, line=1, adj=0)
+mtext("Black: NaN; White: OK", side = 4, line = 1, adj = 0)
 
 ## Plot % of NaN
 percNaN <- 100 * apply(isNaN, 1, mean) # % of NaNs for all alpha
@@ -356,6 +284,7 @@ legend("bottomleft", bty = "n", lwd = c(1, rep(c(2, 1, 1.4, 1), 2)),
                   expression("Bootstrapped"~~widehat(ES)[alpha]),
                   expression("Bootstrapped"~~Var(widehat(ES)[alpha])),
                   "Bootstrapped 95% CIs"))
+
 ## Results:
 ## - hat(VaR)_alpha < hat(ES)_alpha (clear)
 ## - hat(ES)_alpha (and bootstrapped quantities) are not available for large alpha

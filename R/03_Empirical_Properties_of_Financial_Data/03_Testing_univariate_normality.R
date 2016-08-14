@@ -85,7 +85,7 @@ qq_plot(X.t, FUN = function(p) qnorm(p, mean = mu.t, sd = sig.t))
 
 ## Prepare risk factor data
 data(DJ_const) # constituents data
-margin <- c("KO","MSFT","INTC","DIS") # margins considered
+margin <- c("KO", "MSFT", "INTC", "DIS") # margins considered
 DJ.const <- DJ_const['1993-01-01/2000-12-31', margin]
 X <- -log_returns(DJ.const) # compute -log-returns; daily risk-factor changes
 X. <- list(daily = X, # daily risk-factor changes
@@ -100,7 +100,7 @@ pvals <- sapply(X., function(x) apply(x, 2, function(data) jarque.test(data)$p.v
 
 ## Q-Q plots
 time <- c("daily", "weekly", "monthly", "quarterly")
-par(ask = TRUE) # ask after each plot
+opar <- par(ask = TRUE) # ask after each plot
 for(j in seq_len(ncol(X))) { # for all margins, do...
     for(k in seq_along(time)) { # for daily, weekly, monthly and quarterly data, do...
         qq_plot(X.[[k]][,j], FUN = function(p)
@@ -109,7 +109,7 @@ for(j in seq_len(ncol(X))) { # for all margins, do...
         mtext(paste("p-value:", round(pvals[j,k], 4)), side = 4, line = 1, adj = 0)
     }
 }
-par(ask = FALSE)
+par(opar)
 
 
 ### 4 Simulation ###############################################################
