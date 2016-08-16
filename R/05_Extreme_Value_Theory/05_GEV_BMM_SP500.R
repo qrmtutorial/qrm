@@ -116,7 +116,7 @@ qGEV(1-1/50, xi = xi.year, mu = mu.year, sigma = sig.year) # r_{n=260, k=50} ~= 
 ## 20-half-year and 100-half-year return levels
 qGEV(1-1/20,  xi = xi.hyear, mu = mu.hyear, sigma = sig.hyear) # r_{n=130, k=20}  ~= 4.56%; n ~ 1/2y
 qGEV(1-1/100, xi = xi.hyear, mu = mu.hyear, sigma = sig.hyear) # r_{n=130, k=100} ~= 7.90%
-## => Close to r_{n=260, k=10} and r_{n=260, k=50}, respectively (reassuring).
+## => Close to r_{n = 260, k = 10} and r_{n = 260, k = 50}, respectively (reassuring).
 
 ## Q: What is the return period of a risk-factor change at least as large as
 ##    on Black Monday?
@@ -127,3 +127,4 @@ qGEV(1-1/100, xi = xi.hyear, mu = mu.hyear, sigma = sig.hyear) # r_{n=130, k=100
           xi = xi.year, mu = mu.year, sigma = sig.year)) # ~= 1877 years
 1/(1-pGEV(as.numeric(X[date == "1987-10-19"]),
           xi = xi.hyear, mu = mu.hyear, sigma = sig.hyear)) # ~= 2300 half-years = 1150 years
+

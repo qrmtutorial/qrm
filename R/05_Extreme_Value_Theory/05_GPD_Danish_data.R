@@ -23,8 +23,10 @@ str(fit.GPD)
 ## Risk measure estimates
 (RM.u10 <- RiskMeasures(mod.u10, c(0.99, 0.995)))
 
-## Plot the sample excess df and the theoretical excess df (GPD)
+## Plot the empirical excess df and the theoretical excess df (GPD)
 plotFittedGPDvsEmpiricalExcesses(danish, threshold = u10) # hat{F}_{u,n}(x-u) vs G_{hat{xi},hat{beta}}(x-u)
+legend("bottomright", bty = "n", lty = 0:1, pch = c(19, NA), col = c("blue", "black"),
+       legend = c("Empirical excess df", "Theoretical excess df (GPD)"))
 
 ## Semi-parametric Smith/tail estimator and implied risk measures
 plotTail(mod.u10, main = "Semi-parametric Smith/tail estimator") # hat(bar(F))(x), x >= u
@@ -45,9 +47,10 @@ xiplot(danish) # => variance increases for larger thresholds
 
 ## Plot the sample excess df and the theoretical excess df (GPD)
 plotFittedGPDvsEmpiricalExcesses(danish, threshold = u20)
+legend("bottomright", bty = "n", lty = 0:1, pch = c(19, NA), col = c("blue", "black"),
+       legend = c("Empirical excess df", "Theoretical excess df (GPD)"))
 
 ## Semi-parametric Smith/tail estimator and implied risk measures
 plotTail(mod.u20, main = "Semi-parametric Smith/tail estimator") # hat(bar(F))(x), x >= u
 showRM(mod.u20, alpha = 0.99, RM = "VaR", method = "BFGS") # with VaR estimate and CIs
 showRM(mod.u20, alpha = 0.99, RM = "ES",  method = "BFGS") # with ES estimate and CIs
-

@@ -10,9 +10,10 @@ GARCHspec <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(1
 GARCHspec
 
 ## Generate two realizations of length 2000
+set.seed(271)
 path <- ugarchpath(GARCHspec, n.sim = 2000, n.start = 50, m.sim = 2)
 path
-class(path)
+str(path)
 ## 'path' is an S4 object of class "uGARCHpath".
 ## We can use getClass to see more information about such objects
 ## We can also use the getSlots function to see the composition.
@@ -36,7 +37,7 @@ plot(vol[,2], type = "h")
 
 series <- path@path
 ## Series is a simple list
-class(series)
+str(series)
 names(series)
 ## The actual simulated data are in the matrix/vector called "seriesSim"
 X <- series$seriesSim

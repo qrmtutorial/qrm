@@ -94,7 +94,7 @@ bootstrap <- function(x, B, alpha, method = c("VaR", "ES"))
 ## Simulate losses (as we don't have real ones and we want to investigate
 ## the performance of the estimators)
 set.seed(271) # set a seed (for reproducibility)
-L <- qPar(runif(n), theta = th) # simulate losses with the 'inversion method'
+L <- rPar(n, theta = th) # simulate losses with the 'inversion method'
 
 
 ### 2.1 Nonparametric estimates of VaR_alpha and ES_alpha for a fixed alpha ####

@@ -36,7 +36,6 @@
 ##    - '?' or 'help("[[")' for specific functions (e.g., ?uniroot)
 ##      => Study the examples on the help files!
 ##    - Look at the source code
-##
 
 ## Q: How can I work with R?
 ## A: - RStudio; see http://www.rstudio.com/

@@ -16,10 +16,6 @@ th <- 3 # parameter theta
 set.seed(271) # set seed for reproducibility
 X <- rPar(n, theta = th) # generate data
 
-## Build blocks of data (for CLT, Gnedenko)
-m <- 500 # number of blocks
-X. <- split(X, f = rep(1:m, each = floor(n/m))) # split data into blocks
-
 
 ### 1 Strong Law of Large Numbers (SLLN) #######################################
 
@@ -41,11 +37,16 @@ legend("bottomright", lty = c(1,1), col = c("black", "royalblue3"),
 
 ### 2 Central Limit Theorem (CLT) ##############################################
 
-## Standardize blocked data via sqrt(n) * (bar{X}_n - mu) / sigma
+## Build blocks of data
+m <- 500 # number of blocks
+X. <- split(X, f = rep(1:m, each = floor(n/m))) # split data into blocks
+
+## Location-scale transform blocked sums via sqrt(n) * (bar{X}_n - mu) / sigma
+## = (S_n -n * mu) / (sqrt(n) * sigma)
 stopifnot(th > 2)
-mu <- 1/(th-1) # mean
-sig2 <- 2/((th-2)*(th-1)^2) # variance
-Z <- sapply(X., function(x) sqrt(length(x))*(mean(x)-mu)/sqrt(sig2)) # standardize
+mu <- 1/(th-1) # Pareto mean
+sig2 <- 2/((th-2)*(th-1)^2) # Pareto variance
+Z <- sapply(X., function(x) (sum(x) - length(x) * mu) / (sqrt(length(x) * sig2))) # standardize
 
 ## Histogram with overlaid densities
 dens <- density(Z)
@@ -69,7 +70,7 @@ legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange3"), bty = "n"
 ## xi, mu and sig, but one can show that besides xi = 1/theta, one has mu = 1
 ## and sig = 1/theta here. Let's check that.
 
-## Normalize blocked data
+## Location-scale transform blocked maxima
 M <- sapply(X., function(x) (max(x) - 0) / qPar(1-1/length(x), theta = th))
 
 ## Histogram with overlaid densities
@@ -116,6 +117,16 @@ hist(Y, probability = TRUE, ylim = c(0, max(dens$y, true.dens)), breaks = 60,
 lines(dens, col = "royalblue3") # density estimate
 lines(x, true.dens, col = "darkorange3")
 box()
+legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange3"), bty = "n",
+       legend = c("Density estimate", expression("Limiting GPD density"~g[list(xi,beta(u))])))
+
+## Just the density estimates on the log-scale
+x <- 10^seq(-2, 2, length.out = 65)
+true.dens <- dGPD(x, xi = 1/th, beta = (1/th)*(1+u))
+ii <- dens$x > 0
+plot(dens$x[ii], dens$y[ii], type = "l", log = "x", col = "royalblue3",
+     ylim = c(0, max(dens$y[ii], true.dens)), xlab = "x", ylab = "Density")
+lines(x, true.dens, col = "darkorange3")
 legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange3"), bty = "n",
        legend = c("Density estimate", expression("Limiting GPD density"~g[list(xi,beta(u))])))
 

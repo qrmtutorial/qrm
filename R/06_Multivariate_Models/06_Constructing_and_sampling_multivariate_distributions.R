@@ -137,12 +137,15 @@ legend("bottomright", bty = "n", pch = c(1,1), col = c("black", "maroon3"),
 A. <- sqrt(diag(diag(Sigma))) # Cholesky factor of the diagonal matrix containing the variances
 X.t.uncor <- rep(mu, each = n) + sqrt(W) * t(A. %*% t(Z)) # uncorrelated t samples
 X.t.ind   <- rep(mu, each = n) + matrix(rt(n*d, df = nu), ncol = d) # independent t samples
-plot(rbind(X.t, X.t.uncor, X.t.ind), xlim = xlim, ylim = ylim,
+plot(rbind(X.t.uncor, # uncorrelated t; dependence only introduced by sqrt(W) => shifted spherical distribution
+           X.t, # full t; dependence introduced by sqrt(W) *and* correlation
+           X.t.ind), # independence
+     xlim = xlim, ylim = ylim,
      xlab = expression(X[1]), ylab = expression(X[2]),
-     col = rep(c("maroon3", "royalblue3", "black"), each = n))
+     col = rep(c("royalblue3", "maroon3", "black"), each = n))
 legend("topright", bty = "n", pch = rep(1, 3), col = c("black", "royalblue3", "maroon3"),
        legend = c(expression("Independent"~italic(t)[nu]),
-                  expression("Uncorrelated"~italic(t)[nu]),
+                  expression("Uncorrelated"~italic(t)[nu]~"(shifted spherical)"),
                   expression(italic(t)[nu](mu,Sigma))))
 ## => The uncorrelated (but not independent) samples show more mass in the joint
 ##    tails than the independent samples. The (neither uncorrelated nor independent)
