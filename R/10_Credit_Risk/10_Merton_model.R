@@ -6,13 +6,13 @@ library(sde)
 
 
 ## Parameters for Merton model
-V0 <- 1
-muV <- 0.03
-sigmaV <- 0.25
-r <- 0.02
-B <- 0.85
-T <- 1
-N <- 364
+V0 <- 1 # initial value
+muV <- 0.03 # drift (under the real-world measure)
+sigmaV <- 0.25 # volatility
+r <- 0.02 # interest rate
+B <- 0.85 # value of debt
+T <- 1 # time to maturity in years
+N <- 364 # number of days
 
 ## Simulated asset value trajectories for Merton model
 npaths <- 50

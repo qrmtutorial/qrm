@@ -36,7 +36,7 @@ plot.zoo(S[,"SIE"], main = "SIEMENS stock data",
          xlab = "Date t", ylab = expression(Stock~price~S[t]))
 
 ## Compute the risk-factor changes and plot them (here: against each other)
-X <- as.matrix(log_returns(S)) # compute log-returns and range (sign-adjustment below)
+X <- as.matrix(log_returns(S)) # compute log-returns and range (sign-adjustment in loss operator below)
 plot(X, cex = 0.4)
 
 

@@ -3,6 +3,9 @@
 ## Selected correlation pitfalls
 
 
+library(copula)
+
+
 ### Fallacy 1 (Ex. 1): F_1, F_2 and correlation rho uniquely determine F #######
 
 ## Simple example with same margins, rho = 0, but (obviously) different models

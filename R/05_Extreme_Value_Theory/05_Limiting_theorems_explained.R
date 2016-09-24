@@ -46,7 +46,7 @@ X. <- split(X, f = rep(1:m, each = floor(n/m))) # split data into blocks
 stopifnot(th > 2)
 mu <- 1/(th-1) # Pareto mean
 sig2 <- 2/((th-2)*(th-1)^2) # Pareto variance
-Z <- sapply(X., function(x) (sum(x) - length(x) * mu) / (sqrt(length(x) * sig2))) # standardize
+Z <- sapply(X., function(x) (sum(x) - length(x) * mu) / (sqrt(length(x) * sig2))) # standardize by mean(<sum>) and sd(<sum>)
 
 ## Histogram with overlaid densities
 dens <- density(Z)

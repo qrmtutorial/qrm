@@ -1,10 +1,11 @@
 ## By Alexander J. McNeil
 
 library(xts)
-library(qrmdata)
 library(rugarch)
+library(qrmtools)
 library(qrmdata)
 
+set.seed(271)
 
 data(SP500)
 data(VIX)
@@ -65,7 +66,7 @@ spec.tskew <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(
 roll.n <- ugarchroll(spec.n, gains.d, n.start = 1000, window.size = 1000, refit.every = 10,
                      refit.window = "moving", solver = "hybrid", calculate.VaR = TRUE, VaR.alpha = c(0.05, 0.01))
 show(roll.n)
-plot(roll.n,which = 4)
+plot.zoo(roll.n,which = 4)
 report(roll.n, type = "VaR", VaR.alpha = 0.01, conf.level = 0.95)
 
 ## A little more detail on how VaR numbers are extracted

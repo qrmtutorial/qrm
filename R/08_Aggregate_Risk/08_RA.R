@@ -68,7 +68,6 @@ basic_rearrange_worst_VaR <- function(X, tol = NULL)
 ## Example
 alpha <- 0.99 # confidence level
 N <- 2^10 # number of discretization points
-set.seed(271) # for reproducibility
 p <- alpha + (1-alpha)*0:(N-1)/N # probabilities at which to evaluate the marginal quantile functions
 X <- sapply(qF, function(qF.) qF.(p)) # input matrix for computing worst VaR
 (worst.VaR <- basic_rearrange_worst_VaR(X))
