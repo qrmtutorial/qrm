@@ -1,3 +1,5 @@
+## By Marius Hofert
+
 ## Computing approximate tail probability, VaR and ES estimates of a
 ## random sum S = \sum_{j=1}^N X_j for independent N ~ Poi(lam), X_j ~ LN(mu, sig^2),
 ## with various different methods.
@@ -7,8 +9,8 @@
 
 ## Fixed parameters and quantile
 lam <- 50 # Poi parameter
-mu <- 5 # LN parameter
-sig <- 1 # LN parameter
+mu <- 5 # LN meanlog mean(log(L)) parameter; E(L) = exp(mu + (sig^2)/2)
+sig <- 1 # LN sdlog = sd(log(L)) parameter; var(L) = (exp(sig^2)-1)*exp(2*mu + sig^2)
 q <- 20000 # quantile
 alpha <- 0.99 # VaR, ES confidence level
 
