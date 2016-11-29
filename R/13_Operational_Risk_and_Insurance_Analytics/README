@@ -1,0 +1,5 @@
+### R scripts for Chapter 13
+
+13_CPoi_distribution.R
+   Computing approximate tail probability, VaR and ES estimates of a compound
+   Poi distribution (with log-normal severity) with various methods
