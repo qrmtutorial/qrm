@@ -104,7 +104,7 @@ cor_bound_LN <- function(s, method = c("max", "min")) {
         sqrt(expm1(s[,1]^2)*exp(s[,1]^2)*expm1(s[,2]^2)*exp(s[,2]^2))
 }
 
-## Evaluate correlation bounds on a grid
+## Evaluate and plot correlation bounds on a grid
 n.grid <- 26 # number of grid points in each dimension
 s <- seq(0.01, 5, length.out = n.grid) # subdivision points in each dimension
 grid <- expand.grid("sigma[1]" = s, "sigma[2]" = s) # build a grid
@@ -112,7 +112,35 @@ val.min <- cbind(grid, "underline(Cor)(sigma[1],sigma[2])" =
                  cor_bound_LN(grid, method = "min"))
 val.max <- cbind(grid, "bar(Cor)(sigma[1],sigma[2])" =
                  cor_bound_LN(grid))
+wireframe2(val.min)
+wireframe2(val.max)
 
-## Plots
+
+## Another example of this type: X_1, X_2 being (e.g., default) indicators
+
+## Function to compute the correlation bounds for B(1, p_.) margins
+## Note: Using F_j (B(1,p_j) df), one obtains F_j^{-1}(u) = I_{(1-p_j,1]}(u) for
+##       all u in (0, 1] and thus X_j = I_{(1-p_j,1]}(U_j) for (U_1, U_2) ~ C.
+##       Hence, E(X_1 X_2) = E(I_{(1-p_1,1] x (1-p_2,1]}(U_1, U_2))
+##       = P(U_1 > 1-p_1, U_2 > 1-p_2) = P(1-U_1 <= p_1, 1-U_2 <= p_2)
+##       = bar(C)(p_1, p_2) with bounds W(p_1, p_2) and M(p_1, p_2).
+##       Together with E(X_j) = P(U_j > 1-p_j) = p_j and Var(X_j) = p_j*(1-p_j),
+##       one thus obtains the correlation bounds.
+cor_bound_B <- function(p, method = c("max", "min")) {
+    ## p = (p_1, p_2)
+    if(!is.matrix(p)) p <- rbind(p)
+    method <- match.arg(method)
+    C.bounds <- if(method == "min") pmax(p[,1]+p[,2]-1, 0) else pmin(p[,1], p[,2])
+    (C.bounds - p[,1]*p[,2]) / sqrt(p[,1]*(1-p[,1]) * p[,2]*(1-p[,2]))
+}
+
+## Evaluate and plot correlation bounds on a grid
+n.grid <- 26 # number of grid points in each dimension
+p <- seq(0.01, 0.99, length.out = n.grid) # subdivision points in each dimension
+grid <- expand.grid("p[1]" = p, "p[2]" = p) # build a grid
+val.min <- cbind(grid, "underline(Cor)(p[1],p[2])" =
+                 cor_bound_B(grid, method = "min"))
+val.max <- cbind(grid, "bar(Cor)(p[1],p[2])" =
+                 cor_bound_B(grid))
 wireframe2(val.min)
 wireframe2(val.max)
