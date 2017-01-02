@@ -5,71 +5,74 @@
 
 ### Comments ###################################################################
 
+## Q: What is R?
+## A: - R is a *free* software environment for *statistical* computing and *graphics*
+##    - R was created by *R*obert Gentleman and *R*oss Ihaka in 1993.
+##    - Since mid-1997, R is developed by the *R Development Core Team* (and
+##      contributors)
+
 ## Q: Why R?
-## A: - R is a free programming language (based on S)
-##    - Computations (mostly: statistical, data handling)
-##    - Graphics
-##    - High(er) level (optimization, run time measurement, debugging,
-##      parallel computing etc.)
-##    - Packages
+## A: - *Packages* (both the available ones and the possibility to write
+##      your own)
+##    - Ability to write *readable* code (focus is on main aspects of a problem)
+##    - High(er) level (optimization, run time, debugging, parallel computing etc.)
+##
 
-## Q: Where to find R?
-## A: - Main site: https://www.r-project.org/
+## Q: Where to find R or help on R?
+## A: - Main website: https://www.r-project.org/
 ##    - CRAN: https://cran.r-project.org/
-##      + Task Views (=> Finance -> rugarch; => Multivariate -> copula)
-##      + Packages (~ 9000; => qrmtools: 'Published', 'Reference manual',
-##        'Vignettes', 'Package source')
-##      + Manuals ("An Introduction to R", "Writing R Extensions")
-##      + FAQ
-
-## Q: Where to find help?
-## A: Externally (outside R):
-##    - See R FAQ 2.7 http://cran.r-project.org/doc/FAQ/R-FAQ.html#What-documentation-exists-for-R_003f
-##    - Manuals and task views (see above)
-##    - Google ('r-help') or http://finzi.psych.upenn.edu/
-##    - R mailing lists; see https://stat.ethz.ch/mailman/listinfo/r-help or http://tolstoy.newcastle.edu.au/R/
-##    - Stackoverflow (tag 'R'); see http://stackoverflow.com/questions/tagged/r
-##    - R graph gallery; see http://www.r-graph-gallery.com/
-##    - R blog; see http://www.r-bloggers.com/
-##    Internally (from within R)
-##    - help.start() -> Search Engine & Keywords
-##    - '?' or 'help("[[")' for specific functions (e.g., ?uniroot)
-##      => Study the examples on the help files!
-##    - Look at the source code
+##      + Packages (check 'Published', 'Reference manual', 'Vignettes', 'Package source')
+##      + Task Views (check Finance -> rugarch or Multivariate -> copula)
+##      + Manuals ("An Introduction to R" (detailed basics) and
+##                 "Writing R Extensions" (package development))
+##      + FAQ (in particular, FAQ 2.7 on http://cran.r-project.org/doc/FAQ/R-FAQ.html#What-documentation-exists-for-R_003f)
+##    - Externally (outside R or CRAN):
+##      + Google ('r-help') or more specific R-related search engines;
+##        see http://tolstoy.newcastle.edu.au/R/ and http://finzi.psych.upenn.edu/
+##      + R Help and other mailing lists; see https://stat.ethz.ch/mailman/listinfo/r-help
+##      + Stackoverflow (tag 'R'); see http://stackoverflow.com/questions/tagged/r
+##      + R graph gallery; see http://www.r-graph-gallery.com/
+##      + R blog; see http://www.r-bloggers.com/
+##    - Internally (from within R):
+##      + Browser-based help: help.start() -> Search Engine & Keywords
+##      + '?' (e.g., ?uniroot) or 'help("[[")' (for specific functions)
+##        => Study the examples on the help files!
+##      + Study the source code (for more ``hidden'' functions, see pp. 43 in
+##        http://cran.r-project.org/doc/Rnews/Rnews_2006-4.pdf)
 
 ## Q: How can I work with R?
-## A: - RStudio; see http://www.rstudio.com/
-##      (or R-GUI, Tinn-R (on Windows))
-##    - Emacs + ESS
-##    Idea: Write an R script (.R file) containing the source code and execute
-##          it line by line (paragraph by paragraph etc.) or the whole script
-##          at once (if in batch mode).
+## A: - Software interfaces:
+##      + RStudio (recommended): http://www.rstudio.com/
+##      + Emacs + ESS
+##    - Workflow:
+##      + Write an R script (.R file) containing the source code.
+##      + Execute it line-by-line (paragraph-by-paragraph etc.) or the whole script
+##        at once (if in batch mode).
 
-## Q: How to install (the latest version of) 'qrmtools'?
-## A: - From CRAN:
-##      install.packages("qrmtools")
-##    - From R-Forge (latest version; most up-to-date):
-##      install.packages("qrmtools", repos = "http://R-Forge.R-project.org")
-
-## Q: Where to find these R scripts?
-## A: On http://qrmtutorial.org/r-code -> Link "complete GitHub repository"
-##    => https://github.com/qrmtutorial/qrm -> 'Clone or download'
+## Q: How to install (the latest version of) a package?
+## A: - From CRAN (release):
+##      install.packages("mypackage")
+##    - From R-Forge (snapshot):
+##      install.packages("mypackage", repos = "http://R-Forge.R-project.org")
 
 ## Q: What to watch out for when programming?
-## A: - Design errors (code correct, but model wrong)
-##    - Theoretical challenges (e.g., curse of dimensionality; computing
+## A: - Theoretical challenges (e.g., curse of dimensionality, e.g., for computing
 ##      P(a < X <= b) in high dimensions)
-##    - Programming language related issues
-##    - Syntactic errors (code does not run; easily detected; useful tools:
+##    - Design errors (code correct, but model wrong)
+##    - Programming language related issues (R vs C vs Fortran; if you need
+##      to implement your own root-finding procedure, errors are more likely)
+##    - Syntactic errors (code does not run; typically easy to detect; useful tools:
 ##      traceback(), debug() or browser())
-##    - Semantic errors (code correct, but does not what expected;
+##    - Semantic errors (code on its own correct, but does not what was intended;
 ##      test your code, use plots!)
-##    - Numerical errors (often undetected)
-##    - Measure run time (can be a way of detecting a flaw)
-##    - Warnings (are useful, e.g., if the optimum in an optimization procedure
-##      has not been reached)
-##    - Scaling (use parallel's mclappy() and parLapply() for multi-core and
-##      multi-node computations)
+##    - Numerical errors (often undetected unless code is properly tested)
+##    - Warnings (are useful! For example, if the optimum in an optimization
+##      procedure has not yet been reached)
+##    - Measuring run time (system vs wall clock; depends
+##      on architecture, programming style, compiler, current workload, etc.; use
+##      benchmarks; can also be useful for detecting semantic errors)
+##    - Scaling (bigger simulations; if possible, use parallel's mclappy() and
+##      parLapply() for multi-core and multi-node computations)
 
 ## Note: The code below is a medley of Appendix A of the manual
 ##       "An Introduction to R" on http://cran.r-project.org/manuals.html
