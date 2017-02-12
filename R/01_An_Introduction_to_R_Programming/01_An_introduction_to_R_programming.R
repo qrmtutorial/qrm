@@ -25,12 +25,13 @@
 ##      + Task Views (check Finance -> rugarch or Multivariate -> copula)
 ##      + Manuals ("An Introduction to R" (detailed basics) and
 ##                 "Writing R Extensions" (package development))
-##      + FAQ (in particular, FAQ 2.7 on http://cran.r-project.org/doc/FAQ/R-FAQ.html#What-documentation-exists-for-R_003f)
+##      + FAQ, in particular, FAQ 2.7 on http://cran.r-project.org/doc/FAQ/R-FAQ.html#What-documentation-exists-for-R_003f
 ##    - Externally (outside R or CRAN):
-##      + Google ('r-help') or more specific R-related search engines;
+##      + Google ('r-help') or R-related search engines;
 ##        see http://tolstoy.newcastle.edu.au/R/ and http://finzi.psych.upenn.edu/
 ##      + R Help and other mailing lists; see https://stat.ethz.ch/mailman/listinfo/r-help
 ##      + Stackoverflow (tag 'R'); see http://stackoverflow.com/questions/tagged/r
+##        => provide a minimal working example, see https://en. wikipedia.org/wiki/Minimal_Working_Example
 ##      + R graph gallery; see http://www.r-graph-gallery.com/
 ##      + R blog; see http://www.r-bloggers.com/
 ##    - Internally (from within R):
@@ -47,7 +48,7 @@
 ##    - Workflow:
 ##      + Write an R script (.R file) containing the source code.
 ##      + Execute it line-by-line (paragraph-by-paragraph etc.) or the whole script
-##        at once (if in batch mode).
+##        at once (if in batch mode, e.g., on a computer cluster).
 
 ## Q: How to install (the latest version of) a package?
 ## A: - From CRAN (release):
@@ -84,10 +85,10 @@
 1+2
 1/2
 1/0 # in R, Inf and -Inf exist and R can often deal with them correctly
-0/0 # ... also NaN (= not a number) is available
+0/0 # ... also NaN = 'not a number' is available; 0/0, 0*Inf, Inf-Inf lead to NaN
 x <- 0/0 # store the result in 'x'
 class(x) # the class/type of 'x'; => NaN is still of mode 'numeric'
-class(Inf) # Inf is of mode 'numeric' (although mathematically not a number)
+class(Inf) # Inf is of mode 'numeric' (although mathematically not a number); helpful in optimizations
 
 ## Vectors (data structure which contains objects of the same mode)
 numeric(0) # the empty numeric vector
@@ -100,14 +101,14 @@ z[6] <- 6 # append to a vector (better than z <- c(z, 6)); (much) more comfortab
 z
 
 ## Note: We can check whether the R objects are the same
-x == y # component wise
+x == y # component wise numerically equal
 identical(x, y) # identical as objects? why not?
 class(x) # => x is a *numeric* vector
 class(y) # => y is an *integer* vector
 all.equal(x, y) # numerical equality; see argument 'tolerance'
 identical(x, as.numeric(y)) # => also fine
 
-## Another example of this type
+## Numerically not exactly the same
 x <- var(1:4)
 y <- sd(1:4)^2
 all.equal(x, y) # numerical equality
@@ -131,8 +132,8 @@ length(x) # as seen above
 rev(x) # change order
 sort(x) # sort in increasing order
 sort(x, decreasing = TRUE) # sort in decreasing order
-o <- order(x) # create indices that sort x
-x[o] # => sorted
+ii <- order(x) # create the indices which sort x
+x[ii] # => sorted
 log(x) # component-wise logarithms
 x^2 # component-wise squares
 sum(x) # sum all numbers
@@ -145,25 +146,26 @@ head(x, n = -1) # get all but the last element
 
 ## Logical vectors
 logical(0) # the empty logical vector
-(ind <- x >= 3) # logical vector indicating whether each element of x is >= 3
-x[ind] # use that vector to index x => pick out all values of x >= 3
-!ind # negate the logical vector
-all(ind) # check whether all indices are TRUE (whether all x >= 3)
-any(ind) # check whether any indices are TRUE (whether any x >= 3)
-ind | !ind # vectorized logical OR
-ind & !ind # vectorized logical AND
-ind || !ind # logical OR applied to all values
-ind && !ind # logical AND applied to all values
+(ii <- x >= 3) # logical vector indicating whether each element of x is >= 3
+x[ii] # use that vector to index x => pick out all values of x >= 3
+!ii # negate the logical vector
+all(ii) # check whether all indices are TRUE (whether all x >= 3)
+any(ii) # check whether any indices are TRUE (whether any x >= 3)
+ii |  !ii # vectorized logical OR
+ii &  !ii # vectorized logical AND
+ii || !ii # logical OR applied to all values
+ii && !ii # logical AND applied to all values
 3 * c(TRUE, FALSE) # TRUE is coerced to 1, FALSE to 0
 class(NA) # NA = 'not available' is 'logical' as well (used for missing data)
 z <- 1:3; z[5] <- 4 # two statements in one line (';'-separated)
 z # => 4th element 'not available' (NA)
-(z <- c(z, 0/0)) # e.g., 0/0, 0*Inf, Inf-Inf lead to 'not a number' (NaN)
+(z <- c(z, NaN, Inf)) # append NaN and Inf
 class(z) # still numeric
 is.na(z) # check for NA or NaN
 is.nan(z) # check for just NaN
-z[(!is.na(z)) & z >= 2] # indexing: pick out all numbers >= 2
-z[(!is.na(z)) && z >= 2] # watch out (indexing by 'FALSE' => empty vector)
+is.infinite(z) # check for +/-Inf
+z[(!is.na(z)) &  is.finite(z) &  z >= 2] # indexing: pick out all numbers >= 2
+z[(!is.na(z)) && is.finite(z) && z >= 2] # watch out (indexing by 'FALSE' => empty vector)
 
 ## Character vectors
 character(0) # the empty character vector
@@ -217,11 +219,7 @@ P.inv <- solve(P) # compute P^{-1}; solve(A, b) solves Ax = b (if b is omitted, 
 P %*% P.inv # (numerically close to) I
 P.inv %*% P # (numerically close to) I
 
-## Build a grid and work on it
-(grid <- expand.grid(1:3, LETTERS[1:2])[,2:1]) # create a grid containing each variable combination
-class(grid) # a data.frame (containing objects of different mode)
-as.matrix(grid) # coercion to a character matrix
-data.matrix(grid) # coercion to a numeric matrix
+## Other useful functions
 rowSums(A) # row sums
 apply(A, 1, sum) # the same
 colSums(A) # column sums
@@ -243,10 +241,19 @@ str(arr.)
 
 ### Lists (and data frames) ####################################################
 
-## data.frame (data structure which contains objects of the same length but
-## possibly different type)
+## data frames (lists which contains objects of the same length but possibly
+## different type)
 (df <- data.frame(group = rep(LETTERS[1:3], each = 2), value = 1:6))
 str(df) # => first column is a factor; second an integer vector
+
+## Creating grids, coercion of data frames to matrices
+(grid <- expand.grid(1:3, LETTERS[1:2])[,2:1]) # create a grid containing each variable combination
+class(grid) # a data.frame (containing objects of different mode)
+as.matrix(grid) # coercion to a character matrix
+data.matrix(grid) # coercion to a numeric matrix
+
+## Data frames are just lists
+is.list(df)
 
 ## Note: Lists are the most general data structures in R in the sense that they
 ##       can contain pretty much everything, e.g., lists themselves or functions
@@ -260,7 +267,7 @@ L[[3]][[1]] # get first element of the sub-list
 ## Version 2: # use '$'
 L$group
 L$sublist[[1]]
-## Version 3: use the provided names
+## Version 3 (most readable and fail-safe): use the provided names
 L[["group"]]
 L[["sublist"]][[1]]
 
@@ -271,7 +278,7 @@ str(L)
 
 ## Watch out
 L[[1]] # the first component
-L[1] # the sub-list consisting of the first component of L
+L[1] # the sub-list containing the first component of L
 class(L[[1]]) # character
 class(L[1]) # list
 
@@ -290,22 +297,22 @@ if(x < 5) y <- 1 else y <- 0 # y is the indicator whether x < 5
 y <- if(x < 5) 1 else 0
 ## ... or even better
 (y <- x < 5) # ... as a logical
-y+2 # ... which is internally again converted to {0,1} in calculations
+y + 2 # ... which is internally again converted to {0,1} in calculations
 
 ## Also, loops of the type...
 x <- integer(5)
-for(i in 1:5) x[i] <- i*i
+for(i in 1:5) x[i] <- i * i
 ## ... can typically be avoided by something like
-x. <- sapply(1:5, function(i) i*i) # of course we know that this is simply (1:5)^2 which is even faster
+x. <- sapply(1:5, function(i) i * i) # of course we know that this is simply (1:5)^2 which is even faster
 stopifnot(identical(x, x.))
 
 ## For efficient R programming, the following functions are useful:
 ## caution, we enter the 'geek zone'...
-lapply(1:5, function(i) i*i) # returns a list
-sapply(1:5, function(i) i*i) # returns a *s*implified version (here: a vector)
+lapply(1:5, function(i) i * i) # returns a list
+sapply(1:5, function(i) i * i) # returns a *s*implified version (here: a vector)
 sapply # => calls lapply()
-unlist(lapply(1:5, function(i) i*i)) # a bit faster than sapply()
-vapply(1:5, function(i) i*i, NA_real_) # even faster but we have to know the return value of the function
+unlist(lapply(1:5, function(i) i * i)) # a bit faster than sapply()
+vapply(1:5, function(i) i * i, NA_real_) # even faster but we have to know the return value of the function
 
 
 ### Using implemented distributions ############################################
@@ -330,10 +337,10 @@ packageDescription("mvtnorm") # get a short description of the package
 maintainer("mvtnorm") # see citation("mvtnorm") for how to cite a package
 
 ## Generate and plot data from a multivariate t distribution
+set.seed(271) # for reproducibility (see below)
 X <- rmvt(2000, sigma = P, df = 4.5) # generate data from a multivariate t_4.5 distribution
 library(lattice) # for the cloud plot
 cloud(X[,3]~X[,1]+X[,2], scales = list(col = 1, arrows = FALSE), col = 1,
-      distance = 0,
       xlab = expression(italic(X[1])), ylab = expression(italic(X[2])),
       zlab = expression(italic(X[3])),
       par.settings = list(background = list(col = "#ffffff00"),
@@ -381,6 +388,7 @@ Z <- rnorm(2) # use L'Ecuyer's CMRG for generating random numbers
 .Random.seed <- nextRNGStream(.Random.seed) # advance seed by 2^127; requires 'parallel'
 Z. <- rnorm(2) # generate from next stream => will be 'sufficiently apart' from Z
 RNGkind("Mersenne-Twister") # switch back to Mersenne-Twister
+RNGkind()
 
 
 ### Writing a function #########################################################
@@ -430,12 +438,10 @@ getwd() # get the current working directory; set it with setwd()
 ##   read.csv()/write.csv().
 ## - How to load/save R objects from/to a file.
 ##   This can be done using load()/save()
-## - How to retrieve an R plot as a file (for printing, for example). To this
-##   end, use, for example:
+## - How to retrieve an R plot as a file (for printing, for example). For example:
 ##   doPDF <- TRUE
-##   if(doPDF) pdf(file = (file <- "myfile.pdf"), width = 10, height = 6)
-##   <do the plotting here>
-##   if(doPDF) dev.off() # or use crop's dev.off.crop(file) here to crop the picture
-##   This also works for png() (plotting to a .png)
+##   if(doPDF) pdf(file = (file <- "myfile.pdf"), width = 6, height = 6) # open plot device
+##   plot(1:10, 10:1) # actual plot command(s)
+##   if(doPDF) dev.off() # close plot device; or use crop's dev.off.crop(file)
 
 q() # quit the R session

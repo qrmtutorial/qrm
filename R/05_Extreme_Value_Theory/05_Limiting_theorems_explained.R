@@ -11,7 +11,7 @@
 library(qrmtools)
 
 ## Data from a Par(theta) distribution
-n <- 50000 # sample size = number of i.i.d. random variables
+n <- 50000 # sample size = number of iid random variables
 th <- 3 # parameter theta
 set.seed(271) # set seed for reproducibility
 X <- rPar(n, theta = th) # generate data
@@ -25,9 +25,9 @@ Xn <- cumsum(X)/(1:n)
 
 ## Plot (this one path of the stochastic process (bar{X}_n)_{n=1}^{infty})
 plot(1:n, Xn, type = "l", log = "x", ylab = "",
-     xlab = expression("Number n of i.i.d. random variables"~(X[i])[i == 1]^n),
+     xlab = expression("Number n of iid random variables"~(X[i])[i == 1]^n),
      main = substitute(bold("Strong Law of Large Numbers for Par("*th.*") data"), list(th. = th)))
-mu <- 1/(th-1) # mean
+mu <- 1/(th-1) # true mean
 abline(h = mu, col = "royalblue3")
 legend("bottomright", lty = c(1,1), col = c("black", "royalblue3"),
        bty = "n", y.intersp = 1.2,
@@ -42,10 +42,10 @@ m <- 500 # number of blocks
 X. <- split(X, f = rep(1:m, each = floor(n/m))) # split data into blocks
 
 ## Location-scale transform blocked sums via sqrt(n) * (bar{X}_n - mu) / sigma
-## = (S_n -n * mu) / (sqrt(n) * sigma)
+## = (S_n - n * mu) / (sqrt(n) * sigma)
 stopifnot(th > 2)
-mu <- 1/(th-1) # Pareto mean
-sig2 <- 2/((th-2)*(th-1)^2) # Pareto variance
+mu <- 1/(th-1) # true mean
+sig2 <- 2/((th-2)*(th-1)^2) # true variance
 Z <- sapply(X., function(x) (sum(x) - length(x) * mu) / (sqrt(length(x) * sig2))) # standardize by mean(<sum>) and sd(<sum>)
 
 ## Histogram with overlaid densities
