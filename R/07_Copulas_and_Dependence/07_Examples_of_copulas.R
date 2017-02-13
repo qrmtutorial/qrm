@@ -10,8 +10,9 @@ library(copula)
 n <- 1000 # sample size
 d <- 5 # max. considered dimension
 tau <- 0.5 # Kendall's tau
-tblack <- function(alpha.f) adjustcolor("black", alpha.f = alpha.f) # transparent black
-set.seed(271)
+tblack <- function(alpha.f) adjustcolor("black", alpha.f = alpha.f) # color (transparent black)
+
+set.seed(271) # for reproducibility
 
 
 ### 1 Fundamental copulas ######################################################
@@ -111,7 +112,7 @@ pairs2(U, cex = 0.4, col = tblack(0.5)) # d = 5
 
 ## A nonexchangeable example
 ## Build a block correlation matrix
-rho <- c(0.2, 0.5, 0.8)
+rho <- c(0.3, 0.6, 0.9)
 P <- matrix(rho[1], nrow = d, ncol = d)
 P[1:2, 1:2] <- rho[2]
 P[3:5, 3:5] <- rho[3]

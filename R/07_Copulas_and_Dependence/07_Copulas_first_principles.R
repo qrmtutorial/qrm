@@ -10,10 +10,10 @@ library(mvtnorm)
 library(copula)
 library(qrmtools)
 
-set.seed(271)
+set.seed(271) # for reproducibility
 
 
-### 1 A bivariate normal distribution ##########################################
+### 1 Normal copula sample #####################################################
 
 ## Sample from a bivariate normal distribution
 P <- matrix(0.7, nrow = 2, ncol = 2) # correlation matrix
@@ -26,7 +26,7 @@ plot(X, xlab = expression(X[1]), ylab = expression(X[2])) # scatter plot
 U <- pnorm(X) # probability transformation
 plot(U, xlab = expression(U[1]), ylab = expression(U[2])) # sample from the Gauss copula
 
-## (Visually) check that the margins are indeed U[0,1]
+## (Visually) check that the margins are indeed U(0,1)
 plot(U[,1], ylab = expression(U[1])) # scatter plot
 hist(U[,1], xlab = expression(U[1]), probability = TRUE, main = "") # histogram
 plot(U[,2], ylab = expression(U[2])) # scatter plot
@@ -38,15 +38,15 @@ Y <- qt(U, df = nu) # quantile transformation
 plot(Y, xlab = expression(Y[1]), ylab = expression(Y[2]), col = "royalblue3") # scatter plot
 points(X)
 legend("bottomright", bty = "n", pch = c(1,1), col = c("black", "royalblue3"),
-       legend = c(expression(N(mu,Sigma)),
+       legend = c(expression(N(0,P)),
                   substitute("With"~italic(t)[nu.]~"margins", list(nu. = nu))))
 
 
-### 2 A 5-dimensional t distribution (now with empirical margins) ##############
+### 2 t copula sample ##########################################################
 
 ## Build a block correlation matrix
 d <- 5
-rho <- c(0.2, 0.5, 0.8)
+rho <- c(0.3, 0.6, 0.9)
 P <- matrix(rho[1], nrow = d, ncol = d)
 P[1:2, 1:2] <- rho[2]
 P[3:5, 3:5] <- rho[3]
