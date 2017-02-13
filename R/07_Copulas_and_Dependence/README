@@ -18,6 +18,8 @@
    Generate and transform multivariate data (with the probability and quantile transformations)
 07_Meta_copula_models.R
    Generate some meta models using different copulas
+07_Quasi-random_numbers_for_copulas.R
+   Quasi-random numbers for copula models with an application to estimating rare event probabilities
 07_Sklar_theorem_and_invariance_principle.R
    Visually explaining Sklar's Theorem and the invariance principle
 07_Spearmans_rho_Kendalls_tau.R
