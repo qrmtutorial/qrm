@@ -48,6 +48,7 @@ M <- pmin(grid[,1], grid[,2]) # values of M on grid
 val.W <- cbind(grid, "W(u[1],u[2])" = W) # append grid
 val.M <- cbind(grid, "M(u[1],u[2])" = M) # append grid
 wireframe2(val.W) # wire frame plot of W
+
 contourplot2(val.W, xlim = 0:1, ylim = 0:1) # level curves of W
 wireframe2(val.M) # wire frame plot of M
 contourplot2(val.M, xlim = 0:1, ylim = 0:1) # level curves of M
@@ -121,6 +122,10 @@ diag(P) <- 1
 tc.. <- tCopula(P2p(P), dim = d, dispstr = "un", df = 3.5)
 U. <- rCopula(n, copula = tc..)
 pairs2(U., cex = 0.4, col = tblack(0.5)) # d = 5
+
+## A model more flexible than the multivariate t (more degrees of freedom)
+X <- sapply(1:ncol(U.), function(j) qt(U.[,j], df = j))
+pairs2(X, labels.null.lab = "X", cex = 0.4, col = tblack(0.5))
 
 
 ### 3 Explicit copulas #########################################################
