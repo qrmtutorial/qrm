@@ -6,9 +6,9 @@
 
 ### 0 Setup ####################################################################
 
-library(mvtnorm)
-library(copula)
-library(qrmtools)
+library(qrmtools) # for qPar()
+library(copula) # for pairs2()
+library(qrmdata) # for S&P 500 data etc.
 
 set.seed(271) # for reproducibility
 
@@ -18,9 +18,18 @@ set.seed(271) # for reproducibility
 ## Sample from a bivariate normal distribution
 P <- matrix(0.7, nrow = 2, ncol = 2) # correlation matrix
 diag(P) <- 1
+A <- t(chol(P)) # Cholesky factor
 n <- 1000 # sample size
-X <- rmvnorm(n, sigma = P) # generate X
+Z <- matrix(rnorm(n * 2), ncol = 2) # iid N(0,1)
+X <- Z %*% t(A) # X = AZ ~ N(0, P)
 plot(X, xlab = expression(X[1]), ylab = expression(X[2])) # scatter plot
+
+## (Negative) logarithmic stock (and other) returns can look quite similarly
+data(SP500_const) # S&P 500 data
+time <- c("2007-01-03", "2009-12-31") # time period
+dat <- SP500_const[paste0(time, collapse = "/"), c("AAPL", "IBM")] # grab out stocks
+X. <- as.matrix(-log_returns(dat)) # build negative logarithmic returns
+plot(X., xlab = expression(X[1]), ylab = expression(X[2])) # scatter plot
 
 ## Marginally apply probability transforms (with the corresponding dfs)
 U <- pnorm(X) # probability transformation
@@ -40,6 +49,7 @@ points(X)
 legend("bottomright", bty = "n", pch = c(1,1), col = c("black", "royalblue3"),
        legend = c(expression(N(0,P)),
                   substitute("With"~italic(t)[nu.]~"margins", list(nu. = nu))))
+## => Sample is stretched out by heavier tailed marginal distributions
 
 
 ### 2 t copula sample ##########################################################
@@ -54,7 +64,10 @@ diag(P) <- 1
 P
 
 ## Sample from a multivariate t distribution
-X <- rmvt(n, sigma = P, df = nu)
+A <- t(chol(P)) # Cholesky factor
+Z <- matrix(rnorm(n * d), ncol = d) # iid N(0,1)
+sqrt.W <- sqrt(1/rgamma(n, shape = nu/2, rate = nu/2))
+X <- sqrt.W * (Z %*% t(A)) # X = sqrt(W)AZ ~ t_{P,nu}
 pairs2(X, labels.null.lab = "X", cex = 0.4, col = adjustcolor("black", alpha.f = 0.5))
 
 ## Marginally apply probability transforms (here: empirically estimated dfs)

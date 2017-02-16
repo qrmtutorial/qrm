@@ -209,7 +209,7 @@ plot(S, xlim = lim, ylim = lim,
 rho <- 0.8 # correlation
 P <- matrix(c(  1, rho,
               rho, 1), ncol = 2) # correlation matrix
-A <- chol(P) # Cholesky factor
+A <- chol(P) # Cholesky factor (here: upper triangular matrix for efficiency reasons)
 X. <- t(A %*% t(S)) # (n, d) matrix
 par(pty = "s")
 plot(X., xlim = lim, ylim = lim,
