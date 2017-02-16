@@ -16,7 +16,7 @@ set.seed(271) # for reproducibility
 ### 1 Normal copula sample #####################################################
 
 ## Sample from a bivariate normal distribution
-P <- matrix(0.7, nrow = 2, ncol = 2) # correlation matrix
+P <- matrix(0.7, nrow = 2, ncol = 2) # correlation matrix; play with the entry!
 diag(P) <- 1
 A <- t(chol(P)) # Cholesky factor
 n <- 1000 # sample size
@@ -29,13 +29,17 @@ data(SP500_const) # S&P 500 data
 time <- c("2007-01-03", "2009-12-31") # time period
 dat <- SP500_const[paste0(time, collapse = "/"), c("AAPL", "IBM")] # grab out stocks
 X. <- as.matrix(-log_returns(dat)) # build negative logarithmic returns
-plot(X., xlab = expression(X[1]), ylab = expression(X[2])) # scatter plot
+plot(X., xlab = expression("Apple -log-returns"~X[1]),
+     ylab = expression("IBM -log-returns"~X[2])) # scatter plot
 
 ## Marginally apply probability transforms (with the corresponding dfs)
 U <- pnorm(X) # probability transformation
 plot(U, xlab = expression(U[1]), ylab = expression(U[2])) # sample from the Gauss copula
 
-## (Visually) check that the margins are indeed U(0,1)
+## ... and the pseudo-sample of the underlying copula for the stock data
+plot(pobs(X.), xlab = expression(U[1]), ylab = expression(U[2]))
+
+## (Visually) check that the margins of our generated data are indeed U(0,1)
 plot(U[,1], ylab = expression(U[1])) # scatter plot
 hist(U[,1], xlab = expression(U[1]), probability = TRUE, main = "") # histogram
 plot(U[,2], ylab = expression(U[2])) # scatter plot
@@ -78,3 +82,4 @@ pairs2(U, cex = 0.4, col = adjustcolor("black", alpha.f = 0.5))
 Y <- cbind(qPar(U[,1], theta = 3), qnorm(U[,2:5])) # quantile transformation
 pairs2(Y, cex = 0.4, col = adjustcolor("black", alpha.f = 0.5),
        labels.null.lab = "Y")
+## ... and the components have the same dependence structure as those of X above!
