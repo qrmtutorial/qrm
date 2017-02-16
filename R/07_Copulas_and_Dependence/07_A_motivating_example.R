@@ -23,13 +23,19 @@ plot(X., xlab = expression(X[1]*"'"), ylab = expression(X[2]*"'"))
 ## We can transform the data to have the same marginals by using the probability
 ## transformation. Instead of ("cheating" by) using the above chosen marginal
 ## distribution functions (dfs), we make the realistic assumption that we don't
-## know them, so we would estimate them by their empirical dfs and then apply
-## these marginal empirical dfs to the respective data columns. The function
-## pobs() of the R package indirectly does that for you. By the probability
-## transformation, we then get the the marginal dfs of both data sets X and X.
-## are (approximately) U(0,1), so allow for a comparison.
+## know them, so we would estimate them by their empirical dfs (edfs) and then
+## apply these marginal empirical dfs to the respective data columns. The function
+## pobs() of the R package indirectly does that for you; see (*) for the 'why'.
+## By the probability transformation, we then get the the marginal dfs of both
+## data sets X and X. are (approximately) U(0,1), so allow for a comparison.
 U  <- pobs(X)
 U. <- pobs(X.)
+## (*) Applying the edf \hat{F}_{n,j} of the jth margin to the data X_{ij},
+## i in {1,..,n}, we obtain U_{ij} = \hat{F}_{n,j}(X_ij)
+## = (1/n)\sum_{k=1}^n \I_{\{X_{kj} \le X_{ij}\}} = R_{ij}/n, where R_{ij}
+## denotes the rank of X_{ij} among X_{1j},..,X_{nj}. One then typically uses
+## the slightly scaled version R_{ij}/(n+1) to avoid that that U_{ij} can be 1
+## (so on the boundary of [0,1]^d). The function pobs() computes exactly that.
 
 ## Now plot the pseudo-observations
 plot(U,  xlab = expression(U[1]),     ylab = expression(U[2]))
