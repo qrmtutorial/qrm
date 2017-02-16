@@ -15,8 +15,8 @@ n <- 1000 # sample size
 
 ## Sample
 set.seed(271) # for reproducibility
-U <- matrix(runif(n*2), ncol = 2)
-U. <- ghalton(n, d = 2) # or sobol()
+U <- matrix(runif(n*2), ncol = 2) # pseudo-random numbers
+U. <- ghalton(n, d = 2) # quasi-random numbers (faster alternative: sobol())
 
 ## Plot
 layout(rbind(1:2))
@@ -39,13 +39,14 @@ U.t. <- cCopula(U., copula = cop.t3, inverse = TRUE)
 layout(rbind(1:2))
 plot(U.t,  xlab = expression(U[1]), ylab = expression(U[2]))
 plot(U.t., xlab = expression(U[1]), ylab = expression(U[2]))
+layout(1) # reset layout
 
 ## 3d plot
 U.3d. <- ghalton(n, d = 3)
 cop <- tCopula(param = th, dim = 3, df = nu)
 U.t.3d. <- cCopula(U.3d., copula = cop, inverse = TRUE)
-cloud2(U.t.3d., xlab=expression(italic(U[1])), ylab=expression(italic(U[2])),
-       zlab=expression(italic(U[3]))) # not much visible
+cloud2(U.t.3d., xlab = expression(U[1]), ylab = expression(U[2]),
+       zlab = expression(U[3])) # not much visible
 pairs2(U.t.3d., labels.null.lab = "U")
 ## Structure doesn't *look* very convincing, but it is a low-discrepancy sequence
 
@@ -106,8 +107,8 @@ system.time(res <- lapply(1:B, function(b) survival_prob(n, copula = cop.t3, u =
 str(res, max.level = 1) # structure of the result
 prob  <- sapply(res, function(x) x[["PRNG"]][["prob"]])
 prob. <- sapply(res, function(x) x[["QRNG"]][["prob"]])
-rt  <- sapply(res, function(x) x[["PRNG"]][["rt"]])
-rt. <- sapply(res, function(x) x[["QRNG"]][["rt"]])
+rt    <- sapply(res, function(x) x[["PRNG"]][["rt"]])
+rt.   <- sapply(res, function(x) x[["QRNG"]][["rt"]])
 
 ## Estimate the probabilities and compare with true probability
 probs <- c(PRNG = mean(prob), QRNG = mean(prob.),
@@ -117,7 +118,8 @@ abs(probs["QRNG"] - probs["true"]) # => slightly closer...
 ##... but not necessarily for smaller B or n
 
 ## Boxplot of the computed probabilities
-boxplot(list(PRNG = prob, QRNG = prob.))
+boxplot(list(PRNG = prob, QRNG = prob.),
+        main = "Simulated exceedance probability"~P(U[1] > u[1], U[2] > u[2]))
 ## => QRNGs provide a smaller variance
 (vr <- var(prob.)/var(prob)) # estimated variance-reduction fraction
 
@@ -134,9 +136,9 @@ vr * rtf # => effort of QRNG only a fraction of PRNG
 ## - QRNGs can estimate high quantile probabilities with a smaller variance
 ##   (=> need less random variates to obtain the same precision => good for
 ##   memory/storage-intensive methods).
-## - QRNGs can also be faster than PRNGs but that's not the case here
-##   (one could draw all random variates at once to see how that changes
-##   run time; it could also look differently in higher dimensions).
+## - QRNGs can also be faster than PRNGs (see sobol() below) but that's not
+##   the case for the generalized Halton sequence used here; this may depend
+##   on the dimension, too.
 ## - If (*) is used for pseudo-sampling from the t copula, run time is
 ##   significantly smaller, the total effort slightly above 1. It can
 ##   then still be advantages to use quasi-random numbers (because of

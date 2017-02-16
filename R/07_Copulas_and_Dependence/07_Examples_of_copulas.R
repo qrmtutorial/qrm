@@ -170,12 +170,12 @@ cloud2(U[,1:3], # d = 3
        xlab = expression(U[1]), ylab = expression(U[2]), zlab = expression(U[3]))
 pairs2(U, cex = 0.4, col = tblack(0.5)) # d = 5
 
-
 ## Scatter plot of a survival Gumbel copula
 pairs2(1-U, cex = 0.4, col = tblack(0.5))
 
 ## Only the first component flipped
-pairs2(cbind(1-U[,1], U[,2:5]), cex = 0.4, col = tblack(0.5))
+pairs2(U, cex = 0.4, col = tblack(0.5)) # original
+pairs2(cbind(1-U[,1], U[,2:5]), cex = 0.4, col = tblack(0.5)) # first flipped
 
 
 ### 3.3 Outer power Clayton copula #############################################
