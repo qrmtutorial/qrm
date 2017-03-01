@@ -54,9 +54,9 @@ hist(Z, probability = TRUE, ylim = c(0, max(dnorm(0), dens$y)), breaks = 20,
      main = substitute(bold("Central Limit Theorem for Par("*th.*") data"),
                        list(th. = th)), xlab = expression("Realizations of"~sqrt(n)*(bar(X)[n]-mu)/sigma))
 lines(dens, col = "royalblue3") # overlaid density estimate
-curve(dnorm, from = min(Z), to = max(Z), add = TRUE, col = "darkorange3") # overlaid N(0,1) density
+curve(dnorm, from = min(Z), to = max(Z), add = TRUE, col = "darkorange2") # overlaid N(0,1) density
 box()
-legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange3"), bty = "n",
+legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange2"), bty = "n",
        legend = c("Density estimate", "N(0,1) density"))
 
 
@@ -82,9 +82,9 @@ hist(M, probability = TRUE, ylim = c(0, max(dens$y, true.dens)), breaks = 60,
                        list(th. = th)), xlab = expression("Realizations of"~(M[n]-d[n])/c[n]~~
                                                           "(for"~c[n] == {F^{-1}}(1-1/n)*";"~~d[n] == 0*")"))
 lines(dens, col = "royalblue3") # density estimate
-lines(x, true.dens, col = "darkorange3")
+lines(x, true.dens, col = "darkorange2")
 box()
-legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange3"), bty = "n",
+legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange2"), bty = "n",
        legend = c("Density estimate", expression("Limiting GEV density"~h[list(xi,mu,sigma)])))
 
 ## Q-Q plot
@@ -115,9 +115,9 @@ hist(Y, probability = TRUE, ylim = c(0, max(dens$y, true.dens)), breaks = 60,
      main = substitute(bold("Pickands-Balkema-de Haan Theorem for Par("*th.*") data"),
             list(th. = th)), xlab = "Realizations of excesses Y over the threshold u (90% quantile)")
 lines(dens, col = "royalblue3") # density estimate
-lines(x, true.dens, col = "darkorange3")
+lines(x, true.dens, col = "darkorange2")
 box()
-legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange3"), bty = "n",
+legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange2"), bty = "n",
        legend = c("Density estimate", expression("Limiting GPD density"~g[list(xi,beta(u))])))
 
 ## Just the density estimates on the log-scale
@@ -126,8 +126,8 @@ true.dens <- dGPD(x, xi = 1/th, beta = (1/th)*(1+u))
 ii <- dens$x > 0
 plot(dens$x[ii], dens$y[ii], type = "l", log = "x", col = "royalblue3",
      ylim = c(0, max(dens$y[ii], true.dens)), xlab = "x", ylab = "Density")
-lines(x, true.dens, col = "darkorange3")
-legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange3"), bty = "n",
+lines(x, true.dens, col = "darkorange2")
+legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange2"), bty = "n",
        legend = c("Density estimate", expression("Limiting GPD density"~g[list(xi,beta(u))])))
 
 ## Q-Q plot

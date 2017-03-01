@@ -66,5 +66,3 @@ Bt <- B*exp(-r*(T-times)) - Black_Scholes(times,Vt,r,sigmaV,B,T,type="put")
 lines(times,Bt,col=2)
 
 par(def.par)
-
-
