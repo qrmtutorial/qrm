@@ -1,0 +1,81 @@
+## By Marius Hofert
+
+## Sampling a geometric Brownian motion
+
+
+## The Black--Scholes model makes assumptions on the time-dynamics of a stock
+## price S_t. Under these assumptions, the log-returns X_{s,t} satisfy
+##
+##    X_{s,t} := log(S_t/S_s) ~ N((r-sig^2/2)*(t-s), (sig^2)*(t-s)),      (*)
+##
+## where:
+## - r:   risk-free annual interest rate;
+## - sig: (constant) annual volatility (standard deviation of log(S_1/S_0));
+## - s,t: time points (in years).
+##
+## If we want to simulate the price process S_t for t in (0,T] on a grid with N
+## equidistant (subdivision) points per year, we can proceed as follows.
+## Let X_t denote the log-return over the time period [t-1/N, t] in years,
+## for any time t in [1/N, T]. By choosing s = t-1/N in (*),
+##
+##    X_t = log(S_t/S_{t-1/N}) ~ N((r-sig^2/2)/N, (sig^2)/N), t in [1/N, T],
+##
+## so log-return increments over a period of length 1/N years are
+## N((r-sig^2/2)/N, (sig^2)/N) distributed. Changing time t from years to
+## (1/N)-years (and thus the time difference from 1/N to 1; typically N = 250
+## for the time t being measured in 'business days'), t now runs in
+## {1,..,N*T} and we obtain that
+##
+##    X_{t} := log(S_{t} / S_{t-1}) ~ N((r-sig^2/2)/N, (sig^2)/N), t in {1,..,N*T}.
+##
+## Therefore,
+##
+##    S_{t} = S_{t-1} e^{X_t} = S_{t-2} e^{X_{t-1} + X_t}
+##            = ... = S_{0} e^{\sum_{s=1}^{t} X_s}, t in {1,..,N*T}
+##
+## A path of the stock price S_t from t = 1 to t = N*T (so, for N = 250,
+## N*T business days ahead) can thus be sampled as follows:
+##
+## Algorithm (Sampling a geometric Brownian motion)
+## 1) Draw X_t ~ N((r-sig^2/2)/N, (sig^2)/N), t in {1,..,N*T}
+## 2) Set S_t = S_0 e^{\sum_{s=1}^t X_s}, t in {1,..,N*T}
+## 3) Return (S_0,..,S_{N*T})
+##
+## Note: What the algorithm indeed samples is a so-called "geometric
+##       Brownian motion", which is a stochastic process of the form
+##       S_t = a * exp((mu+sig^2/2)*t + sig * "Brownian motion").
+
+## Let's generate some sample paths of a geometric Brownian motion
+S <- 10 # current stock price S_0
+r <- 0.01 # risk-free annual interest rate
+sig <- 0.2 # (constant) annual volatility
+T <- 2 # maturity in years
+N <- 250 # business days per year
+t <- 1:(N*T) # time points to be sampled
+npath <- 400 # number of paths of the stock price S_t to be sampled
+set.seed(271) # for reproducibility
+S.paths <- replicate(npath, S * exp(cumsum(rnorm(N*T, # sample paths of S_t
+                                                 mean = (r-sig^2/2)/N,
+                                                 sd = sqrt((sig^2)/N))))) # (N*T, npath) matrix
+
+## Plotting
+## Plot of the paths
+layout(cbind(1, 2), width = c(1, 1/2)) # plot layout
+yran <- range(S.paths) # plot range
+opar <- par(mar = c(4.5, 4.2, 1, 0.5)) # reduce space around plot 1, especially to the right
+plot(t, S.paths[,1], type = "l", ylim = yran, # plot the first path
+     xlab = "Time t (in business days)", ylab = expression(S[t]))
+for(k in 2:npath) # plot the other paths
+    lines(t, S.paths[,k], col = adjustcolor("black", alpha.f = 1/(1+npath/14)))
+## Plot of the density estimate and true density at maturity
+dens <- density(S.paths[nrow(S.paths),]) # density estimate of S at maturity for all paths
+dLN <- dlnorm(dens$x, meanlog = log(S) + ((r-sig^2/2)/N) * (N*T), # true density (as simulated)
+              sdlog = sqrt(((sig^2)/N) * (N*T)))
+par(mar = c(4.5, 0.5, 1, 3)) # reduce space around plot 2, especially to the left
+plot(dens$y, dens$x, type = "l", xlab = expression("Density of"~S[T]),
+     xlim = range(c(dens$y, dLN)), ylab = "", yaxt = "n", ylim = yran) # plot density estimate
+lines(dLN, dens$x, lty = 2) # plot true density
+axis(4) # secondary y-axis
+legend("topright", bty = "n", lty = 1:2, cex = 0.7,
+       legend = c("Density estimate", "True LN density"))
+par(opar) # restore plot parameters
