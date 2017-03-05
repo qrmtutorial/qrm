@@ -16,5 +16,5 @@
    Calculation of credit spreads in hazard rate models under RT and RF recovery models
 10_CDS_calibration.R
    Illustration of the calibration of hazard rate when one CDS spread is available
-10_Simulating_geometric_BM.R
-   Manual simulation of a geometric Brownian motion
+10_Simulating_BM.R
+   Simulating Brownian motion, Brownian bridge and geometric Brownian motion
