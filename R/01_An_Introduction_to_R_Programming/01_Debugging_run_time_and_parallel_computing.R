@@ -105,7 +105,7 @@ if(FALSE)
 
 ## Setup
 library(parallel) # for parLapply() (multi-node) and mclapply() (multi-core) functionality
-d <- 8:15 # dimensions in which we compute the volumes
+d <- 8:17 # dimensions in which we compute the volumes
 B <- 100 # number of replications (of measuring the relative error)
 
 ## Determine the number of cores/nodes to use
