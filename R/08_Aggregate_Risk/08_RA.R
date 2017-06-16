@@ -6,8 +6,8 @@
 
 ### 0 Setup ####################################################################
 
-library(qrmtools)
 library(qrmdata)
+library(qrmtools)
 
 
 ### 1 Building the marginal quantile functions #################################
@@ -21,7 +21,7 @@ stopifnot(all(!is.na(S)))
 
 ## Build negative log-returns and corresponding marginal empirical quantile
 ## functions
-X <- -log_returns(S) # -log-returns
+X <- -returns(S) # -log-returns
 qF <- lapply(1:ncol(X), function(j)
     function(p) quantile(X[,j], probs = p, names = FALSE, type = 1))
 

@@ -1,4 +1,4 @@
-### R scripts for Chapter 11
+### Suggested order of R scripts for Chapter 11
 
 11_FFT_for_CF.R
    Illustrates how the characteristic function for a portfolio credit risk model can be inverted

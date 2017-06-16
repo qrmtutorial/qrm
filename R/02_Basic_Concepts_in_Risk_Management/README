@@ -1,11 +1,9 @@
-### R scripts for Chapter 2
+### Suggested order of R scripts for Chapter 2
 
-02_Evaluating_exp_minus_1.R
-   Illustrating how R's expm1(x) evaluates exp(x)-1 in a numerically more stable way
-02_Nonparametric_VaR_and_ES_estimators.R
-   Investigates the classical nonparametric value-at-risk and expected shortfall estimators
 02_VaR_ES_tail_comparison_for_normal_t.R
    Illustration that VaR (or ES) does not always give larger values for the t
    than the normal distribution
 02_VaR_superadditivity_examples.R
    Illustrates superadditivity of VaR under two scenarios
+02_Nonparametric_VaR_and_ES_estimators.R
+   Investigates the classical nonparametric value-at-risk and expected shortfall estimators

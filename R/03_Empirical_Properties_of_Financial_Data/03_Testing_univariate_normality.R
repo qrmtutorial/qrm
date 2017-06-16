@@ -87,7 +87,7 @@ qq_plot(X.t, FUN = function(p) qnorm(p, mean = mu.t, sd = sig.t))
 data(DJ_const) # constituents data
 margin <- c("KO", "MSFT", "INTC", "DIS") # margins considered
 DJ.const <- DJ_const['1993-01-01/2000-12-31', margin]
-X <- -log_returns(DJ.const) # compute -log-returns; daily risk-factor changes
+X <- -returns(DJ.const) # compute -log-returns; daily risk-factor changes
 X. <- list(daily = X, # daily risk-factor changes
            weekly = apply.weekly(X, FUN = colSums), # weekly risk-factor changes
            monthly = apply.monthly(X, FUN = colSums), # monthly risk-factor changes

@@ -1,8 +1,10 @@
-### R scripts for Chapter 8
+### Suggested order of R scripts for Chapter 8
 
 08_RA.R
    Presenting a basic implementation of the RA and the more sophisticated RA(),
    ARA() plus the underlying rearrange()
+08_VaR_DNB_data.R
+   Worst/best Value-at-Risk for the sum of six random losses for a portfolio
 08_Visual_intuition_RA.R
    Visually explaining the intuition behind the (Adaptive) Rearrangement Algorithm ((A)RA)
 

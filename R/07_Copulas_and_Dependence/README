@@ -1,27 +1,27 @@
-### R scripts for Chapter 7
+### Suggested order of R scripts for Chapter 7
 
 07_A_motivating_example.R
    A motivating example
-07_Computing_volumes.R
-   Compute C-volumes
+07_First_principles.R
+   Generate and transform multivariate data (with the probability and quantile transformations)
+07_Sklar_theorem_and_invariance_principle.R
+   Visually explaining Sklar's Theorem and the invariance principle
+07_Examples_of_copulas.R
+   Selected copulas and copula families
+07_Meta_copula_models.R
+   Generate some meta models using different copulas
+07_Correlation_pitfalls.R
+   Selected correlation pitfalls
+07_Copula_tail_probabilities.R
+   Computing tail probabilities of Gauss and t copulas
 07_Copula_estimation.R
    Basic estimation of various bivariate copulas to SP500 and FTSE
 07_Copula_estimation_and_goodness-of-fit.R
    Another copula estimation example (with copula-GARCH approach and goodness-of-fit)
-07_Copula_tail_probabilities.R
-   Computing tail probabilities of Gauss and t copulas
-07_Correlation_pitfalls.R
-   Selected correlation pitfalls
-07_Examples_of_copulas.R
-   Selected copulas and copula families
-07_First_principles.R
-   Generate and transform multivariate data (with the probability and quantile transformations)
-07_Meta_copula_models.R
-   Generate some meta models using different copulas
 07_Quasi-random_numbers_for_copulas.R
    Quasi-random numbers for copula models with an application to estimating rare event probabilities
-07_Sklar_theorem_and_invariance_principle.R
-   Visually explaining Sklar's Theorem and the invariance principle
+07_Computing_volumes.R
+   Compute C-volumes
 07_Spearmans_rho_Kendalls_tau.R
    Various experiments with Spearman's rho and Kendall's tau
 

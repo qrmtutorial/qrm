@@ -107,7 +107,7 @@ rho.t <- sapply(nu, function(nu.) rho_t(rho, nu = nu.)) # (length(rho), length(n
 ## Plot of Spearman's rho vs Pearson's rho for t copulas
 cols <- c("black", "maroon3", "darkorange2", "royalblue3")
 plot(rho, rho.t[,1], type = "l", col = cols[2],
-     xlab = expression("Pearson's"~~rho), ylab = expression("Spearman's"~~rho))
+     xlab = expression("Pearson's"~~rho), ylab = expression("Spearman's"~~rho[S]))
 lines(rho, rho.t[,2], col = cols[3])
 lines(rho, rho.t[,3], col = cols[4])
 abline(0, 1)

@@ -6,9 +6,9 @@
 
 ### 0 Setup ####################################################################
 
-library(qrmtools) # for qPar()
+library(mvtnorm) # for sampling from N(0, P)
 library(copula) # for pairs2()
-library(qrmdata) # for S&P 500 data etc.
+library(qrmtools) # for qPar()
 
 set.seed(271) # for reproducibility
 
@@ -17,27 +17,15 @@ set.seed(271) # for reproducibility
 
 ## Sample from a bivariate normal distribution
 P <- matrix(0.7, nrow = 2, ncol = 2) # correlation matrix; play with the entry!
-diag(P) <- 1
-A <- t(chol(P)) # Cholesky factor
+diag(P) <- 1 # set diagonals to 1
 n <- 1000 # sample size
-Z <- matrix(rnorm(n * 2), ncol = 2) # iid N(0,1)
-X <- Z %*% t(A) # X = AZ ~ N(0, P)
+set.seed(271) # for reproducibility
+X <- rmvnorm(n, sigma = P) # sample from N(0, P)
 plot(X, xlab = expression(X[1]), ylab = expression(X[2])) # scatter plot
-
-## (Negative) logarithmic stock (and other) returns can look quite similarly
-data(SP500_const) # S&P 500 data
-time <- c("2007-01-03", "2009-12-31") # time period
-dat <- SP500_const[paste0(time, collapse = "/"), c("AAPL", "IBM")] # grab out stocks
-X. <- as.matrix(-log_returns(dat)) # build negative logarithmic returns
-plot(X., xlab = expression("Apple -log-returns"~X[1]),
-     ylab = expression("IBM -log-returns"~X[2])) # scatter plot
 
 ## Marginally apply probability transforms (with the corresponding dfs)
 U <- pnorm(X) # probability transformation
 plot(U, xlab = expression(U[1]), ylab = expression(U[2])) # sample from the Gauss copula
-
-## ... and the pseudo-sample of the underlying copula for the stock data
-plot(pobs(X.), xlab = expression(U[1]), ylab = expression(U[2]))
 
 ## (Visually) check that the margins of our generated data are indeed U(0,1)
 plot(U[,1], ylab = expression(U[1])) # scatter plot
@@ -68,10 +56,7 @@ diag(P) <- 1
 P
 
 ## Sample from a multivariate t distribution
-A <- t(chol(P)) # Cholesky factor
-Z <- matrix(rnorm(n * d), ncol = d) # iid N(0,1)
-sqrt.W <- sqrt(1/rgamma(n, shape = nu/2, rate = nu/2))
-X <- sqrt.W * (Z %*% t(A)) # X = sqrt(W)AZ ~ t_{P,nu}
+X <- rmvt(n, sigma = P, df = nu) # sample from t_{P, nu}
 pairs2(X, labels.null.lab = "X", cex = 0.4, col = adjustcolor("black", alpha.f = 0.5))
 
 ## Marginally apply probability transforms (here: empirically estimated dfs)

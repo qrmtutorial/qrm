@@ -5,13 +5,13 @@
 
 ### 0 Setup ####################################################################
 
-library(copula)
-library(qrmtools)
-library(qrmdata)
 library(rugarch)
 library(xts)
 library(ADGofTest)
 library(qqtest)
+library(copula)
+library(qrmdata)
+library(qrmtools)
 
 
 ### 1 Working with the data ####################################################
@@ -29,7 +29,7 @@ stopifnot(all(!is.na(S))) # na.fill(, fill = "extend") is often helpful
 ### 2 Fitting marginal ARMA(1,1)-GARCH(1,1) models with standardized t residuals
 
 ## Build negative log-returns
-X <- -log_returns(S) # -log-returns
+X <- -returns(S) # -log-returns
 
 ## Basic plot
 plot.zoo(X, main = "Negative log-returns")

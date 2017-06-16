@@ -1,4 +1,4 @@
-### R scripts for Chapter 13
+### Suggested order of R scripts for Chapter 13
 
 13_CPoi_distribution.R
    Computing approximate tail probability, VaR and ES estimates of a compound

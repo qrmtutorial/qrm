@@ -5,10 +5,10 @@
 
 ### 0 Setup ####################################################################
 
-library(copula)
-library(qrmtools)
-library(qrmdata)
 library(xts)
+library(copula)
+library(qrmdata)
+library(qrmtools)
 
 
 ### 1 Working with the data ####################################################
@@ -18,8 +18,8 @@ data("SP500")
 data("FTSE")
 
 ## Build negative log-returns
-X.SP500 <- -log_returns(SP500)
-X.FTSE  <- -log_returns(FTSE)
+X.SP500 <- -returns(SP500)
+X.FTSE  <- -returns(FTSE)
 
 ## Merge
 X <- merge(X.SP500, X.FTSE, all = FALSE)

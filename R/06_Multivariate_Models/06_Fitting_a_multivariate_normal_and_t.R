@@ -3,9 +3,9 @@
 ## Fitting a multivariate normal and t distribution to Dow Jones -log-returns
 
 library(xts) # for time series manipulation
-library(qrmdata) # for Dow Jones constituents data
-library(qrmtools) # for log_returns()
 library(QRM) # for fit.mst()
+library(qrmdata) # for Dow Jones constituents data
+library(qrmtools) # for returns(); note: load after 'QRM' to get right returns()
 library(mvtnorm) # for sampling from a multivariate normal or t distribution
 
 ## Load and extract the data we work with and plot
@@ -16,7 +16,7 @@ S <- DJ_const['2000-01-01/', c("AAPL", "BA", "INTC", "IBM", "NKE")]
 plot.zoo(S, xlab = "Time t")
 
 ## Build and plot -log-returns
-X <- -log_returns(S) # compute -log-returns
+X <- -returns(S) # compute -log-returns
 pairs(as.matrix(X), main = "Scatter plot matrix of risk-factor changes", gap = 0, pch = ".")
 plot.zoo(X, xlab = "Time t", main = "")
 ## For illustration purposes, we treat this data as realizations of iid

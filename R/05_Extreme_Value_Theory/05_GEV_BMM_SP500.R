@@ -14,10 +14,10 @@
 
 ### Setup ######################################################################
 
-library(qrmdata) # for the S&P 500 data
-library(qrmtools) # for log_returns
 library(xts) # for functions around time series objects
 library(QRM) # for fit.GEV()
+library(qrmdata) # for the S&P 500 data
+library(qrmtools) # for returns(); note: load after 'QRM' to get right returns()
 
 
 ### 1 Working with the data ####################################################
@@ -25,8 +25,8 @@ library(QRM) # for fit.GEV()
 ## Load the data and compute the negative log-returns (risk-factor changes X)
 data(SP500)
 S <- SP500 # 'xts'/'zoo' object
-X <- -log_returns(S) # -log-returns X_t = -log(S_t/S_{t-1})
-stopifnot(identical(X, -diff(log(S))[-1]))
+X <- -returns(S) # -log-returns X_t = -log(S_t/S_{t-1})
+stopifnot(all.equal(X, -diff(log(S))[-1], check.attributes = FALSE))
 date <- index(X)
 
 ## Let's briefly work out some numbers around next Monday (= Black Monday!)
@@ -43,8 +43,10 @@ Y[date == "1987-10-19"] # ~= 20.47% (drop)
 
 ## To see the same change from -log-returns, note that X_t = -log(S_t/S_{t-1})
 ## = -log(1+beta) => -beta = -(exp(-X_t)-1) = -expm1(-X_t)
-stopifnot(all.equal(-expm1(-X[date == "1987-10-16"]), Y[date == "1987-10-16"]))
-stopifnot(all.equal(-expm1(-X[date == "1987-10-19"]), Y[date == "1987-10-19"]))
+stopifnot(all.equal(-expm1(-X[date == "1987-10-16"]), Y[date == "1987-10-16"],
+                    check.attributes = FALSE))
+stopifnot(all.equal(-expm1(-X[date == "1987-10-19"]), Y[date == "1987-10-19"],
+                    check.attributes = FALSE))
 
 ## Does working with either notion of (classical/log-)returns matter?
 ## The tangent to the curve log(x) in 1 is x - 1.
@@ -55,7 +57,8 @@ stopifnot(all.equal(-expm1(-X[date == "1987-10-19"]), Y[date == "1987-10-19"]))
 ##    so it can/does matter:
 x <- S["1987-10-19"]/as.numeric(S["1987-10-16"]) # S_t/S_{t-1} ~= 0.7953
 stopifnot(all.equal(x - 1,  -Y[date == "1987-10-19"])) # classical return; ~= -0.2047
-stopifnot(all.equal(log(x), -X[date == "1987-10-19"])) # log-return; ~= -0.2290
+stopifnot(all.equal(log(x), -X[date == "1987-10-19"], # log-return; ~= -0.2290
+                    check.attributes = FALSE))
 ## => Since the tangent provides an upper bound for the log, classical returns
 ##    are larger than log-returns
 
@@ -63,11 +66,11 @@ stopifnot(all.equal(log(x), -X[date == "1987-10-19"])) # log-return; ~= -0.2290
 ## Note: S_t/S_{t-4} = S_t/S_{t-1} * S_{t-1}/S_{t-2} ... * S_{t-3}/S_{t-4}
 ##       = exp(-X_t) * exp(-X_{t-1}) * ... * exp(-X_{t-3}) = exp(-sum(X_i, i=t-3,..,t))
 ##       => (Positive drop) -beta = -(S_t/S_{t-4}-1) = -(exp(-sum(X_i, i=t-3,..,t))-1)
--expm1(-sum(X["1987-10-12" <= date & date <= "1987-10-16"])) # ~= 9.12% (drop)
+-expm1(-sum(X['1987-10-12/1987-10-16'])) # ~= 9.12% (drop)
 
 ## From now on we only consider the risk-factor changes from 1960-01-01 until
 ## the evening of 1987-10-16
-X. <- X["1960-01-01" <= date & date <= "1987-10-16"]
+X. <- X['1960-01-01/1987-10-16']
 
 ## Plot the S&P 500 log-returns
 plot.zoo(X., main = "S&P 500 risk-factor changes (-log-returns)",
@@ -127,4 +130,3 @@ qGEV(1-1/100, xi = xi.hyear, mu = mu.hyear, sigma = sig.hyear) # r_{n=130, k=100
           xi = xi.year, mu = mu.year, sigma = sig.year)) # ~= 1877 years
 1/(1-pGEV(as.numeric(X[date == "1987-10-19"]),
           xi = xi.hyear, mu = mu.hyear, sigma = sig.hyear)) # ~= 2300 half-years = 1150 years
-
