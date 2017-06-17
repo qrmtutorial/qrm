@@ -121,16 +121,16 @@ abs(probs["QRNG"] - probs["true"]) # => slightly closer...
 boxplot(list(PRNG = prob, QRNG = prob.),
         main = "Simulated exceedance probability"~P(U[1] > u[1], U[2] > u[2]))
 ## => QRNGs provide a smaller variance
-(vr <- var(prob.)/var(prob)) # estimated variance-reduction fraction
+(vr <- var(prob)/var(prob.)) # estimated variance-reduction fraction
 
 ## Boxplot of the measured run times in milliseconds
 boxplot(list(PRNG = rt, QRNG = rt.))
 boxplot(list(PRNG = rt, QRNG = rt.), outline = FALSE) # without outliers (points)
 ## => QRNG takes a bit longer
-(rtf <- mean(rt.)/mean(rt)) # estimated run-time factor
+(rtf <- mean(rt)/mean(rt.)) # estimated run-time factor
 
 ## Effort comparison
-vr * rtf # => effort of QRNG only a fraction of PRNG
+vr * rtf # => effort of QRNG about 6.95x better than for PRNG
 
 ## Remark:
 ## - QRNGs can estimate high quantile probabilities with a smaller variance
@@ -140,9 +140,9 @@ vr * rtf # => effort of QRNG only a fraction of PRNG
 ##   the case for the generalized Halton sequence used here; this may depend
 ##   on the dimension, too.
 ## - If (*) is used for pseudo-sampling from the t copula, run time is
-##   significantly smaller, the total effort slightly above 1. It can
-##   then still be advantages to use quasi-random numbers (because of
-##   memory/storage limitations)
+##   significantly smaller, the total effort still slightly above 1. Even if
+##   below one, it can still be advantages to use quasi-random numbers
+##   instead of pseudo-random numbers (because of memory/storage limitations)
 ## - Both methods could be made significantly faster by not using cCopula(),
 ##   but that requires more work; see Cambou, Hofert, Lemieux ("Quasi-random
 ##   numbers for copula models")
