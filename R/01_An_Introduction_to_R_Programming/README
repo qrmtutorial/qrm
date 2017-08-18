@@ -1,6 +1,8 @@
-### R scripts for Chapter 1
+### Suggested order of R scripts for Chapter 1
 
 01_An_introduction_to_R_programming.R
    Covers the elements of R programming including illustration of good practice
+01_Evaluating_exp_minus_1.R
+   Illustrating how R's expm1(x) evaluates exp(x)-1 in a numerically more stable way
 01_Debugging_run_time_and_parallel_computing.R
    Shows how to debug, measure run time and implement parallel computing in R

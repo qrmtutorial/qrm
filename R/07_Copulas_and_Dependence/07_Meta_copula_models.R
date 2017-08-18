@@ -3,7 +3,7 @@
 ## Illustrating meta-C models
 
 
-### 0 Setup ####################################################################
+### Setup ######################################################################
 
 library(copula)
 library(gridExtra) # for grid.arrange()

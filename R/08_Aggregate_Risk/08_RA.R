@@ -4,7 +4,7 @@
 ## and the adaptive rearrangement algorithm (ARA)
 
 
-### 0 Setup ####################################################################
+### Setup ######################################################################
 
 library(qrmdata)
 library(qrmtools)
@@ -19,12 +19,12 @@ time <- c("2006-01-03", "2015-12-31") # time period
 S <- SP500_const[paste0(time, collapse = "/"), stocks] # data
 stopifnot(all(!is.na(S)))
 
-## Build negative log-returns and corresponding marginal empirical quantile
-## functions
+## Build -log-returns
 X <- -returns(S) # -log-returns
+
+## Build corresponding marginal empirical quantile functions
 qF <- lapply(1:ncol(X), function(j)
     function(p) quantile(X[,j], probs = p, names = FALSE, type = 1))
-
 ## Append two parametric marginal quantile functions (as obtained by estimation,
 ## for example, if the number of losses is too small to use empirical dfs)
 qF <- c(qF, function(p) qPar(p, theta = 2),
@@ -39,7 +39,7 @@ qF <- c(qF, function(p) qPar(p, theta = 2),
 ##'        until each column is oppositely ordered to the sum of all others
 ##' @return The worst VaR
 ##' @author Marius Hofert
-##' @note Already uses relative errors
+##' @note Already uses relative tolerances
 basic_rearrange_worst_VaR <- function(X, tol = NULL)
 {
     N <- nrow(X)
@@ -51,7 +51,7 @@ basic_rearrange_worst_VaR <- function(X, tol = NULL)
             Y[,j] <- sort(Y[,j], decreasing = TRUE)[rank(rowSums(Y[,-j, drop = FALSE]), ties.method = "first")]
         Y.rs <- rowSums(Y)
         m.rs.new <- min(Y.rs)
-        tol. <- abs((m.rs.new - m.rs.old)/m.rs.old)
+        tol. <- abs((m.rs.new - m.rs.old)/m.rs.old) # relative tolerance
         tol.reached <- if(is.null(tol)) {
             identical(Y, X)
         } else { tol. <= tol }
@@ -70,8 +70,8 @@ alpha <- 0.99 # confidence level
 N <- 2^10 # number of discretization points
 p <- alpha + (1-alpha)*0:(N-1)/N # probabilities at which to evaluate the marginal quantile functions
 X <- sapply(qF, function(qF.) qF.(p)) # input matrix for computing worst VaR
-(worst.VaR <- basic_rearrange_worst_VaR(X))
-stopifnot(all.equal(worst.VaR, basic_rearrange_worst_VaR(X, tol = 0)))
+(worst.VaR <- basic_rearrange_worst_VaR(X)) # rearrange until *all* columns are oppositely ordered
+stopifnot(all.equal(worst.VaR, basic_rearrange_worst_VaR(X, tol = 0))) # compare with tol = 0
 
 
 ### 3 The more sophisticated RA() and ARA() ####################################

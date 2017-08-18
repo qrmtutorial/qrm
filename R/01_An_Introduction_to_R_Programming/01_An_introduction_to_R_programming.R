@@ -82,9 +82,9 @@
 ### Simple manipulations; numbers and vectors ##################################
 
 ## Simple manipulations
-1+2
 1/2
 1/0 # in R, Inf and -Inf exist and R can often deal with them correctly
+1/-0
 0/0 # ... also NaN = 'not a number' is available; 0/0, 0*Inf, Inf-Inf lead to NaN
 x <- 0/0 # store the result in 'x'
 class(x) # the class/type of 'x'; => NaN is still of mode 'numeric'
@@ -151,16 +151,16 @@ x[ii] # use that vector to index x => pick out all values of x >= 3
 !ii # negate the logical vector
 all(ii) # check whether all indices are TRUE (whether all x >= 3)
 any(ii) # check whether any indices are TRUE (whether any x >= 3)
-ii |  !ii # vectorized logical OR
-ii &  !ii # vectorized logical AND
-ii || !ii # logical OR applied to all values
-ii && !ii # logical AND applied to all values
+ii |  !ii # vectorized logical OR (is, componentwise, any entry TRUE?)
+ii &  !ii # vectorized logical AND (are, componentwise, both entries TRUE?)
+ii || !ii # logical OR applied to all values (is entry any TRUE?)
+ii && !ii # logical AND applied to all values (are all entries TRUE?)
 3 * c(TRUE, FALSE) # TRUE is coerced to 1, FALSE to 0
 class(NA) # NA = 'not available' is 'logical' as well (used for missing data)
 z <- 1:3; z[5] <- 4 # two statements in one line (';'-separated)
 z # => 4th element 'not available' (NA)
 (z <- c(z, NaN, Inf)) # append NaN and Inf
-class(z) # still numeric
+class(z) # still numeric (although is.numeric(NA) is FALSE)
 is.na(z) # check for NA or NaN
 is.nan(z) # check for just NaN
 is.infinite(z) # check for +/-Inf
@@ -192,7 +192,7 @@ x[["b"]] # drop the name
 (C <- cbind(1:3, 4:6, 7:9, 10:12)) # column bind
 stopifnot(identical(A, C), identical(A., B)) # check whether the constructions are identical
 cbind(1:3, 5) # recycling
-(A <- outer(1:4, 1:5, FUN = pmin)) # build a (4, 5)-matrix with (i,j)th element being min{i, j}
+(A <- outer(1:4, 1:5, FUN = pmin)) # (4,5)-matrix with (i,j)th element min{i, j}
 ## => Lower triangular matrix contains column number, upper triangular matrix contains row number
 
 ## Some functions
@@ -212,12 +212,12 @@ L <- matrix(c(2, 0, 0,
 Sigma <- L %*% t(L) # ... real, symmetric, positive definite (covariance) matrix Sigma
 standardize <- Vectorize(function(r, c) Sigma[r,c]/(sqrt(Sigma[r,r])*sqrt(Sigma[c,c])))
 (P <- outer(1:3, 1:3, standardize)) # construct the corresponding correlation matrix
-## Alternatively, this could have been done with Matrix::nearPD(Sigma, corr = TRUE)
-## which works slightly differently though (by finding a correlation matrix
-## close to the given matrix in the Frobenius norm) and thus gives a different answer.
+stopifnot(all.equal(P, cov2cor(Sigma))) # a faster way
 P.inv <- solve(P) # compute P^{-1}; solve(A, b) solves Ax = b (if b is omitted, it defaults to I, thus leading to A^{-1})
 P %*% P.inv # (numerically close to) I
 P.inv %*% P # (numerically close to) I
+## Another useful function is Matrix::nearPD(Sigma, corr = TRUE) which finds a
+## correlation matrix close to the given matrix in the Frobenius norm.
 
 ## Other useful functions
 rowSums(A) # row sums
@@ -236,13 +236,12 @@ str(arr) # use str() to the *str*ucture of the object arr
 arr[1,2,2] # pick out a value
 arr. <- aperm(arr, perm = c(3,1,2)) # permute the array to dimensions (z,x,y)
 str(arr.)
-(mat <- apply(arr, 1:2, FUN = sum)) # for each combination of fixed first and second variables, sum over all others (the third dimension)
+(mat <- apply(arr, 1:2, FUN = sum)) # for each combination of fixed first and second variables, sum over all other dimensions
 
 
 ### Lists (and data frames) ####################################################
 
-## data frames (lists which contains objects of the same length but possibly
-## different type)
+## data frames (lists containing possibly different objects of the same length)
 (df <- data.frame(group = rep(LETTERS[1:3], each = 2), value = 1:6))
 str(df) # => first column is a factor; second an integer vector
 
@@ -346,7 +345,6 @@ cloud(X[,3]~X[,1]+X[,2], scales = list(col = 1, arrows = FALSE), col = 1,
       par.settings = list(background = list(col = "#ffffff00"),
                 axis.line = list(col = "transparent"), clip = list(panel = "off")))
 ## => not much visible; in higher dimensions even impossible ...
-
 pairs(X, gap = 0, pch = ".") # ... but we can use a pairs plot
 
 

@@ -3,7 +3,7 @@
 ## Copula estimation and goodness-of-fit (5d example, 2 copulas)
 
 
-### 0 Setup ####################################################################
+### Setup ######################################################################
 
 library(rugarch)
 library(xts)
@@ -85,7 +85,7 @@ set.seed(271) # for reproducibility
 N <- 100 # this is to save run time; it should be larger!
 
 ## Check the Gumbel copula
-gof.gc <- gofCopula(gc, x = U, N = N)
+gof.gc <- gofCopula(gc, x = U, N = N) # warning also because the copula doesn't fit well here
 stopifnot(gof.gc$p.value < 0.05) # => rejection
 
 ## Check the t copula
@@ -98,8 +98,8 @@ stopifnot(gof.gc$p.value < 0.05) # => rejection
 U.Rsnbl <- cCopula(U, copula = tc)
 pairs2(U.Rsnbl, cex = 0.4, col = adjustcolor("black", alpha.f = 0.5)) # looks ok
 
-## Map it to a K_d distribution and do a Q-Q plot
-U.Rsnbl.K <- sqrt(rowMeans(qnorm(U.Rsnbl)^2)) # map to a K_d
+## Map it to a K_d distribution ("kay") and do a Q-Q plot
+U.Rsnbl.K <- sqrt(rowMeans(qnorm(U.Rsnbl)^2)) # map to a kay distribution
 pK <- function(q, d) pchisq(d*q*q, df = d) # df of a K_d distribution
 AD <- ad.test(U.Rsnbl.K, distr.fun = pK, d = d) # compute an AD test
 stopifnot(AD$p.value >= 0.05)
@@ -139,7 +139,7 @@ X.lst <- lapply(1:B, function(b) {
 ## Note: - This is merely a demo of what can be done with the simulated data.
 ##       - See also the vignette "ARMA_GARCH_VaR" in qrmtools
 
-## Predict the aggregated loss and VaR (nonparametrically)
+## Predict VaR of the aggregated loss nonparametrically
 Xs <- rowSums(X) # aggregated loss; n-vector
 Xs. <- sapply(X.lst, rowSums) # simulated aggregated losses; (m, B)-matrix
 Xs.mean <- rowMeans(Xs.) # predicted aggregated loss; m-vector
@@ -163,5 +163,3 @@ legend("bottomright", bty = "n", lty = rep(1, 4),
        col = c("black", "royalblue3", "grey50", "maroon3"),
        legend = c("(Aggregated) loss", "(Simulated) predicted loss",
                   "95% CIs", as.expression(substitute("Simulated"~VaR[a], list(a = alpha)))))
-
-

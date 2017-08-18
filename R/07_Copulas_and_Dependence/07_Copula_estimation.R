@@ -3,7 +3,7 @@
 ## Basic copula estimation (2d example, 4 copulas)
 
 
-### 0 Setup ####################################################################
+### Setup ######################################################################
 
 library(xts)
 library(copula)
@@ -54,4 +54,3 @@ fit.G <- fitCopula(gumbelCopula(),  data = U)
 ## Comparing the likelihoods
 sort(c(N = fit.N@loglik, t = fit.t@loglik, C = fit.C@loglik, G = fit.G@loglik),
      decreasing = TRUE)
-

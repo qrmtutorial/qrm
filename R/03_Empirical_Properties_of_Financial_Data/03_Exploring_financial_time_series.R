@@ -1,8 +1,13 @@
 ## By Alexander McNeil and Marius Hofert
 
+## Loading, exploring, merging, aggregating and presenting financial time series
+
+
+### Setup ######################################################################
 
 library(xts)
 library(qrmdata)
+library(qrmtools)
 
 
 ### Stock prices ###############################################################
@@ -12,87 +17,98 @@ data("DJ_const")
 str(DJ_const)
 
 ## We extract a time period and take the first 10 stocks
-DJdata <- DJ_const['2006-12-29/2015-12-31',1:10]
+DJdata <- DJ_const['2006-12-29/2015-12-31', 1:10]
 
 ## Use plot for zoo objects to get multiple plots
-plot.zoo(DJdata)
-DJ.X <- diff(log(DJdata))[-1,]
-head(DJ.X)
-plot.zoo(DJ.X)
+plot.zoo(DJdata, xlab = "Time", main = "DJ (10 component series)")
+X <- returns(DJdata) # or diff(log(DJdata))[-1,]
+head(X)
+plot.zoo(X, xlab = "Time", main = "Log-returns of 10 DJ component series")
 
-## Aggregating log returns by summation
-DJ.X.w <- apply.weekly(DJ.X, FUN = colSums)
-dim(DJ.X.w)
-plot.zoo(DJ.X.w, type = "h")
-
-DJ.X.m <- apply.monthly(DJ.X, FUN = colSums)
-dim(DJ.X.m)
-plot.zoo(DJ.X.m, type = "h")
-
-DJ.X.q <- apply.quarterly(DJ.X, FUN = colSums)
-dim(DJ.X.q)
-plot.zoo(DJ.X.q, type = "h")
+## Aggregating log returns by summation for each column
+## Weekly
+X.w <- apply.weekly(X, FUN = colSums)
+dim(X.w)
+plot.zoo(X.w, type = "h", xlab = "Time", main = "Weekly log-returns") # 'h' = histogram = vertical lines only
+## Monthly
+X.m <- apply.monthly(X, FUN = colSums)
+dim(X.m)
+plot.zoo(X.m, type = "h", xlab = "Time", main = "Monthly log-returns")
+## Quarterly
+X.q <- apply.quarterly(X, FUN = colSums)
+dim(X.q)
+plot.zoo(X.q, type = "h", xlab = "Time", main = "Quarterly log-returns")
 
 
 ### Stock indexes ##############################################################
 
-data("SP500")
-data("FTSE")
-data("SMI")
-str(SP500)
-plot.zoo(SP500)
+## Load stock index data
+data("SP500") # S&P 500
+data("FTSE") # FTSE
+data("SMI") # SMI
+plot.zoo(SP500, xlab = "Time", ylab = "S&P 500")
 
-## Merge all the data
-INDEXESall <- merge(SP500, FTSE, SMI, all = TRUE)
-plot.zoo(INDEXESall)
+## Merge the three time series
+all <- merge(SP500, FTSE, SMI)
+nms <- c("S&P 500", "FTSE", "SMI")
+colnames(all) <- nms
+plot.zoo(all, xlab = "Time", main = "All")
 
-## Merge and retain only days where all indexes have values
-INDEXES <- merge(SP500, FTSE, SMI, all = FALSE)
-plot.zoo(INDEXES)
+## Merge and retain only days where all three time series are available
+all.avail <- merge(SP500, FTSE, SMI, all = FALSE)
+colnames(all.avail) <- nms
+plot.zoo(all.avail, xlab = "Time", main = "All available")
 
 ## Compute returns
-SP500.X <- diff(log(SP500))[-1]
-FTSE.X <- diff(log(FTSE))[-1]
-SMI.X <- diff(log(SMI))[-1]
-INDEXES.X <- merge(SP500.X, FTSE.X, SMI.X, all = FALSE)
-plot.zoo(INDEXES.X)
-pairs(as.zoo(INDEXES.X), gap = 0, cex = 0.4)
+SP500.X <- returns(SP500)
+FTSE.X  <- returns(FTSE)
+SMI.X   <- returns(SMI)
+X <- merge(SP500.X, FTSE.X, SMI.X, all = FALSE)
+colnames(X) <- nms
+plot.zoo(X, xlab = "Time", main = "Log-returns")
+pairs(as.zoo(X), gap = 0, cex = 0.4)
 
-## Aggregating by week, month
-INDEXES.X.w <- apply.weekly(INDEXES.X, FUN = colSums)
-plot.zoo(INDEXES.X.w, type = "h")
-
-INDEXES.X.m <- apply.monthly(INDEXES.X, FUN = colSums)
-plot.zoo(INDEXES.X.m, type = "h")
+## Aggregating
+## By week
+X.w <- apply.weekly(X, FUN = colSums)
+plot.zoo(X.w, xlab = "Time", main = "Weekly log-returns", type = "h")
+## By month
+X.m <- apply.monthly(X, FUN = colSums)
+plot.zoo(X.m, xlab = "Time", main = "Monthly log-returns", type = "h")
 
 
 ### Exchange rates #############################################################
 
-data("GBP_USD")
-data("EUR_USD")
-data("JPY_USD")
-data("CHF_USD")
-FX <- merge(GBP_USD, EUR_USD, JPY_USD, CHF_USD, all = TRUE)
+## Load exchange rate data
+data("GBP_USD") # 1 GBP in USD
+data("EUR_USD") # 1 EUR in USD
+data("JPY_USD") # 1 JPY in USD
+data("CHF_USD") # 1 CHF in USD
+FX <- merge(GBP_USD, EUR_USD, JPY_USD, CHF_USD)
 head(FX)
-plot.zoo(FX)
-FX.X <- diff(log(FX))[-1,]
-plot.zoo(FX.X, col = 1:4)
+plot.zoo(FX, xlab = "Time", main = "Exchange rates to USD")
+X <- returns(FX)
+plot.zoo(X, xlab = "Time", main = "Log-returns of exchange rates to USD",
+         col = c("black", "royalblue3", "maroon3", "darkorange2"))
 
 
 ### Zero-coupon bond yields ####################################################
 
+## Load zero-coupon bond yield data (in CAD)
 data("ZCB_CA")
 dim(ZCB_CA)
 head(ZCB_CA)
 
 ## Change to percentages and select period
-ZCB <- 100*ZCB_CA['2002-01-02/2011-12-30']
-plot.zoo(ZCB[,1:10], col = 1:10)
+ZCB <- 100 * ZCB_CA['2002-01-02/2011-12-30']
+cols <- c("royalblue3", "darkorange2", RColorBrewer::brewer.pal(8, name = "Dark2"))
+plot.zoo(ZCB[,1:10], xlab = "Time", main = "Percentage yields (first 10 maturities)",
+         col = cols)
 
-## Compute simple returns and remove first row
-ZCB.X <- diff(ZCB)[-1,]
+## Compute differences (first row is removed)
+X <- returns(ZCB, method = "diff")
 
 ## Pick 3 maturities
-ZCB.X.3 <- ZCB.X[,c(1,8,40)]
-plot.zoo(ZCB.X.3, col = 1:3)
-pairs(as.zoo(ZCB.X.3), gap = 0, cex = 0.4)
+X3 <- X[, c(1, 8, 40)]
+plot.zoo(X3, xlab = "Time", main = "Differences (3 maturities)", col = cols[c(9, 5, 7)])
+pairs(as.zoo(X3), gap = 0, cex = 0.4)

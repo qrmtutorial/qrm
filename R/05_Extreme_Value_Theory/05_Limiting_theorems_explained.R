@@ -1,17 +1,16 @@
 ## By Marius Hofert
 
-## R is strong on quickly visualizing concepts. We do this here by numerically
-## verifying major limiting theorems in Probability (SLLN, CLT) and
-## Extreme Value Theory (Gnedenko's Theorem, Pickands--Balkema--de Haan).
-## Note that we use the same generated data throughout!
+## Visualization of major limiting theorems in Probability (SLLN, CLT) and
+## Extreme Value Theory (Gnedenko's Theorem, Pickands--Balkema--de Haan)
+## based on the *same* (simulated) data.
 
 
-### Generate the data ##########################################################
+### Setup ######################################################################
 
 library(qrmtools)
 
 ## Data from a Par(theta) distribution
-n <- 50000 # sample size = number of iid random variables
+n <- 2e5 # sample size = number of iid random variables
 th <- 3 # parameter theta
 set.seed(271) # set seed for reproducibility
 X <- rPar(n, theta = th) # generate data
@@ -38,7 +37,7 @@ legend("bottomright", lty = c(1,1), col = c("black", "royalblue3"),
 ### 2 Central Limit Theorem (CLT) ##############################################
 
 ## Build blocks of data
-m <- 500 # number of blocks
+m <- 500 # number of blocks (each of size n/m = 400)
 X. <- split(X, f = rep(1:m, each = floor(n/m))) # split data into blocks
 
 ## Location-scale transform blocked sums via sqrt(n) * (bar{X}_n - mu) / sigma
@@ -70,7 +69,7 @@ legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange2"), bty = "n"
 ## xi, mu and sig, but one can show that besides xi = 1/theta, one has mu = 1
 ## and sig = 1/theta here. Let's check that.
 
-## Location-scale transform blocked maxima
+## Location-scale transform blocked maxima with c_n = F^-(1-1/n) and d_n = 0
 M <- sapply(X., function(x) (max(x) - 0) / qPar(1-1/length(x), theta = th))
 
 ## Histogram with overlaid densities
@@ -89,9 +88,13 @@ legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange2"), bty = "n"
 
 ## Q-Q plot
 qq_plot(M, FUN = function(p) qGEV(p, xi = 1/th, mu = 1, sigma = 1/th),
-        method = "empirical",
         main = substitute(bold("Gnedenko's Theorem for Par("*th.*") data"),
                           list(th. = th)))
+## => For smaller block sizes (try n = 50000, so block sizes of 100), there
+##    is significant departure visible. This indicates that one typically
+##    needs quite a large (block and thus) sample size to get a sufficiently
+##    good approximation to the limiting GEV. The following approach is less
+##    'wasteful' with the data and already works well for n = 50000.
 
 
 ### 4 Pickands--Balkema--de Haan (1974/1975) ###################################
@@ -123,7 +126,7 @@ legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange2"), bty = "n"
 ## Just the density estimates on the log-scale
 x <- 10^seq(-2, 2, length.out = 65)
 true.dens <- dGPD(x, xi = 1/th, beta = (1/th)*(1+u))
-ii <- dens$x > 0
+ii <- dens$x > 0 # only use those values with density > 0 (otherwise log-scale fails)
 plot(dens$x[ii], dens$y[ii], type = "l", log = "x", col = "royalblue3",
      ylim = c(0, max(dens$y[ii], true.dens)), xlab = "x", ylab = "Density")
 lines(x, true.dens, col = "darkorange2")

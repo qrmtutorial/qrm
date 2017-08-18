@@ -17,3 +17,5 @@
    Estimating a macroeconomic factor model using time-series regression
 06_PCA_factor_model.R
    Using PCA to construct a factor model
+06_Projections_of_uniform_on_sphere.R
+   Investigating projections of distributions uniform on the unit sphere

@@ -52,7 +52,6 @@ library(qrmtools)
 
 n <- 2500 # sample size (~= 10y of daily data)
 B <- 1000 # number of bootstrap replications (= number or realizations of VaR, ES)
-th <- 2 # Pareto parameter (true underlying distribution)
 
 
 ### 1 Auxiliary functions ######################################################
@@ -78,13 +77,17 @@ CI <- function(x, beta = 0.05, na.rm = FALSE)
 bootstrap <- function(x, B, alpha, method = c("VaR", "ES"))
 {
     stopifnot(is.vector(x), (n <- length(x)) >= 1, B >= 1) # sanity checks
+    ## Define the risk measure (as a function of x, alpha)
     method <- match.arg(method) # check and match 'method'
-    rm <- if(method == "VaR") { # risk measure
+    rm <- if(method == "VaR") {
         VaR_np
     } else {
         function(x, alpha) ES_np(x, alpha = alpha, verbose = TRUE)
     }
-    x.boot <- matrix(sample(x, size = n*B, replace = TRUE), ncol = B) # (n, B)-matrix of bootstrap samples
+    ## Construct the bootstrap samples (by drawing with replacement)
+    ## from the underlying empirical distribution function
+    x.boot <- matrix(sample(x, size = n*B, replace = TRUE), ncol = B) # (n, B)-matrix
+    ## For each bootstrap sample, estimate the risk measure
     apply(x.boot, 2, rm, alpha = alpha) # (length(alpha), B)-matrix
 }
 
@@ -94,6 +97,7 @@ bootstrap <- function(x, B, alpha, method = c("VaR", "ES"))
 ## Simulate losses (as we don't have real ones and we want to investigate
 ## the performance of the estimators)
 set.seed(271) # set a seed (for reproducibility)
+th <- 2 # Pareto parameter (true underlying distribution; *just* infinite Var)
 L <- rPar(n, theta = th) # simulate losses with the 'inversion method'
 
 

@@ -52,6 +52,7 @@ plot(U[,1],  ylab = expression(U[1]))
 plot(U[,2],  ylab = expression(U[2]))
 plot(U.[,1], ylab = expression(U[1]*"'"))
 plot(U.[,2], ylab = expression(U[2]*"'"))
+layout(1)
 ## Hence U and U. above are "pseudo"-observations (hence the name "pobs") of the
 ## underlying copulas. They give us insight in the actual dependence structure
 ## (copula) underlying our data sets X and X.

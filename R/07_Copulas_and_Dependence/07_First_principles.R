@@ -4,7 +4,7 @@
 ## transformations)
 
 
-### 0 Setup ####################################################################
+### Setup ######################################################################
 
 library(mvtnorm) # for sampling from N(0, P)
 library(copula) # for pairs2()

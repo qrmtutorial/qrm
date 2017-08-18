@@ -6,7 +6,7 @@
 library(QRM)
 
 
-### EVT related plots ##########################################################
+### 1 EVT related plots ########################################################
 
 ## Sample mean excess plot
 plot(danish)
@@ -21,7 +21,7 @@ str(fit.GPD)
 (mod.u10 <- fit.GPD(danish, threshold = u10))
 
 ## Risk measure estimates
-(RM.u10 <- RiskMeasures(mod.u10, c(0.99, 0.995)))
+(RM.u10 <- RiskMeasures(mod.u10, p = c(0.99, 0.995)))
 
 ## Plot the empirical excess df and the theoretical excess df (GPD)
 plotFittedGPDvsEmpiricalExcesses(danish, threshold = u10) # hat{F}_{u,n}(x-u) vs G_{hat{xi},hat{beta}}(x-u)
@@ -37,7 +37,7 @@ showRM(mod.u10, alpha = 0.99, RM = "ES",  method = "BFGS") # with ES estimate an
 xiplot(danish) # => variance increases for larger thresholds
 
 
-### 2nd threshold analysis #####################################################
+### 2 Analysis for second threshold ############################################
 
 ## Fit GPD model
 (mod.u20 <- fit.GPD(danish, threshold = u20))

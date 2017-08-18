@@ -8,9 +8,9 @@
 library(nortest) # for cvm.test()
 library(ADGofTest) # for ad.test()
 library(moments) # for agostino.test(), jarque.test()
-library(qrmtools)
-library(qrmdata)
 library(xts) # for time-series related functions
+library(qrmdata)
+library(qrmtools)
 
 
 ### 1 Generate data from N(mu, sig^2) and t_nu(mu, sig^2) ######################
@@ -20,10 +20,10 @@ mu <- 1 # location
 sig <- 2 # scale
 nu <- 3 # degrees of freedom
 set.seed(271) # set seed (for reproducibility)
-X.norm <- rnorm(n, mean = mu, sd = sig) # sample from N(mu, sig^2)
+X.N <- rnorm(n, mean = mu, sd = sig) # sample from N(mu, sig^2)
 X.t <- mu + sig * rt(n, df = nu) * sqrt((nu-2)/nu) # sample from t_nu(mu, sqrt((nu-2)/nu)*sig^2) (same variance as N(mu, sig^2))
 if(FALSE) {
-    var(X.norm)
+    var(X.N)
     var(X.t)
     ## => quite apart (but closer for larger n)
 }
@@ -32,18 +32,18 @@ if(FALSE) {
 ### 2 Testing for N(mu, sig^2) #################################################
 
 ## We treat mu and sig^2 as unknown and estimate them
-mu.norm <- mean(X.norm)
+mu.N <- mean(X.N)
 mu.t <- mean(X.t)
-sig.norm <- sd(X.norm)
+sig.N <- sd(X.N)
 sig.t <- sd(X.t)
 
 
 ### 2.1 Tests for general distributions (here applied to the normal) ###########
 
 ## Applied to normal data (with estimated mu and sig^2)
-(ks <- ks.test(X.norm, y = "pnorm", mean = mu.norm, sd = sig.norm)) # Kolmogorov--Smirnov
-(cvm <- cvm.test(X.norm)) # Cramer--von Mises for normality
-(ad <- ad.test(X.norm, distr.fun = pnorm, mean = mu.norm, sd = sig.norm)) # Anderson--Darling
+(ks <- ks.test(X.N, y = "pnorm", mean = mu.N, sd = sig.N)) # Kolmogorov--Smirnov
+(cvm <- cvm.test(X.N)) # Cramer--von Mises for normality
+(ad <- ad.test(X.N, distr.fun = pnorm, mean = mu.N, sd = sig.N)) # Anderson--Darling
 stopifnot(min(ks$p.value, cvm$p.value, ad$p.value) >= 0.05) # => no rejections
 
 ## Applied to t data (with estimated mu and sig^2)
@@ -56,9 +56,9 @@ stopifnot(max(ks$p.value, cvm$p.value, ad$p.value) < 0.05) # => all rejections b
 ### 2.2 Tests specifically for the normal distribution #########################
 
 ## Applied to normal data
-(sh <- shapiro.test(X.norm)) # Shapiro--Wilk
-(ag <- agostino.test(X.norm)) # D'Agostino's test
-(jb <- jarque.test(X.norm)) # Jarque--Bera test
+(sh <- shapiro.test(X.N)) # Shapiro--Wilk
+(ag <- agostino.test(X.N)) # D'Agostino's test
+(jb <- jarque.test(X.N)) # Jarque--Bera test
 stopifnot(min(sh$p.value, ag$p.value, jb$p.value) >= 0.05) # => no rejections
 
 ## Applied to t data
@@ -71,8 +71,8 @@ stopifnot(max(sh$p.value, ag$p.value, jb$p.value) < 0.05) # => all rejections ba
 ### 2.3 Graphical tests of normality ###########################################
 
 ## Applied to normal data
-pp_plot(X.norm, FUN = function(q) pnorm(q, mean = mu.norm, sd = sig.norm))
-qq_plot(X.norm, FUN = function(p) qnorm(p, mean = mu.norm, sd = sig.norm))
+pp_plot(X.N, FUN = function(q) pnorm(q, mean = mu.N, sd = sig.N))
+qq_plot(X.N, FUN = function(p) qnorm(p, mean = mu.N, sd = sig.N))
 
 ## Applied to t data
 pp_plot(X.t, FUN = function(q) pnorm(q, mean = mu.t, sd = sig.t))
@@ -96,6 +96,7 @@ X. <- list(daily = X, # daily risk-factor changes
 ## Are the risk-factor changes normally distributed?
 ## Formal tests
 pvals <- sapply(X., function(x) apply(x, 2, function(data) jarque.test(data)$p.value))
+pvals < 0.05
 ## => Daily and weekly risk-factor changes are not (univariate) normal
 
 ## Q-Q plots
@@ -114,7 +115,7 @@ par(opar)
 
 ### 4 Simulation ###############################################################
 
-## Under H0, p-values are uniformly distributed. Let's check that for N(0,1) data
+## Under H0, p-values are uniformly distributed. Let's check that for N(0,1) data.
 set.seed(271)
 pvals.H0 <- sapply(1:200, function(b) jarque.test(rnorm(n))$p.value)
 qq_plot(pvals.H0, FUN = qunif)

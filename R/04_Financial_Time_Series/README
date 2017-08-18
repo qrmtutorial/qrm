@@ -1,8 +1,11 @@
-### R Scripts for Chapter 4
+### Suggested order of R Scripts for Chapter 4
 
 04_GARCH_simulation.R
    Simulation of univariate GARCH models
-04_GARCH_models.R
+04_GARCH_estimation.R
    Estimation of univariate GARCH models
 04_GARCH_EWMA.R
    Implementation of EWMA volatility estimation and comparison with GARCH
+04_Simulate_fit_predict_VaR_under_ARMA_GARCH.R
+   Simulate a path, fit, estimate and backtest VaR, predict, simulate and
+   compute VaR with confidence intervals.

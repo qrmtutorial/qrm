@@ -5,7 +5,7 @@
 ## with various different methods.
 
 
-### 0 Setup ####################################################################
+### Setup ######################################################################
 
 ## Fixed parameters and quantile
 lam <- 50 # Poi parameter

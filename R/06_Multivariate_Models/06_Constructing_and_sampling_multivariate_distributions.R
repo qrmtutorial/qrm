@@ -1,9 +1,9 @@
 ## By Marius Hofert
 
-## Playground for multivariate distributions, in particular, the multivariate
-## normal distribution, normal variance mixtures, elliptical distributions etc.
-## Note that this is for education purposes; for several of the tasks presented
-## here, functions already exist in R packages.
+## Understanding the construction of multivariate normal distributions,
+## normal variance mixtures, elliptical distributions etc.
+## Note: This is for educational purposes only; for several of the tasks
+##       presented below, functions already exist in R packages.
 
 
 ### 1 Basic 'ingredients' ######################################################
@@ -17,7 +17,7 @@ L <- matrix(c( 4, 0,
 
 ## Corresponding correlation matrix
 P. <- outer(1:2, 1:2, Vectorize(function(r, c)
-                          Sigma[r,c]/(sqrt(Sigma[r,r])*sqrt(Sigma[c,c])))) # construct the corresponding correlation matrix
+            Sigma[r,c]/(sqrt(Sigma[r,r])*sqrt(Sigma[c,c])))) # construct the corresponding correlation matrix
 (P  <- cov2cor(Sigma)) # a more elegant solution, see the source of cov2cor()
 stopifnot(all.equal(P., P))
 ## Another option would be as.matrix(Matrix::nearPD(Sigma, corr = TRUE, maxit = 1000)$mat)
@@ -34,6 +34,7 @@ stopifnot(all.equal(P., P))
 A <- t(chol(Sigma)) # the Cholesky factor (lower triangular with real entries > 0)
 stopifnot(all.equal(A, L), all.equal(A %*% t(A) , Sigma))
 
+## Another decomposition of Sigma as A %*% t(A)
 if(FALSE) {
     ## The eigendecomposition (or spectral decomposition)
     eig <- eigen(Sigma) # eigenvalues and eigenvectors
@@ -44,6 +45,7 @@ if(FALSE) {
     Sigma. <- A. %*% t(A.)
     stopifnot(all.equal(Sigma, Sigma.))
     ## However, not that A and A. are different (A. is not a lower triangular matrix!)
+    A-A.
 }
 
 
@@ -59,7 +61,7 @@ lim <- c(-mabs, mabs)
 plot(Z, xlim = lim, ylim = lim,
      xlab = expression(Z[1]), ylab = expression(Z[2]))
 
-## Change the covariance matrix from the identity to Sigma
+## Change the covariance matrix from identity to Sigma
 X. <- t(A %*% t(Z)) # ~ N_d(0, Sigma)
 xlim <- c(-16, 16)
 ylim <- c(-8, 8)
@@ -168,17 +170,18 @@ legend("topright", bty = "n", pch = rep(1, 3), col = c("royalblue3", "maroon3", 
                   expression(N(mu,W*Sigma)~"for W = 2"),
                   expression(italic(t)[nu](mu,Sigma))))
 ## => With probability 0.5 we sample from a normal variance mixture with W = 1
-##    and with probability 0.5 we sample from one with W = 2. By using df for
+##    and with probability 0.5 we sample from one with W = 2. By using a df for
 ##    W with infinite upper endpoint, we can reach further out in the tails than
 ##    with any multivariate normal distribution by overlaying normals
-##    with different (unbounded) covariance matrices.
+##    with different (unbounded) covariance matrices (and this is what is
+##    creating heavier tails for the t distribution than the normal).
 
 
 ### 3.4 A normal *mean*-variance mixture #######################################
 
 ## Now let's also 'mix' the mean (replace mu by mu(W)), to get a normal
-## mean-variance mixture. The way we do that here is such that we 'split' the
-## two clouds of 'overlaid' normal distributions.
+## mean-variance mixture; here: choosing between two different locations mu
+## depending on W.
 mu. <- t(sapply(W, function(w) mu + if(w == 1) 0 else c(15, 0)))
 X.mean.var <- mu. + sqrt(W) * t(A %*% t(Z))
 plot(rbind(X.Wbinom, X.mean.var), xlab = expression(X[1]), ylab = expression(X[2]),
@@ -240,7 +243,7 @@ par(pty = "s")
 plot(X, xlab = expression(X[1]), ylab = expression(X[2]), col = cols)
 legend("bottomright", bty = "n", pch = c(1,1), col = c("royalblue3", "maroon3"),
        legend = c("Elliptical for R = 1", "Elliptical for R = 2"))
-## ... in other words, the radial part R scales each point on the ellipse A*S
+## ... in other words, the radial part R scales each point on the ellipse AS
 ## to lie on another ellipse. For continuously distributed R, these ellipses
 ## are all overlaid (and thus not visible anymore), but for discrete R, we
 ## may see them (here: two ellipses).

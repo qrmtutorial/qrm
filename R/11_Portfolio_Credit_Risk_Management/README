@@ -8,7 +8,7 @@
 11_Monte_Carlo_for_credit.R
    Estimation of the loss distribution for one-factor Bernoulli mixture implied by a Gaussian
    threshold model using importance sampling
-11_Credit_factor_models.R
-   Calibration of a typical industry-sector factor model to S&P stock return data
 11_Credit_estimation.R
    Estimating parameters of portfolio models from default data
+11_Credit_factor_models.R
+   Calibration of a typical industry-sector factor model to S&P stock return data
