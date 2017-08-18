@@ -84,7 +84,7 @@ plot(L, LDeltaGamma)
 abline(0, 1, col = 2)
 
 
-## THE EXAMPLE IN TEXTBOOK
+## THE EXAMPLE IN TEXTBOOK (Example 9.1)
 
 t <- 0
 T <- 1
