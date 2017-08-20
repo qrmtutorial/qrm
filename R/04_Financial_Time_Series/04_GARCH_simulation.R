@@ -13,7 +13,7 @@ library(qrmtools)
 
 ## GARCH(1,1) model specification
 (uspec <- ugarchspec(variance.model = list(model = "sGARCH", # standard GARCH
-                                           garchOrder = c(1, 1)), GARCH(1,1)
+                                           garchOrder = c(1, 1)), # GARCH(1,1)
                      mean.model = list(armaOrder = c(0, 0), # no ARMA part
                                        include.mean = FALSE), # no mean included
                      distribution.model = "norm", # normal innovations
