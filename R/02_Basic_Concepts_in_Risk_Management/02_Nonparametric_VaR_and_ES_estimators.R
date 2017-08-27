@@ -271,14 +271,27 @@ lines(1-alpha, ES.boot., lty = "solid", col = "maroon3") # bootstrapped nonparam
 lines(1-alpha, ES.boot.var, lty = "dotdash", lwd = 1.4, col = "maroon3") # bootstrapped Var(hat(ES)_alpha)
 lines(1-alpha, ES.boot.CI[1,], lty = "dotted", col = "maroon3") # bootstrapped 95% CI
 lines(1-alpha, ES.boot.CI[2,], lty = "dotted", col = "maroon3")
+## Also adding peaks-over-threshold-based estimators (as motivation for Chapter 5)
+u <- quantile(L, probs = 0.95, names = FALSE)
+library(QRM) # for fit.GPD()
+fit <- fit.GPD(L, threshold = u) # fit a GPD to the excesses (note: fit.GPD() requires the losses)
+xi <- fit$par.ests[["xi"]] # fitted xi
+beta <- fit$par.ests[["beta"]] # fitted beta
+if(xi <= 0) stop("Risk measures only implemented for xi > 0.")
+L. <- L[L > u] - u # compute the excesses over u
+Fbu <- length(L.) / length(L) # number of excesses / number of losses = N_u / n
+VaR.POT <- u + (beta/xi)*(((1-alpha)/Fbu)^(-xi)-1) # see McNeil, Frey, Embrechts (2015, Section 5.2.3)
+ES.POT <- (VaR.POT + beta-xi*u) / (1-xi) # see McNeil, Frey, Embrechts (2015, Section 5.2.3)
+lines(1-alpha, VaR.POT, lty = "dashed")
+lines(1-alpha, ES.POT, lty = "dashed")
 ## Misc
 eaxis(1) # a nicer exponential y-axis
 eaxis(2) # a nicer exponential y-axis
 mtext(substitute(B == B.~~"replications of size"~~n == n.~~"from Par("*th.*")",
                  list(B. = B, n. = n, th. = th)), side = 4, line = 1, adj = 0) # secondary y-axis label
-legend("bottomleft", bty = "n", lwd = c(1, rep(c(2, 1, 1.4, 1), 2)),
-       lty = c("solid", rep(c("dashed", "solid", "dotdash", "dotted"), times = 2)),
-       col = c("black", rep(c("royalblue3", "maroon3"), each = 4)),
+legend("bottomleft", bty = "n", lwd = c(1, rep(c(2, 1, 1.4, 1), 2), 1),
+       lty = c("solid", rep(c("dashed", "solid", "dotdash", "dotted"), times = 2), "dashed"),
+       col = c("black", rep(c("royalblue3", "maroon3"), each = 4), "black"),
        legend = c(## VaR_alpha
                   expression("True"~VaR[alpha]~"and"~ES[alpha]),
                   expression(widehat(VaR)[alpha]),
@@ -289,7 +302,9 @@ legend("bottomleft", bty = "n", lwd = c(1, rep(c(2, 1, 1.4, 1), 2)),
                   expression(widehat(ES)[alpha]),
                   expression("Bootstrapped"~~widehat(ES)[alpha]),
                   expression("Bootstrapped"~~Var(widehat(ES)[alpha])),
-                  "Bootstrapped 95% CIs"))
+                  "Bootstrapped 95% CIs",
+                  ## POT
+                  expression("POT-based"~VaR[alpha]~"and"~ES[alpha]~"estimates")))
 
 ## Results:
 ## - hat(VaR)_alpha < hat(ES)_alpha (clear)
@@ -304,3 +319,4 @@ legend("bottomleft", bty = "n", lwd = c(1, rep(c(2, 1, 1.4, 1), 2)),
 ##   (hat(ES)_alpha requires information from the *whole* tail)
 ## - For not too extreme alpha, the estimated CI for ES_alpha are larger than
 ##   those for VaR_alpha
+## - The POT-based method (see later) allows more accurate estimates for large alpha
