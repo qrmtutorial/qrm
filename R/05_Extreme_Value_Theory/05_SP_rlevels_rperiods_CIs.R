@@ -13,12 +13,12 @@ library(qrmtools) # for returns()
 
 
 ##' @title Negative Profile Log-Likelihood
-##' @param x maxima
 ##' @param r return level (parameter of interest)
 ##' @param k return period (parameter of interest)
 ##' @param theta initial values for the nuisance parameters (xi, sigma)
+##' @param x maxima
 ##' @param ... additional arguments passed to optim()
-##' @return return value of optim() giving the minimizer of the -log-likelihood
+##' @return return value of optim() with the minimizer of the -log-likelihood
 ##'         in the nuisance parameters theta = (xi, sigma) for fixed r or k.
 ##'         In other words, pLL()$value gives the profile log-likelihood
 ##'         in r or k.
@@ -46,6 +46,7 @@ npLL <- function(r, k, theta = c(xi = 0.01, sigma = sqrt(6*var(x)/pi)), x, ...)
 ##' @param x maxima
 ##' @param mLL maximal (overall) log-likelihood (when maximizing GEV in all parameters)
 ##' @param alpha significance level
+##' @param ... additional arguments passed to npLL()
 ##' @return One side of the confidence level (which one is determined by
 ##'         the initial values)
 ##' @author Alexander McNeil and Marius Hofert
@@ -78,15 +79,11 @@ npLL <- function(r, k, theta = c(xi = 0.01, sigma = sqrt(6*var(x)/pi)), x, ...)
 root <- function(r, k, x, mLL, alpha = 0.05, ...)
     (-npLL(r, k = k, x = x, ...)$value) - # profile log-likelihood
         (mLL - qchisq(1-alpha, df = 1) / 2)
-
-## findCI <- function()
-## {
-
-## }
-## TODO: document functions above
-## TODO: compare results with Alex' results
-## TODO: Write findCI: needs to call uniroot of root() etc. and needs to start by computing the overall MLE (=> omit arg 'mLL'),
-##         then extend in both directions by doubling, then find roots
+## Note: One could also write a function (say, 'find_CI()') which calls uniroot()
+##       based on root() two times to find the left and right CI endpoints.
+##       find_CI() could also start by computing the overall MLE and then
+##       extend the likelihood to the left and right (by the usual 'doubling')
+##       to find the roots.
 
 
 ### 1 Working with the data ####################################################
