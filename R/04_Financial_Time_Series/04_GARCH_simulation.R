@@ -67,8 +67,8 @@ plot(eps[,2], type = "l", ylab = expression(epsilon[2]))
 
 ## Compute the standardized residuals (Z_t)
 Z <- eps/sig
-plot(Z[,1], type = "l", ylab = expression(Z[1]))
-plot(Z[,2], type = "l", ylab = expression(Z[2]))
+plot(Z[,1], type = "p", ylab = expression(Z[1]))
+plot(Z[,2], type = "p", ylab = expression(Z[2]))
 ## Check their N(0,1) distribution
 qq_plot(Z[,1])
 qq_plot(Z[,2])

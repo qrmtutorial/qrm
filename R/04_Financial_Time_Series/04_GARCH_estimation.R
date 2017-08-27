@@ -20,6 +20,7 @@ plot.zoo(SP500, xlab = "Time")
 ## Extract the data we work with and build log-returns
 SPdata <- SP500['2006-01-01/2009-12-31'] # 4 years of data
 X <- returns(SPdata)
+plot.zoo(X, xlab = "Time")
 
 
 ### 2 Fit an AR(1)--GARCH(1,1) model with normal innovations ###################
@@ -35,8 +36,7 @@ uspec.N <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(1,1
 
 ## The fit contains a lot of information
 ## - The parameter estimates are the "Optimal Parameters" (at the top)
-## - plot(fit.N) will take us into a menu system
-## - Below we select the most important plots
+## - plot(fit.N) will take us into a menu system (below are the most important ones)
 
 ## Series with conditional quantiles
 plot(fit.N, which = 2)

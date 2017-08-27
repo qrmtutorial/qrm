@@ -74,7 +74,7 @@ if(FALSE) {
 }
 
 ## Compare with a Poisson process (simulated iid data)
-L. <- xts(rt(length(L), df = 5), time(L))
+L. <- xts(rt(length(L), df = 5), time(L)) # simulate from a t_5
 xtr.L. <- L.[rank(as.numeric(-L.)) <= 100]
 plot(as.numeric(xtr.L.), type = "h", xlab = "Time", ylab = "100 largest losses")
 spcs. <- as.numeric(diff(time(xtr.L.)))

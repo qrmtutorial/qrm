@@ -1,4 +1,10 @@
-# by Alexander McNeil
+## By Alexander McNeil
+
+## Note: In comparison to 05_GEV_BMM_SP500.R, this script works with
+##       sign-adjusted *percentage* *simple* returns (see 'losses')
+##       rather than sign-adjusted log-returns. The results slightly
+##       differ.
+
 library(xts)
 library(qrmdata)
 

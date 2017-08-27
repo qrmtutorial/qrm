@@ -113,7 +113,7 @@ x <- var(1:4)
 y <- sd(1:4)^2
 all.equal(x, y) # numerical equality
 x == y # ... but not exactly
-x-y # numerically not 0
+x - y # numerically not 0
 ## See also https://cran.r-project.org/doc/FAQ/R-FAQ.html#Why-doesn_0027t-R-think-these-numbers-are-equal_003f
 
 ## Watch out
@@ -164,7 +164,7 @@ class(z) # still numeric (although is.numeric(NA) is FALSE)
 is.na(z) # check for NA or NaN
 is.nan(z) # check for just NaN
 is.infinite(z) # check for +/-Inf
-z[(!is.na(z)) &  is.finite(z) &  z >= 2] # indexing: pick out all numbers >= 2
+z[(!is.na(z)) &  is.finite(z) &  z >= 2] # pick out all finite numbers >= 2
 z[(!is.na(z)) && is.finite(z) && z >= 2] # watch out (indexing by 'FALSE' => empty vector)
 
 ## Character vectors
@@ -205,7 +205,7 @@ diag(3) # identity (3, 3)-matrix
 D %*% B # matrix multiplication
 B * B # Hadamard product, i.e., element-wise product
 
-## Build a correlation matrix and invert it
+## Build a covariance matrix, its correlation matrix and inverse
 L <- matrix(c(2, 0, 0,
               6, 1, 0,
              -8, 5, 3), ncol = 3, byrow = TRUE) # Cholesky factor of the ...

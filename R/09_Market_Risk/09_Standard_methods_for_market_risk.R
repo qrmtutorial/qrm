@@ -70,7 +70,7 @@ risk_measure <- function(S, lambda, alpha,
     method <- match.arg(method) # match correct method if not fully provided
 
     ## Ingredients required for *all* methods
-    X <- as.matrix(apply(log(S), 2, diff)) # compute risk-factor changes
+    X <- returns(S) # compute risk-factor changes
     if(!length(X)) stop("'S' should have more than just one line") # check
     S. <- as.numeric(tail(S, n = 1)) # pick out last available stock prices ("today")
     w <- lambda * S. # weights w today

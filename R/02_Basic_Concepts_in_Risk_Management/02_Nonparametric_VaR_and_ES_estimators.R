@@ -1,7 +1,7 @@
 ## By Marius Hofert
 
-## We ...
-## - non-parametrically estimate value-at-risk (VaR_alpha) and expected shortfall (ES_alpha);
+## We want to...
+## - non-parametrically estimate VaR_alpha and ES_alpha;
 ## - compute bootstrapped estimators;
 ## - compute bootstrapped confidence intervals;
 ## - estimate Var(hat{VaR}_alpha) and Var(hat{ES}_alpha);
@@ -80,9 +80,9 @@ bootstrap <- function(x, B, alpha, method = c("VaR", "ES"))
     ## Define the risk measure (as a function of x, alpha)
     method <- match.arg(method) # check and match 'method'
     rm <- if(method == "VaR") {
-        VaR_np
+        VaR_np # see qrmtools; essentially quantile(, type = 1)
     } else {
-        function(x, alpha) ES_np(x, alpha = alpha, verbose = TRUE)
+        function(x, alpha) ES_np(x, alpha = alpha, verbose = TRUE) # uses '>' and 'verbose'
     }
     ## Construct the bootstrap samples (by drawing with replacement)
     ## from the underlying empirical distribution function
@@ -99,6 +99,7 @@ bootstrap <- function(x, B, alpha, method = c("VaR", "ES"))
 set.seed(271) # set a seed (for reproducibility)
 th <- 2 # Pareto parameter (true underlying distribution; *just* infinite Var)
 L <- rPar(n, theta = th) # simulate losses with the 'inversion method'
+plot(L)
 
 
 ### 2.1 Nonparametric estimates of VaR_alpha and ES_alpha for a fixed alpha ####
@@ -151,7 +152,8 @@ legend("topleft", bty = "n", y.intersp = 1.2, lty = rep(1, 3),
        legend = c(expression(ES[alpha]~"and"~VaR[alpha]),
                   expression(widehat(ES)[alpha]),
                   expression(widehat(VaR)[alpha])))
-## => We already see that ES_alpha is more difficult to estimate than VaR_alpha
+## => We already see that ES_alpha always underestimates its true value
+##    (ES_alpha is more difficult to estimate than VaR_alpha)
 
 ## With logarithmic x- and y-axis and in 1-alpha
 ## Note: This is why we chose an exponential sequence (powers of 10) in alpha

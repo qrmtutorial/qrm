@@ -56,11 +56,13 @@ rho <- fisher(X.cor)
 ## Plot Fisher-transformed cross-correlation against volatility with regression lines
 ## Note: If (X,Y) are jointly normal with correlation rho, fisher(<sample correlation>)
 ##       is approximately N(log((1+rho)/(1-rho))/2, 1/(n-3)) distributed (n = sample size).
+
 ## FTSE
 plot(FTSE.sig, rho, xlab = "Estimated volatility", ylab = "Estimated cross-correlation")
 reg <- lm(rho ~ FTSE.sig)
 summary(reg)
 abline(reg, col = "royalblue3")
+
 ## SMI
 plot(SMI.sig, rho, xlab = "Estimated volatility", ylab = "Estimated cross-correlation")
 reg <- lm(rho ~ SMI.sig)
@@ -76,6 +78,7 @@ X.N <- xts(rmvnorm(n = nrow(X),      sigma = cor(X)), time(X))
 ### 4 (M4) #####################################################################
 
 plot.zoo(X, xlab = "Time", main = "Log-returns") # seems like extremes occur together
+
 X. <- apply(X, 2, rank)
 plot(X., main = "Componentwise ranks") # now better visible (bottom-left, top-right corners)
 ## Note: More on that ("pseudo-observations") in Chapter 7
