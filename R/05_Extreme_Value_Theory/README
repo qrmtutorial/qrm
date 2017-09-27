@@ -9,5 +9,7 @@
    GPD analysis of excess losses over thresholds for Danish data
 05_GPD_DJstock_data
    GPD analysis of excess losses over thresholds for weekly losses of a DJ stock
+05_MDA_Gumbel_speed_of_convergence.R
+   Speed of convergence for various distributions in the Gumbel maximum domain of attraction
 05_CIs_rlevels_rperiods_SP500.R
    Profile-likelihood-based confidence intervals for return levels and periods (belongs to 05_GEV_BMM_SP500.R)

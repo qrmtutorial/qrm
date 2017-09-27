@@ -127,36 +127,38 @@ boxplot(list(PRNG = prob, QRNG = prob.),
 boxplot(list(PRNG = rt, QRNG = rt.))
 boxplot(list(PRNG = rt, QRNG = rt.), outline = FALSE) # without outliers (points)
 ## => QRNG takes a bit longer
-(rtf <- mean(rt)/mean(rt.)) # estimated run-time factor
+(rrf <- mean(rt)/mean(rt.)) # estimated run-time reduction factor
 
 ## Effort comparison
-vr * rtf # => effort of QRNG about 6.95x better than for PRNG
+vr * rrf # => effort of QRNG about 6.95x better than for PRNG
 
 ## Remark:
-## - QRNGs can estimate high quantile probabilities with a smaller variance
+## - QRNGs can estimate tail probabilities with a smaller variance
 ##   (=> need less random variates to obtain the same precision => good for
-##   memory/storage-intensive methods).
-## - QRNGs can also be faster than PRNGs (see sobol() below) but that's not
-##   the case for the generalized Halton sequence used here; this may depend
-##   on the dimension, too.
+##    memory/storage-intensive methods).
+## - QRNGs can be faster than PRNGs (but it depends: Sobol': yes; generalized
+##   Halton: no); this may depend on the dimension, too.
 ## - If (*) is used for pseudo-sampling from the t copula, run time is
 ##   significantly smaller, the total effort still slightly above 1. Even if
 ##   below one, it can still be advantages to use quasi-random numbers
 ##   instead of pseudo-random numbers (because of memory/storage limitations)
 ## - Both methods could be made significantly faster by not using cCopula(),
-##   but that requires more work; see Cambou, Hofert, Lemieux ("Quasi-random
-##   numbers for copula models")
+##   but that requires more work for QRNGs; see Cambou, Hofert,
+##   Lemieux ("Quasi-random numbers for copula models")
 
-## Profiling: See where run time is spent
-Rprof(profiling <- tempfile(), line.profiling = TRUE) # enable profiling
-res <- lapply(1:B, function(b) survival_prob(n, copula = cop.t3, u = u))
-Rprof(NULL) # disable profiling
-(profile <- summaryRprof(profiling, lines = "both")) # get a summary
-## => by.total => most of the run time is spent in cCopula()
+## Just comparing a PRNG and QRNGs
+n. <- 2e7 # 20 Mio
+system.time(runif(n.)) # PRNG
+system.time(ghalton(n., d = 1)) # QRNG
+system.time(sobol(n.,   d = 1, randomize = TRUE)) # Faster QRNG
+## => Run time also depends on the *type* of QRNG
 
-## Just comparing drawing pseudo- and quasi-random numbers
-n <- 1e7 # 10 Mio
-system.time(runif(n)) # PRNG
-system.time(ghalton(n, d = 1)) # QRNG
-system.time(sobol(n,   d = 1)) # Faster QRNG
-## => also depends on the *type* of QRNG
+if(FALSE) {
+    ## Profiling: See where run time is spent
+    Rprof(profiling <- tempfile(), line.profiling = TRUE) # enable profiling
+    res <- lapply(1:B, function(b) survival_prob(n, copula = cop.t3, u = u))
+    Rprof(NULL) # disable profiling
+    (profile <- summaryRprof(profiling, lines = "both")) # get a summary
+    ## => by.total => most of the run time is spent in cCopula()
+}
+
