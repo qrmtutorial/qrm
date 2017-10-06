@@ -1,4 +1,4 @@
-## By Alexander McNeil
+## By Alexander McNeil and Marius Hofert
 
 ## This script calculates confidence intervals for 05_GEV_BMM_SP500.R
 ## by the profile likelihood method.
