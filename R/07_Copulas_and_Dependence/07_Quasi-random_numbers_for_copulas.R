@@ -70,95 +70,105 @@ layout(1) # reset layout
 
 ### 2 Why considering quasi-random numbers? ####################################
 
-## Auxiliary function for approximately computing P(U_1 > u_1, U_2 > u_2) by
-## simulation (also known as Monte Carlo integration)
-survival_prob <- function(n, copula, u)
+## Computing P(U_1 > u_1,..., U_d > u_d) by MC based on PRNG, QRNG
+tail_prob <- function(n, copula, u) # sample size, copula, lower-left endpoint
 {
-    stopifnot(n >= 1, inherits(copula, "Copula"), length(u) == 2, 0 < u, u < 1)
+    d <- length(u)
+    stopifnot(n >= 1, inherits(copula, "Copula"), 0 < u, u < 1,
+              d == dim(copula))
+    umat <- rep(u, each = n)
 
-    ## Pseudo-sampling
-    ## Note: Using (*) below would be significantly faster but the comparison
-    ##       would be unfair (unless we also use a faster QRNG copula method)
+    ## Pseudo-random numbers
     clock <- proc.time() # start watch
-    U  <- cCopula(matrix(runif(n * 2), ncol = 2), copula = copula, inverse = TRUE) # (*) rCopula(n, copula = copula)
-    prob <- mean(rowSums(U > rep(u, each = n)) == 2) # = sum(<rows with both entries TRUE>) / n
-    usr.time <- 1000 * (proc.time() - clock)[[1]] # time in ms
+    U <- rCopula(n, copula = copula) # unfair comparison but *still* slower than Sobol' + cCopula()
+    prob.PRNG <- mean(rowSums(U > umat) == d) # = sum(<rows with all entries TRUE>) / n
+    usr.time.PRNG <- 1000 * (proc.time() - clock)[[1]] # time in ms
 
-    ## Quasi-sampling
-    clock <- proc.time() # start clock
-    U. <- cCopula(ghalton(n, d = 2), copula = copula, inverse = TRUE)
-    prob. <- mean(rowSums(U. > rep(u, each = n)) == 2) # = sum(<rows with both entries TRUE>) / n
-    usr.time. <- 1000 * (proc.time() - clock)[[1]] # time in ms
+    ## (Randomized) quasi-random numbers
+    clock <- proc.time() # start watch
+    U. <- cCopula(sobol(n, d = d, randomize = TRUE), # needed for unbiasedness
+                  copula = copula, inverse = TRUE)
+    prob.QRNG <- mean(rowSums(U. > umat) == d) # = sum(<rows with all entries TRUE>) / n
+    usr.time.QRNG <- 1000 * (proc.time() - clock)[[1]] # time in ms
 
     ## Return
-    list(PRNG = c(prob = prob,  rt = usr.time),
-         QRNG = c(prob = prob., rt = usr.time.))
+    list(PRNG = c(prob = prob.PRNG, rt = usr.time.PRNG),
+         QRNG = c(prob = prob.QRNG, rt = usr.time.QRNG))
 }
 
-## Simulate the probabilities of falling in (u_1,1] x (u_2,1].
-B <- 500 # number of replications
+## Simulate the probabilities of falling in (u_1, 1] x ... x (u_d, 1]
+N <- 200 # number of replications
 n <- 2000 # sample size
-u <- c(0.99, 0.99) # lower-left endpoint of the considered cube
+d <- 2 # dimension
+u <- rep(0.99, d) # lower-left endpoint of the considered cube
+nu <- 3 # degrees of freedom
+tau <- 0.5 # Kendall's tau
+rho <- iTau(tCopula(df = nu), tau = 0.5) # correlation parameter
+cop <- tCopula(param = rho, dim = d, df = nu) # t copula
+
+## Run
 set.seed(271) # for reproducibility
-system.time(res <- lapply(1:B, function(b) survival_prob(n, copula = cop.t3, u = u))) # simulate
-## ~ 18s (mostly because of cCopula(); see profiling below)
+system.time(res <- lapply(1:N, function(N.) tail_prob(n, copula = cop, u = u)))
 
-## Grab out the values
-str(res, max.level = 1) # structure of the result
-prob  <- sapply(res, function(x) x[["PRNG"]][["prob"]])
-prob. <- sapply(res, function(x) x[["QRNG"]][["prob"]])
-rt    <- sapply(res, function(x) x[["PRNG"]][["rt"]])
-rt.   <- sapply(res, function(x) x[["QRNG"]][["rt"]])
+## Grab out the results
+prob.PRNG <- sapply(res, function(x) x[["PRNG"]][["prob"]])
+prob.QRNG <- sapply(res, function(x) x[["QRNG"]][["prob"]])
+rt.PRNG   <- sapply(res, function(x) x[["PRNG"]][["rt"]])
+rt.QRNG   <- sapply(res, function(x) x[["QRNG"]][["rt"]])
 
-## Estimate the probabilities and compare with true probability
-probs <- c(PRNG = mean(prob), QRNG = mean(prob.),
-           true = 1 - u[1] - u[2] + pCopula(u, copula = cop.t3))
-abs(probs["PRNG"] - probs["true"])
-abs(probs["QRNG"] - probs["true"]) # => slightly closer...
-##... but not necessarily for smaller B or n
+## Boxplot of computed exceedance probabilities
+boxplot(list(PRNG = prob.PRNG, QRNG = prob.QRNG),
+        main = substitute("Simulated"~
+                          P(bold(U) > bold(u))~~"for a"~t[nu.]~"copula",
+                          list(nu. = nu)))
+mtext(sprintf("N = %d replications with n = %d and d = %d", N, n, d),
+      side = 4, line = 1, adj = 0, las = 0)
+## QRNGs provide a smaller variance
 
-## Boxplot of the computed probabilities
-boxplot(list(PRNG = prob, QRNG = prob.),
-        main = "Simulated exceedance probability"~P(U[1] > u[1], U[2] > u[2]))
-## => QRNGs provide a smaller variance
-(vr <- var(prob)/var(prob.)) # estimated variance-reduction fraction
+## Variance reduction factor and % improvement
+(vrf <- var(prob.PRNG)/var(prob.QRNG)) # estimated variance reduction factor
 
-## Boxplot of the measured run times in milliseconds
-boxplot(list(PRNG = rt, QRNG = rt.))
-boxplot(list(PRNG = rt, QRNG = rt.), outline = FALSE) # without outliers (points)
-## => QRNG takes a bit longer
-(rrf <- mean(rt)/mean(rt.)) # estimated run-time reduction factor
+## Boxplot of measured run times (in milliseconds)
+boxplot(list(PRNG = rt.PRNG, QRNG = rt.QRNG), outline = FALSE,
+        main = substitute("Run times for a" ~ t[nu.]~"copula",
+                          list(nu. = nu)))
+mtext(sprintf("N = %d replications with n = %d and d = %d", N, n, d),
+      side = 4, line = 1, adj = 0, las = 0)
+## Clearly (the way we sampled here!), QRNG is slower here in this comparison
 
-## Effort comparison
-vr * rrf # => effort of QRNG about 6.95x better than for PRNG
+## Run-time reduction factor
+(rrf <- mean(rt.PRNG)/mean(rt.QRNG)) # estimated run-time factor PRNG w.r.t. QRNG
+## < 1 (PRNG faster) here because rCopula() is *way* faster than cCopula()
+
+## Effort comparison (variance per unit of time)
+vrf * rrf # = (Var('PRNG') * time('PRNG')) / (Var('QRNG') * time('QRNG'))
+## Still better to use QRNG! (if > 1, QRNG is preferable)
 
 ## Remark:
-## - QRNGs can estimate tail probabilities with a smaller variance
+## - QRNGs can estimate tail probabilities with smaller variance than PRNGs
 ##   (=> need less random variates to obtain the same precision => good for
 ##    memory/storage-intensive methods).
 ## - QRNGs can be faster than PRNGs (but it depends: Sobol': yes; generalized
 ##   Halton: no); this may depend on the dimension, too.
-## - If (*) is used for pseudo-sampling from the t copula, run time is
-##   significantly smaller, the total effort still slightly above 1. Even if
-##   below one, it can still be advantages to use quasi-random numbers
-##   instead of pseudo-random numbers (because of memory/storage limitations)
-## - Both methods could be made significantly faster by not using cCopula(),
-##   but that requires more work for QRNGs; see Cambou, Hofert,
-##   Lemieux ("Quasi-random numbers for copula models")
+## - If more efficient sampling methods for copula-QRNGs are used (so similar
+##   to rCopula() instead of cCopula()), run time for QRNGs is significantly
+##   reduced; see Cambou, Hofert, Lemieux ("Quasi-random numbers for copula models").
+## - Even if slower, it can still be advantageous to use QRNGs instead of PRNGs
+##   (because of memory/storage limitations).
 
 ## Just comparing a PRNG and QRNGs
 n. <- 2e7 # 20 Mio
+set.seed(271)
 system.time(runif(n.)) # PRNG
 system.time(ghalton(n., d = 1)) # QRNG
 system.time(sobol(n.,   d = 1, randomize = TRUE)) # Faster QRNG
-## => Run time also depends on the *type* of QRNG
+## Run time also depends on the *type* of QRNG
 
 if(FALSE) {
     ## Profiling: See where run time is spent
     Rprof(profiling <- tempfile(), line.profiling = TRUE) # enable profiling
-    res <- lapply(1:B, function(b) survival_prob(n, copula = cop.t3, u = u))
+    res <- lapply(1:N, function(N.) tail_prob(n, copula = cop, u = u))
     Rprof(NULL) # disable profiling
     (profile <- summaryRprof(profiling, lines = "both")) # get a summary
     ## => by.total => most of the run time is spent in cCopula()
 }
-
