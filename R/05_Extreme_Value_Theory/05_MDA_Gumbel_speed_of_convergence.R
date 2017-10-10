@@ -9,22 +9,23 @@
 
 library(qrmtools)
 
-## Block sizes and number of blocks
+## Block sizes (the larger the block, the closer to a Gumbel we should be)
 n <- 10^c(1,3,5) # block sizes
 
-## Distributional parameters
+## Parameters of the distribution functions F (whose location-scale transformed
+## maxima we investigate; they are distributed as F^n(d_n + c_n * x))
 pmExp <- 2 # Exp(lambda) parameter lambda
 pmG  <- c(2, 2) # Gamma(alpha, beta) parameters alpha, beta (rate)
 pmN  <- c(1, 2) # N(mu, sigma^2) parameter mu, sigma
 pmLN <- c(1, 2) # LN(mu, sigma^2) parameter mu, sigma
 
-## Evaluation points
+## Evaluation points (of the density of F^n(d_n + c_n * x))
 x <- seq(-3, 10, length.out = 257)
 
 
 ### 1 Auxiliary functions ######################################################
 
-## Distribution functions
+## Distribution functions F
 pFun <- list(function(q, ...) pexp(q, rate = pmExp, ...),
              function(q, ...) pgamma(q, shape = pmG[1], rate = pmG[2], ...),
              function(q, ...) pnorm(q, mean = pmN[1], sd = pmN[2], ...),
@@ -36,13 +37,13 @@ dfs <- as.expression(c(paste0("Exp(",pmExp,")"),
                        paste0("N(",pmN[1],", ",pmN[2],")"),
                        paste0("LN(",pmLN[1],", ",pmLN[2],")")))
 
-## Corresponding densities
+## Corresponding densities f
 dFun <- list(function(x, ...) dexp(x, rate = pmExp, ...),
              function(x, ...) dgamma(x, shape = pmG[1], rate = pmG[2], ...),
              function(x, ...) dnorm(x, mean = pmN[1], sd = pmN[2], ...),
              function(x, ...) dlnorm(x, meanlog = pmLN[1], sdlog = pmLN[2], ...))
 
-## Corresponding quantile functions
+## Corresponding quantile functions F^{-1}
 qFun <- list(function(p, ...) qexp(p, rate = pmExp, ...),
              function(p, ...) qgamma(p, shape = pmG[1], rate = pmG[2], ...),
              function(p, ...) qnorm(p, mean = pmN[1], sd = pmN[2], ...),
@@ -70,10 +71,10 @@ c_n <- function(n, k)
 
 ## Block maxima method (for different distributions and sample sizes)
 res.p <- vector("list", length = ndf)
-for(k in seq_len(ndf)) { # distribution
-    res.p[[k]] <- lapply(seq_along(n), function(i) { # sample size
-        c.n <- c_n(n[i], k = k)
-        d.n <- d_n(n[i], k = k)
+for(k in seq_len(ndf)) { # distributions F
+    res.p[[k]] <- lapply(seq_along(n), function(i) { # sample sizes n
+        c.n <- c_n(n[i], k = k) # normalizing scale of distribution F for sample size n
+        d.n <- d_n(n[i], k = k) # normalizing location of distribution F for sample size n
         ## Evaluate the density of the location-scaled transformed block maxima
         ## Note: 1) F_{(M_n - d_n)/c_n} (x) = F^n(d_n + c_n x) and thus
         ##          f_{(M_n - d_n)/c_n} (x) = n c_n f(d_n + c_n x) F^{n-1}(d_n + c_n x)
@@ -115,23 +116,23 @@ par(opar)
 ### 3 Nonparametrically (based on kernel density estimates) ####################
 
 ## Generate data (here: with inversion method in order to recycle)
-m <- 100 # number of blocks (each of size n/m) for each n; results for m = 200 don't seem much better
+m <- 100 # number of blocks for each n; results for m = 200 don't seem much better
 ns <- n * m
 ns.max <- max(ns) # maximal sample size (for recycling)
 set.seed(271)
-U <- runif(ns.max)
-system.time(dat <- lapply(qFun, function(qF) qF(U))) # use same U's; about 1min
+U <- runif(ns.max) # uniforms to be mapped to the F's
+system.time(dat <- lapply(qFun, function(qF) qF(U))) # use same U's
 
 ## Block maxima method (for different distributions and sample sizes)
 res.np <- vector("list", length = ndf)
-for(k in seq_len(ndf)) { # distribution
-    res.np[[k]] <- lapply(seq_along(n), function(i) { # sample size
-        c.n <- c_n(n[i], k = k)
-        d.n <- d_n(n[i], k = k)
+for(k in seq_len(ndf)) { # distributions F
+    res.np[[k]] <- lapply(seq_along(n), function(i) { # sample sizes n
+        c.n <- c_n(n[i], k = k) # normalizing scale of distribution F for sample size n
+        d.n <- d_n(n[i], k = k) # normalizing location of distribution F for sample size n
         ## Build location-scaled transformed block maxima (transformed with
         ## known normalizing sequences c_n, d_n)
         dat. <- head(dat[[k]], n = ns[i]) # grab out the data we work with
-        dat.blocks <- split(dat., f = rep(1:m, each = n[i])) # split it in blocks
+        dat.blocks <- split(dat., f = rep(1:m, each = n[i])) # split it in m blocks
         M <- sapply(dat.blocks, function(x) (max(x) - d.n) / c.n)
         ## Fit density to the location-scaled transformed block maxima
         fit.dens <- density(M) # kernel density estimate

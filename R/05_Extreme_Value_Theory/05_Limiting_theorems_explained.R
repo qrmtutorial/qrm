@@ -19,7 +19,7 @@ X <- rPar(n, theta = th) # generate data
 ### 1 Strong Law of Large Numbers (SLLN) #######################################
 
 ## Building cumulative averages (X_1/1, (X_1+X_2)/2, (X_1+X_2+X_3)/3,...)
-stopifnot(th > 1)
+stopifnot(th > 1) # for mean to exist
 Xn <- cumsum(X)/(1:n)
 
 ## Plot (this one path of the stochastic process (bar{X}_n)_{n=1}^{infty})
@@ -42,7 +42,7 @@ X. <- split(X, f = rep(1:m, each = floor(n/m))) # split data into blocks
 
 ## Location-scale transform blocked sums via sqrt(n) * (bar{X}_n - mu) / sigma
 ## = (S_n - n * mu) / (sqrt(n) * sigma)
-stopifnot(th > 2)
+stopifnot(th > 2) # for variance to exist
 mu <- 1/(th-1) # true mean
 sig2 <- 2/((th-2)*(th-1)^2) # true variance
 Z <- sapply(X., function(x) (sum(x) - length(x) * mu) / (sqrt(length(x) * sig2))) # standardize by mean(<sum>) and sd(<sum>)
@@ -65,9 +65,9 @@ legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange2"), bty = "n"
 ## infinity). By Gnedenko's Theorem (1943), such F is in MDA(H_{1/theta}) for
 ## all theta>0 and as normalizing sequences one can take c_n = F^-(1-1/n) and
 ## d_n = 0 for all n so that (M_n-d_n)/c_n is approximately distributed as
-## H_{xi = 1/theta, mu, sig} for some xi, mu and sig. One could take estimates of
-## xi, mu and sig, but one can show that besides xi = 1/theta, one has mu = 1
-## and sig = 1/theta here. Let's check that.
+## H_{xi = 1/theta, mu, sig} for some xi, mu and sig. One could take estimates
+## of xi, mu and sig, but one can show that besides xi = 1/theta, one has
+## mu = 1 and sig = 1/theta here. Let's check that.
 
 ## Location-scale transform blocked maxima with c_n = F^-(1-1/n) and d_n = 0
 M <- sapply(X., function(x) (max(x) - 0) / qPar(1-1/length(x), theta = th))
@@ -75,7 +75,7 @@ M <- sapply(X., function(x) (max(x) - 0) / qPar(1-1/length(x), theta = th))
 ## Histogram with overlaid densities
 dens <- density(M, adjust = 2) # smoothed density estimate
 x <- seq(0, max(M), length.out = 257)
-true.dens <- dGEV(x, xi = 1/th, mu = 1, sigma = 1/th)
+true.dens <- dGEV(x, xi = 1/th, mu = 1, sigma = 1/th) # true density
 hist(M, probability = TRUE, ylim = c(0, max(dens$y, true.dens)), breaks = 60,
      main = substitute(bold("Gnedenko's Theorem for Par("*th.*") data"),
                        list(th. = th)), xlab = expression("Realizations of"~(M[n]-d[n])/c[n]~~
@@ -90,11 +90,11 @@ legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange2"), bty = "n"
 qq_plot(M, FUN = function(p) qGEV(p, xi = 1/th, mu = 1, sigma = 1/th),
         main = substitute(bold("Gnedenko's Theorem for Par("*th.*") data"),
                           list(th. = th)))
-## => For smaller block sizes (try n = 50000, so block sizes of 100), there
-##    is significant departure visible. This indicates that one typically
-##    needs quite a large (block and thus) sample size to get a sufficiently
-##    good approximation to the limiting GEV. The following approach is less
-##    'wasteful' with the data and already works well for n = 50000.
+## => For smaller block sizes, there is significant departure visible (and even
+##    here there is departure visible). This indicates that one typically needs
+##    quite a large (block and thus) sample size to get a sufficiently good
+##    approximation to the limiting GEV. The following approach is less
+##    'wasteful' with the data and already works well for smaller n.
 
 
 ### 4 Pickands--Balkema--de Haan (1974/1975) ###################################
@@ -102,9 +102,9 @@ qq_plot(M, FUN = function(p) qGEV(p, xi = 1/th, mu = 1, sigma = 1/th),
 ## For sufficiently large thresholds u, excesses over u follow a GPD(xi, beta)
 ## distribution if and only if F is in MDA(H_xi). If F is GPD(xi, beta)
 ## one can show that the excess distribution F_u over u is GPD(xi, beta+xi*u).
-## Since that's the case for Pareto distributions (with xi = 1/theta, beta = 1/theta),
-## excesses over u should follow a GPD(1/theta, (1/theta)*(1+u)) distribution.
-## Let's check that.
+## Since that's the case for Pareto distributions (with xi = 1/theta,
+## beta = 1/theta), excesses over u should follow a GPD(1/theta, (1/theta)*(1+u))
+## distribution. Let's check that.
 
 ## Determine excesses
 u <- quantile(X, 0.9) # use the 90% quantile (rule of thumb)
@@ -137,3 +137,5 @@ legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange2"), bty = "n"
 qq_plot(Y, FUN = function(p) qGPD(p, xi = 1/th, beta = (1/th)*(1+u)),
         main = substitute(bold("Pickands-Balkema-de Haan Theorem for Par("*th.*") data"),
                           list(th. = th)))
+## => In particular, this looks better than the Q-Q plot before (this
+##    'peaks-over-threshold' method is less wasteful with the data).
