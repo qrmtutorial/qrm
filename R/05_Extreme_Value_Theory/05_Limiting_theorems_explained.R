@@ -58,6 +58,9 @@ box()
 legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange2"), bty = "n",
        legend = c("Density estimate", "N(0,1) density"))
 
+## Q-Q plot
+qq_plot(Z, FUN = qnorm, main = "Central Limit Theorem")
+
 
 ### 3 Gnedenko's Theorem #######################################################
 
@@ -90,11 +93,12 @@ legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange2"), bty = "n"
 qq_plot(M, FUN = function(p) qGEV(p, xi = 1/th, mu = 1, sigma = 1/th),
         main = substitute(bold("Gnedenko's Theorem for Par("*th.*") data"),
                           list(th. = th)))
-## => For smaller block sizes, there is significant departure visible (and even
-##    here there is departure visible). This indicates that one typically needs
-##    quite a large (block and thus) sample size to get a sufficiently good
-##    approximation to the limiting GEV. The following approach is less
-##    'wasteful' with the data and already works well for smaller n.
+## => For smaller block sizes (e.g. take n = 2e4 => n/m = 40), there is
+##    significant departure visible (and even here there is departure visible).
+##    This indicates that one typically needs quite a large (block and thus)
+##    sample size to get a sufficiently good approximation to the limiting GEV.
+##    The following approach is less 'wasteful' with the data and already
+##    works well/better for smaller n.
 
 
 ### 4 Pickands--Balkema--de Haan (1974/1975) ###################################
