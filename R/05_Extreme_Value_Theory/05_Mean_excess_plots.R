@@ -112,7 +112,7 @@ lines(u, y, col = "royalblue3")
 set.seed(271)
 x. <- rlnorm(n)
 stopifnot(all.equal(log(x.), x)) # sanity check
-MEplot(x.)
+MEplot(x., omit = 0)
 ## Formula (*) and substitutions y = log(x) and v = Phi(y) provide us with e(u)
 ## (with numerical integration on a compact interval)
 f <- function(v) {

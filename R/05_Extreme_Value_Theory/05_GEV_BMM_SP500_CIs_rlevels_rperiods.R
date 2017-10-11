@@ -195,6 +195,45 @@ abline(h = 0)
 ##         as it depends on computed optima.
 ##       - Problem probably requires a rescaling of the likelihood.
 
+if(FALSE) {
+    ## Trial to find the problem:
+    k <- 10^17
+    r <- rBM
+    ## => Calls root(r = r, k = k., x = M.year, mLL = mLL, control = list(reltol = 0))
+    ##    which is...
+    x <- M.year
+    alpha <- 0.05
+    mLL
+    mLL - qchisq(1-alpha, df = 1)/2
+    (-npLL(r, k = k, x = x, control = list(reltol = 0))$value) - # profile +log-likelihood
+        (mLL - qchisq(1-alpha, df = 1) / 2)
+    ## => npLL() must be 0
+    npLL(r, k = k, x = x, control = list(reltol = 0))$value == 0
+    ## => Calls ...
+    nLL <- function(theta) { # note: r, k and x are locally 'seen' here
+        xi <- theta[1]
+        sig <- theta[2]
+        implied.mu <- r - (sig/xi) * ((-log1p(-1/k))^(-xi) - 1) # mu implied by xi, sigma, r, k
+        -sum(dGEV(x, xi = xi, mu = implied.mu, sigma = abs(sig), log = TRUE)) # -log-likelihood
+    }
+    (theta <- c(xi = 0.01, sigma = sqrt(6*var(x)/pi)))
+    optim(theta, fn = nLL, control = list(reltol = 0))
+    nLL(theta)
+    ## Build a grid and evaluate nLL there
+    ## xisig <- expand.grid(seq(0.01, 2.9999, length.out = 30), seq(0.001, 10, length.out = 30))
+    xisig <- expand.grid(seq(0.001, 0.01, length.out = 30), seq(0.001, 0.01, length.out = 30))
+    dat <- cbind(xi = xisig[,1], sig = xisig[,2], z = apply(xisig, 1, nLL))
+    dat. <- dat[is.finite(dat[,3]),] # omit Inf
+    nrow(dat.)
+    ## 3d plot
+    ## library(rgl)
+    ## plot3d(x = dat.[,1], y = dat.[,2], z = dat.[,3],
+    ##        xlab = "xi", ylab = "sigma", zlab = "nLL")
+    library(lattice)
+    wireframe(dat.[,3] ~ dat.[,1] * dat.[,2],
+              xlab = "xi", ylab = "sigma", zlab = "nLL") # => definitely a problem of nLL() for small sigma (and small xi)
+}
+
 
 ### 3.2 Based on biannual maxima ###############################################
 
