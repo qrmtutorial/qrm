@@ -18,3 +18,5 @@
    Illustration of the calibration of hazard rate when one CDS spread is available
 10_Simulating_BM.R
    Simulating Brownian motion, Brownian bridge and geometric Brownian motion
+10_Doubly_stochastic_default_time_and_CIR.R
+   Illustration for doubly stochastic random times using the CIR model
