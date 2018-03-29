@@ -86,7 +86,7 @@ bootstrap <- function(x, B, alpha, method = c("VaR", "ES"))
     }
     ## Construct the bootstrap samples (by drawing with replacement)
     ## from the underlying empirical distribution function
-    x.boot <- matrix(sample(x, size = n*B, replace = TRUE), ncol = B) # (n, B)-matrix
+    x.boot <- matrix(sample(x, size = n * B, replace = TRUE), ncol = B) # (n, B)-matrix
     ## For each bootstrap sample, estimate the risk measure
     apply(x.boot, 2, rm, alpha = alpha) # (length(alpha), B)-matrix
 }

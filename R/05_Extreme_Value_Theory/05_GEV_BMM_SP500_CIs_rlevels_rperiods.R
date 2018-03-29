@@ -61,60 +61,118 @@
 ### Setup ######################################################################
 
 library(xts) # for functions around time series objects
-library(QRM) # for fit.GEV()
 library(qrmdata) # for the S&P 500 data
 library(qrmtools) # for returns()
 
 
-##' @title Negative Profile Log-Likelihood
+##' @title Profile Log-Likelihood
 ##' @param r return level (parameter of interest)
 ##' @param k return period (parameter of interest)
-##' @param theta initial values for the nuisance parameters (xi, sigma)
 ##' @param x maxima
+##' @param control see ?optim
 ##' @param ... additional arguments passed to optim()
 ##' @return return value of optim() with the minimizer of the -log-likelihood
 ##'         in the nuisance parameters theta = (xi, sigma) for fixed r or k.
-##'         In other words, npLL()$value gives the negative profile
-##'         log-likelihood in r or k.
+##'         In other words, profLogLik()$value gives the profile log-likelihood
+##'         in r or k.
 ##' @author Alexander McNeil and Marius Hofert
-##' @note r = H^-(1-1/k) = mu + (sig/xi)((-log(1-1/k))^xi - 1) so the mu
-##'       implied by a fixed xi, sigma, r, k is
-##'       mu = r - (sig/xi)((-log(1-1/k))^xi - 1)
-npLL <- function(r, k, theta = c(xi = 0.01, sigma = sqrt(6*var(x)/pi)), x, ...)
+##' @note 1) r = H_{xi,mu,sig}^-(1-1/k) => mu implied by xi, sig, r, k
+##'       2) reltol = 0 improves the smoothness of the objective function below
+profLogLik <- function(r, k, x, control = list(reltol = 0), ...)
 {
-    nLL <- function(theta) { # note: r, k and x are locally 'seen' here
+    ## log-likelihood as a function of the nuisance parameters xi, sigma
+    ## (mu is implied from the given r, k)
+    ## Note: Could very well be -Inf due to choice of r or k and thus implied mu
+    logLik.xi.sig <- function(theta) { # note: r, k and x are locally 'seen' here
         xi <- theta[1]
         sig <- theta[2]
-        implied.mu <- r - (sig/xi) * ((-log1p(-1/k))^(-xi) - 1) # mu implied by xi, sigma, r, k
-        -sum(dGEV(x, xi = xi, mu = implied.mu, sigma = abs(sig), log = TRUE)) # -log-likelihood
+        imu <- if(xi == 0) { # mu implied by xi, sigma, r, k
+                   r + sig * log(-log1p(-1/k))
+               } else {
+                   r - (sig/xi) * ((-log1p(-1/k))^(-xi) - 1)
+               }
+        stopifnot(is.finite(imu)) # sanity check
+        sum(dGEV(x, xi = xi, mu = imu, sigma = sig, log = TRUE)) # log-likelihood (correctly deals with sigma <= 0)
     }
-    ## Minimize the -log-likelihood in the nuisance parameters theta = (xi, sigma)
+    ## Construct an initial value which guarantees that logLik.xi.sig is finite
+    ## Note:
+    ## 1) The case 'xi = 0' guarantees that 1 + xi (x - mu) / sigma > 0 but
+    ##    since we use the implied mu here (to force a given r or k), y = (x - mu) / sigma
+    ##    can still be so negative (e.g. ~= -1e4) such that exp(-y) = Inf and thus
+    ##    dGEV(, log = TRUE) = -Inf; see code of dGEV(). We thus adjust sigma
+    ##    here to guarantee that we get a finite initial log-likelihood.
+    ## 2) y = (x - mu) / sigma should be >= -log(.Machine$double.xmax) for all y
+    ##    so that exp(-y) < Inf for all y. So sigma >= (x - mu) / -log(.Machine$double.xmax)
+    ##    for all x (so min(x) [since -log(..) < 0]).
+    ## 3) ... but we can't take .Machine$double.xmax as sum() (over sample size)
+    ##    would still be -Inf.
+    ##    Version 1: take .Machine$double.xmax / sample size
+    ##    imu <- r + init[2] * log(-log1p(-1/k)) # implied mu
+    ##    const <- -log(.Machine$double.xmax/1e8) # good up to sample size 1e8
+    ##    xmin <- min(x)
+    ##    if((xmin - imu) / init[2] < const)
+    ##         init[2] <- (xmin - imu) / const
+    ##    Version 2: simply double sigma
+    init <- c(0, sqrt(6 * var(x)) / pi) # case 'xi = 0' (xi, sigma)
+    while(!is.finite(logLik.xi.sig(init))) init[2] <- init[2] * 2
+    ## Maximize the log-likelihood in the nuisance parameters theta = (xi, sigma)
     ## for our given parameters of interest r and k (and the data x)
-    optim(theta, fn = nLL, ...) # minimize nLL
+    control <- c(as.list(control), fnscale = -1) # maximization (overwrites possible additionally passed 'fnscale')
+    optim(init, fn = logLik.xi.sig, control = control, ...) # maximize logLik.xi.sig
 }
 
-##' @title Computing a Side of the (1-alpha)-Confidence Interval for the
+##' @title Objective Function for Finding (1-alpha)-Confidence Intervals for the
 ##'        Return Level r or the Return Period k
 ##' @param r return level
 ##' @param k return period
 ##' @param x maxima
-##' @param mLL maximal (overall) log-likelihood (when maximizing GEV in all parameters)
+##' @param maxLogLik maximal (overall) log-likelihood (when maximizing GEV in all parameters)
 ##' @param alpha significance level
-##' @param ... additional arguments passed to npLL()
+##' @param control see ?optim
+##' @param ... additional arguments passed to profLogLik()
 ##' @return One side of the confidence level (which one is determined by
 ##'         the initial values)
 ##' @author Alexander McNeil and Marius Hofert
 ##' @note - Our parameter of interest is either r or k (fix the other).
 ##'       - The nuisance parameters are xi and sigma; mu is implied when
 ##'         fixing r, k, xi, sigma
-root <- function(r, k, x, mLL, alpha = 0.05, ...)
-    (-npLL(r, k = k, x = x, ...)$value) - # profile +log-likelihood
-        (mLL - qchisq(1-alpha, df = 1) / 2)
-## Note: One could also write a function (say, 'find_CI()') which calls uniroot()
-##       based on root() two times to find the left and right CI endpoints.
-##       find_CI() could also start from computing the overall MLE and then
-##       extend the likelihood to the left and right (by the usual 'doubling')
-##       to find the roots.
+obj <- function(r, k, x, maxLogLik, alpha = 0.05, control = list(reltol = 0), ...)
+    (profLogLik(r = r, k = k, x = x, control = control, ...)$value) - # profile log-likelihood
+        (maxLogLik - qchisq(1-alpha, df = 1) / 2)
+
+##' @title Plot obj() as a Function of r or k
+##' @param r return level (if of length > 1, obj() is evaluated as a function of r)
+##' @param k return perid (if of length > 1, obj() is evaluated as a function of k)
+##' @param x maxima
+##' @param maxLogLik maximal (overall) log-likelihood (when maximizing GEV in all parameters)
+##' @param alpha significance level
+##' @param control see ?optim
+##' @param ... additional arguments passed to profLogLik()
+##' @return invisible(); plot as side-effect
+##' @author Marius Hofert
+plot_obj <- function(r, k, x, maxLogLik, alpha = 0.05, control = list(reltol = 0), ...)
+{
+    lr <- length(r)
+    lk <- length(k)
+    stopifnot(xor(lr == 1, lk == 1)) # one of them has to have length > 1 (otherwise no plot)
+    if(lr > 1) {
+        x. <- r
+        y. <- sapply(r, function(r.) obj(r = r., k = k, x = x,
+                                         maxLogLik = maxLogLik, alpha = alpha,
+                                         control = control, ...))
+        xlab <- "Return level r"
+
+    } else { # length(k) > 1
+        x. <- k
+        y. <- sapply(k, function(k.) obj(r = r, k = k., x = x,
+                                         maxLogLik = maxLogLik, alpha = alpha,
+                                         control = control, ...))
+        xlab <- "Return period k"
+    }
+    plot(x., y., type = "l", xlab = xlab,
+         ylab = "Objective function for finding root")
+    abline(h = 0, lty = 2)
+}
 
 
 ### 1 Working with the data ####################################################
@@ -126,10 +184,10 @@ X <- -returns(S) # -log-returns X_t = -log(S_t/S_{t-1})
 X. <- X['1960-01-01/1987-10-16'] # grab out data we work with
 
 ## Extract (half-)yearly maxima method
-M.year <- period.apply(X., INDEX = endpoints(X., "years"), FUN = max) # yearly maxima
+M.y <- period.apply(X., INDEX = endpoints(X., "years"), FUN = max) # yearly maxima
 endpts <- endpoints(X., "quarters") # end indices for quarters
 endpts <- endpts[seq(1, length(endpts), by = 2)] # end indices for half-years
-M.hyear <- period.apply(X., INDEX = endpts, FUN = max) # half-yearly maxima
+M.hy <- period.apply(X., INDEX = endpts, FUN = max) # half-yearly maxima
 
 
 ### 3 Profile-likelihood-based CIs for return levels and return periods ########
@@ -137,13 +195,12 @@ M.hyear <- period.apply(X., INDEX = endpts, FUN = max) # half-yearly maxima
 ### 3.1 Based on annual maxima #################################################
 
 ## Fit GEV to yearly maxima
-fit.year <- fit.GEV(M.year) # likelihood-based estimation of the GEV; see ?fit.GEV
-(xi.year <- fit.year$par.ests[["xi"]]) # => ~= 0.2971 => Frechet domain with infinite 4th moment
-(mu.year  <- fit.year$par.ests[["mu"]])
-(sig.year <- fit.year$par.ests[["sigma"]])
-
-fit.year$par.ses # standard errors
-mLL <- fit.year$llmax # maximum log-likelihood (at MLE)
+fit.y <- fit_GEV(M.y) # likelihood-based estimation of the GEV; see ?fit_GEV
+(xi.y <- fit.y$par[1]) # ~= 0.2972 => Frechet domain with infinite ceiling(1/xi.y) = 4th moment
+(mu.y  <- fit.y$par[2])
+(sig.y <- fit.y$par[3])
+sqrt(diag(fit.y$Cov)) # standard errors
+mLL <- fit.y$value # ~= 88.5288; maximum log-likelihood (at MLE)
 
 
 ### 3.1.1 CI for 10-year and 50-year return level ##############################
@@ -151,24 +208,43 @@ mLL <- fit.year$llmax # maximum log-likelihood (at MLE)
 ## Fix the return period k = 10 (in years) and estimate the corresponding
 ## return level r
 k <- 10 # fix return period
-r <- qGEV(1-1/k, xi = xi.year, mu = mu.year, sigma = sig.year) # corresponding estimated return level r
+r <- qGEV(1-1/k, xi = xi.y, mu = mu.y, sigma = sig.y) # corresponding estimated return level r
+## Find a suitable initial interval for computing the CI
+I <- c(0.02, 0.1) # found by experimenting with the following plot
+plot_obj(r = seq(I[1], I[2], length.out = 128), k = k, x = M.y, maxLogLik = mLL)
+abline(v = r) # estimated return level
 ## Compute 95%-CI for the 10-year return level r
-low <- uniroot(root, lower = 1e-6, upper = r,   k = k, x = M.year, mLL = mLL)
-up  <- uniroot(root, lower = r,    upper = 1e2, k = k, x = M.year, mLL = mLL)
-(CI.r10 <- c(low$root, up$root)) # 95%-CI for 10-year return level r
+CI.low <- uniroot(obj, lower = I[1], upper = r,    k = k, x = M.y, maxLogLik = mLL)
+CI.up  <- uniroot(obj, lower = r,    upper = I[2], k = k, x = M.y, maxLogLik = mLL)
+(CI.r10 <- c(CI.low$root, CI.up$root)) # 95%-CI for 10-year return level r; [0.0346, 0.0757]
 ## Does it contain a drop as large as on Black Monday?
 rBM <- as.numeric(X['1987-10-19']) # return level on Black Monday
 CI.r10[1] <= rBM && rBM <= CI.r10[2] # => no!
 
 ## The same for k = 50
 k <- 50 # fix return period
-r <- qGEV(1-1/k, xi = xi.year, mu = mu.year, sigma = sig.year) # corresponding estimated return level r
+r <- qGEV(1-1/k, xi = xi.y, mu = mu.y, sigma = sig.y) # corresponding estimated return level r
+## Find a suitable initial interval for computing the CI
+I <- c(0.02, 0.3) # found by experimenting with the following plot
+plot_obj(r = seq(I[1], I[2], length.out = 128), k = k, x = M.y, maxLogLik = mLL)
+abline(v = r) # estimated return level
 ## Compute 95%-CI for the 50-year return level r
-low <- uniroot(root, lower = 1e-6, upper = r,   k = k, x = M.year, mLL = mLL)
-up  <- uniroot(root, lower = r,    upper = 1e2, k = k, x = M.year, mLL = mLL)
-(CI.r50 <- c(low$root, up$root)) # 95%-CI for 50-year return level r
+CI.low <- uniroot(obj, lower = I[1], upper = r,    k = k, x = M.y, maxLogLik = mLL)
+CI.up  <- uniroot(obj, lower = r,    upper = I[2], k = k, x = M.y, maxLogLik = mLL)
+(CI.r50 <- c(CI.low$root, CI.up$root)) # 95%-CI for 50-year return level r; [0.0488, 0.2483]
 ## Does it contain a drop as large as on Black Monday?
+rBM <- as.numeric(X['1987-10-19']) # return level on Black Monday
 CI.r50[1] <= rBM && rBM <= CI.r50[2] # => yes!
+
+## Note: If obj() is called *without* smaller relative tolerance
+##       (e.g., the default control = list()), then the upper CI differs!
+uniroot(obj, lower = r, upper = I[2], k = k, x = M.y, maxLogLik = mLL,
+        control = list())$root
+## This would imply that the return level on Black Monday is *not* contained in the CI!
+## Why does this happen? Watch this...
+plot_obj(r = seq(I[1], I[2], length.out = 128), k = k, x = M.y, maxLogLik = mLL,
+         control = list())
+## => Always watch out for numerical issues!
 
 
 ### 3.1.2 CI for the return period of a loss as on Black Monday ################
@@ -176,75 +252,28 @@ CI.r50[1] <= rBM && rBM <= CI.r50[2] # => yes!
 ## Fix the return level r (as on Black Monday) and estimate the corresponding
 ## return period k
 r <- rBM # fix return level
-k <- 1/(1-pGEV(r, xi = xi.year, mu = mu.year, sigma = sig.year)) # corresponding estimated return period k
-## Compute 95%-CI for the return period (in years) of an event of size as Black Monday
-low <- uniroot(root, lower = 1+1e-2, # has to be > 1 (for log1p(-1/k) to not be NaN)
-               upper = k, r = r, x = M.year, mLL = mLL)
-## Upper bound of the 95%-CI difficult here because of numerical problems:
-pwr <- seq(1, 17, by = 0.2) # powers of 10
-profile <- sapply(pwr, function(p) root(r = r, k = 10^p, x = M.year, mLL = mLL,
-                                        control = list(reltol = 0)))
-## Plot the objective function for finding the root of for computing the upper
-## 95%-CI for the return period of a loss with return level r as on Black Monday
-plot(10^pwr, profile, # each function evaluation is a numerically found root (not stable)
-     type = "l", log = "x", xlab = "Return period k",
-     ylab = "Function for finding the upper 95%-CI bound for k (of event as on BM)")
-abline(h = 0)
-## Note: - Useless without reltol = 0
-##       - Even with reltol = 0, the objective function is quite erratic
-##         as it depends on computed optima.
-##       - Problem probably requires a rescaling of the likelihood.
-
-if(FALSE) {
-    ## Trial to find the problem:
-    k <- 10^17
-    r <- rBM
-    ## => Calls root(r = r, k = k., x = M.year, mLL = mLL, control = list(reltol = 0))
-    ##    which is...
-    x <- M.year
-    alpha <- 0.05
-    mLL
-    mLL - qchisq(1-alpha, df = 1)/2
-    (-npLL(r, k = k, x = x, control = list(reltol = 0))$value) - # profile +log-likelihood
-        (mLL - qchisq(1-alpha, df = 1) / 2)
-    ## => npLL() must be 0
-    npLL(r, k = k, x = x, control = list(reltol = 0))$value == 0
-    ## => Calls ...
-    nLL <- function(theta) { # note: r, k and x are locally 'seen' here
-        xi <- theta[1]
-        sig <- theta[2]
-        implied.mu <- r - (sig/xi) * ((-log1p(-1/k))^(-xi) - 1) # mu implied by xi, sigma, r, k
-        -sum(dGEV(x, xi = xi, mu = implied.mu, sigma = abs(sig), log = TRUE)) # -log-likelihood
-    }
-    (theta <- c(xi = 0.01, sigma = sqrt(6*var(x)/pi)))
-    optim(theta, fn = nLL, control = list(reltol = 0))
-    nLL(theta)
-    ## Build a grid and evaluate nLL there
-    ## xisig <- expand.grid(seq(0.01, 2.9999, length.out = 30), seq(0.001, 10, length.out = 30))
-    xisig <- expand.grid(seq(0.001, 0.01, length.out = 30), seq(0.001, 0.01, length.out = 30))
-    dat <- cbind(xi = xisig[,1], sig = xisig[,2], z = apply(xisig, 1, nLL))
-    dat. <- dat[is.finite(dat[,3]),] # omit Inf
-    nrow(dat.)
-    ## 3d plot
-    ## library(rgl)
-    ## plot3d(x = dat.[,1], y = dat.[,2], z = dat.[,3],
-    ##        xlab = "xi", ylab = "sigma", zlab = "nLL")
-    library(lattice)
-    wireframe(dat.[,3] ~ dat.[,1] * dat.[,2],
-              xlab = "xi", ylab = "sigma", zlab = "nLL") # => definitely a problem of nLL() for small sigma (and small xi)
-}
+k <- 1/(1-pGEV(r, xi = xi.y, mu = mu.y, sigma = sig.y)) # corresponding estimated return period k
+## Find a suitable initial interval for computing the CI
+I <- c(10, 1e5) # found by experimenting with the following plot
+plot_obj(r = r, k = seq(I[1], I[2], length.out = 128), x = M.y, maxLogLik = mLL)
+abline(v = k) # estimated return level
+## => As good as impossible to find the upper CI (even for larger I[2])
+##    Most likely requires to rescale the objective function etc.
+## Compute (at least the lower end of) the 95%-CI for the return period (in years)
+## of an event of size as Black Monday
+CI.low <- uniroot(obj, lower = I[1], upper = k, r = r, x = M.y, maxLogLik = mLL)
+CI.low$root
 
 
 ### 3.2 Based on biannual maxima ###############################################
 
 ## Fit GEV to half-yearly maxima
-fit.hyear <- fit.GEV(M.hyear)
-(xi.hyear <- fit.hyear$par.ests[["xi"]]) # => ~= 0.3401 => Frechet domain with infinite 3rd moment
-(mu.hyear  <- fit.hyear$par.ests[["mu"]])
-(sig.hyear <- fit.hyear$par.ests[["sigma"]])
-
-fit.hyear$par.ses # standard errors
-mLL <- fit.hyear$llmax # maximum log-likelihood (at MLE)
+fit.hy <- fit_GEV(M.hy) # likelihood-based estimation of the GEV; see ?fit_GEV
+(xi.hy <- fit.hy$par[1]) # ~= 0.3401 => Frechet domain with infinite ceiling(1/xi.hy) = 3rd moment
+(mu.hy  <- fit.hy$par[2])
+(sig.hy <- fit.hy$par[3])
+sqrt(diag(fit.hy$Cov)) # standard errors
+mLL <- fit.hy$value # ~= 191.3122; maximum log-likelihood (at MLE)
 
 
 ### 3.2.1 CI for 20-half-year and 100-half-year return level ###################
@@ -252,23 +281,40 @@ mLL <- fit.hyear$llmax # maximum log-likelihood (at MLE)
 ## Fix the return period k = 20 (in half-years) and estimate the corresponding
 ## return level r
 k <- 20 # fix return period
-r <- qGEV(1-1/k, xi = xi.hyear, mu = mu.hyear, sigma = sig.hyear) # corresponding estimated return level r
+r <- qGEV(1-1/k, xi = xi.hy, mu = mu.hy, sigma = sig.hy) # corresponding estimated return level r
+## Find a suitable initial interval for computing the CI
+I <- c(0.03, 0.1) # found by experimenting with the following plot
+plot_obj(r = seq(I[1], I[2], length.out = 128), k = k, x = M.hy, maxLogLik = mLL)
+abline(v = r) # estimated return level
 ## Compute 95%-CI for the 20-half-year return level r
-low <- uniroot(root, lower = 1e-6, upper = r,   k = k, x = M.hyear, mLL = mLL)
-up  <- uniroot(root, lower = r,    upper = 1e2, k = k, x = M.hyear, mLL = mLL)
-(CI.r20 <- c(low$root, up$root)) # 95%-CI for 20-half-year return level r
+CI.low <- uniroot(obj, lower = I[1], upper = r,    k = k, x = M.hy, maxLogLik = mLL)
+CI.up  <- uniroot(obj, lower = r,    upper = I[2], k = k, x = M.hy, maxLogLik = mLL)
+(CI.r20 <- c(CI.low$root, CI.up$root)) # 95%-CI for 20-half-year return level r; [0.0355, 0.0728]
 ## Does it contain a drop as large as on Black Monday?
+rBM <- as.numeric(X['1987-10-19']) # return level on Black Monday
 CI.r20[1] <= rBM && rBM <= CI.r20[2] # => no!
 
 ## The same for k = 100
-k <- 100
-r <- qGEV(1-1/k, xi = xi.hyear, mu = mu.hyear, sigma = sig.hyear) # corresponding estimated return level r
+k <- 100 # fix return period
+r <- qGEV(1-1/k, xi = xi.hy, mu = mu.hy, sigma = sig.hy) # corresponding estimated return level r
+## Find a suitable initial interval for computing the CI
+I <- c(0.04, 0.25) # found by experimenting with the following plot
+plot_obj(r = seq(I[1], I[2], length.out = 128), k = k, x = M.hy, maxLogLik = mLL)
+abline(v = r) # estimated return level
 ## Compute 95%-CI for the 100-half-year return level r
-low <- uniroot(root, lower = 1e-6, upper = r,   k = k, x = M.hyear, mLL = mLL)
-up  <- uniroot(root, lower = r,    upper = 1e2, k = k, x = M.hyear, mLL = mLL)
-(CI.r100 <- c(low$root, up$root)) # 95%-CI for 100-half-year return level r
+CI.low <- uniroot(obj, lower = I[1], upper = r,    k = k, x = M.hy, maxLogLik = mLL)
+CI.up  <- uniroot(obj, lower = r,    upper = I[2], k = k, x = M.hy, maxLogLik = mLL)
+(CI.r100 <- c(CI.low$root, CI.up$root)) # 95%-CI for 100-half-year return level r; [0.0504, 0.1912]
 ## Does it contain a drop as large as on Black Monday?
-CI.r100[1] <= rBM && rBM <= CI.r100[2] # => no (not quite!)
+rBM <- as.numeric(X['1987-10-19']) # return level on Black Monday
+CI.r100[1] <= rBM && rBM <= CI.r100[2] # => no!
+
+## Note: Also here, note that this looks better than it actually is. Watch this:
+I <- c(0.05, 0.25) # ... just a different initial interval
+plot_obj(r = seq(I[1], I[2], length.out = 128), k = k, x = M.hy, maxLogLik = mLL)
+abline(v = r)
+## ... and problems of this sort appear frequently => always good to (at least)
+## check with a plot whether the found roots make sense.
 
 
 ### 3.2.2 CI for the return period of a loss as on Black Monday ################
@@ -276,10 +322,13 @@ CI.r100[1] <= rBM && rBM <= CI.r100[2] # => no (not quite!)
 ## Fix the return level r (as on Black Monday) and estimate the corresponding
 ## return period k
 r <- rBM # fix return level
-k <- 1/(1-pGEV(r, xi = xi.hyear, mu = mu.hyear, sigma = sig.hyear)) # corresponding estimated return period k
-## Compute 95%-CI for the return period (in half-years) of an event of size as Black Monday
-low <- uniroot(root, lower = 1+1e-2, # has to be > 1 (for log1p(-1/k) to not be NaN)
-               upper = k, r = r, x = M.hyear, mLL = mLL)
-up  <- uniroot(root, lower = k, # has to be > 1 (for log1p(-1/k) to not be NaN)
-               upper = 10^8, r = r, x = M.hyear, mLL = mLL)
-(CI.kBM <- c(low$root, up$root)) # 95%-CI (in half-years) for return period k of event as on Black Monday
+k <- 1/(1-pGEV(r, xi = xi.hy, mu = mu.hy, sigma = sig.hy)) # corresponding estimated return period k
+## Find a suitable initial interval for computing the CI
+I <- c(10, 1e5) # found by experimenting with the following plot
+plot_obj(r = r, k = seq(I[1], I[2], length.out = 128), x = M.hy, maxLogLik = mLL)
+abline(v = k) # estimated return level
+## => As before
+## Compute (at least the lower end of) the 95%-CI for the return period (in years)
+## of an event of size as Black Monday
+CI.low <- uniroot(obj, lower = I[1], upper = k, r = r, x = M.hy, maxLogLik = mLL)
+CI.low$root
