@@ -198,4 +198,5 @@ fit_GEV(M.hy, init = c(-.Machine$double.eps, init[2:3])) # ~= 0.3401 => ok
 ##    initial values, and they also (roughly) lead to xi ~= 0.3402.
 ## 2) The problem overall is significantly more severe and challenging
 ##    when computing profile log-likelihood based confidence intervals
-##    for return levels and return periods.
+##    for return levels and return periods; see the script
+##    05_GEV_BMM_SP500_CIs_rlevels_rperiods.R
