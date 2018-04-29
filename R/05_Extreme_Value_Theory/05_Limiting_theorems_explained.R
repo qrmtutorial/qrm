@@ -13,7 +13,7 @@ library(qrmtools)
 n <- 2e5 # sample size = number of iid random variables
 th <- 3 # parameter theta
 set.seed(271) # set seed for reproducibility
-X <- rPar(n, theta = th) # generate data
+X <- rPar(n, shape = th) # generate data
 
 
 ### 1 Strong Law of Large Numbers (SLLN) #######################################
@@ -73,12 +73,12 @@ qq_plot(Z, FUN = qnorm, main = "Central Limit Theorem")
 ## mu = 1 and sig = 1/theta here. Let's check that.
 
 ## Location-scale transform blocked maxima with c_n = F^-(1-1/n) and d_n = 0
-M <- sapply(X., function(x) (max(x) - 0) / qPar(1-1/length(x), theta = th))
+M <- sapply(X., function(x) (max(x) - 0) / qPar(1-1/length(x), shape = th))
 
 ## Histogram with overlaid densities
 dens <- density(M, adjust = 2) # smoothed density estimate
 x <- seq(0, max(M), length.out = 257)
-true.dens <- dGEV(x, xi = 1/th, mu = 1, sigma = 1/th) # true density
+true.dens <- dGEV(x, shape = 1/th, loc = 1, scale = 1/th) # true density
 hist(M, probability = TRUE, ylim = c(0, max(dens$y, true.dens)), breaks = 60,
      main = substitute(bold("Gnedenko's Theorem for Par("*th.*") data"),
                        list(th. = th)), xlab = expression("Realizations of"~(M[n]-d[n])/c[n]~~
@@ -90,7 +90,7 @@ legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange2"), bty = "n"
        legend = c("Density estimate", expression("Limiting GEV density"~h[list(xi,mu,sigma)])))
 
 ## Q-Q plot
-qq_plot(M, FUN = function(p) qGEV(p, xi = 1/th, mu = 1, sigma = 1/th),
+qq_plot(M, FUN = function(p) qGEV(p, shape = 1/th, loc = 1, scale = 1/th),
         main = substitute(bold("Gnedenko's Theorem for Par("*th.*") data"),
                           list(th. = th)))
 ## => For smaller block sizes (e.g. take n = 2e4 => n/m = 40), there is
@@ -117,7 +117,7 @@ Y <- X[X>u] - u # excesses over u
 ## Histogram (note: true density peaks near 0)
 dens <- density(Y) # density estimate
 x <- seq(0, max(Y), length.out = 257)
-true.dens <- dGPD(x, xi = 1/th, beta = (1/th)*(1+u))
+true.dens <- dGPD(x, shape = 1/th, scale = (1/th)*(1+u))
 hist(Y, probability = TRUE, ylim = c(0, max(dens$y, true.dens)), breaks = 60,
      main = substitute(bold("Pickands-Balkema-de Haan Theorem for Par("*th.*") data"),
             list(th. = th)), xlab = "Realizations of excesses Y over the threshold u (90% quantile)")
@@ -129,7 +129,7 @@ legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange2"), bty = "n"
 
 ## Just the density estimates on the log-scale
 x <- 10^seq(-2, 2, length.out = 65)
-true.dens <- dGPD(x, xi = 1/th, beta = (1/th)*(1+u))
+true.dens <- dGPD(x, shape = 1/th, scale = (1/th)*(1+u))
 ii <- dens$x > 0 # only use those values with density > 0 (otherwise log-scale fails)
 plot(dens$x[ii], dens$y[ii], type = "l", log = "x", col = "royalblue3",
      ylim = c(0, max(dens$y[ii], true.dens)), xlab = "x", ylab = "Density")
@@ -138,7 +138,7 @@ legend("topright", lty = c(1,1), col = c("royalblue3", "darkorange2"), bty = "n"
        legend = c("Density estimate", expression("Limiting GPD density"~g[list(xi,beta(u))])))
 
 ## Q-Q plot
-qq_plot(Y, FUN = function(p) qGPD(p, xi = 1/th, beta = (1/th)*(1+u)),
+qq_plot(Y, FUN = function(p) qGPD(p, shape = 1/th, scale = (1/th)*(1+u)),
         main = substitute(bold("Pickands-Balkema-de Haan Theorem for Par("*th.*") data"),
                           list(th. = th)))
 ## => In particular, this looks better than the Q-Q plot before (this

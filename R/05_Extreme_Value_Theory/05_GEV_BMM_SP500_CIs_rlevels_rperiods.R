@@ -92,7 +92,7 @@ profLogLik <- function(r, k, x, control = list(reltol = 0), ...)
                    r - (sig/xi) * ((-log1p(-1/k))^(-xi) - 1)
                }
         stopifnot(is.finite(imu)) # sanity check
-        sum(dGEV(x, xi = xi, mu = imu, sigma = sig, log = TRUE)) # log-likelihood (correctly deals with sigma <= 0)
+        sum(dGEV(x, shape = xi, loc = imu, scale = sig, log = TRUE)) # log-likelihood (correctly deals with sigma <= 0)
     }
     ## Construct an initial value which guarantees that logLik.xi.sig is finite
     ## Note:
@@ -195,11 +195,11 @@ M.hy <- period.apply(X., INDEX = endpts, FUN = max) # half-yearly maxima
 ### 3.1 Based on annual maxima #################################################
 
 ## Fit GEV to yearly maxima
-fit.y <- fit_GEV(M.y) # likelihood-based estimation of the GEV; see ?fit_GEV
-(xi.y <- fit.y$par[1]) # ~= 0.2972 => Frechet domain with infinite ceiling(1/xi.y) = 4th moment
-(mu.y  <- fit.y$par[2])
-(sig.y <- fit.y$par[3])
-sqrt(diag(fit.y$Cov)) # standard errors
+fit.y <- fit_GEV_MLE(M.y) # maximum likelihood estimator
+(xi.y <- fit.y$par[["shape"]]) # ~= 0.2972 => Frechet domain with infinite ceiling(1/xi.y) = 4th moment
+(mu.y  <- fit.y$par[["loc"]])
+(sig.y <- fit.y$par[["scale"]])
+fit.y$SE # standard errors
 mLL <- fit.y$value # ~= 88.5288; maximum log-likelihood (at MLE)
 
 
@@ -208,7 +208,7 @@ mLL <- fit.y$value # ~= 88.5288; maximum log-likelihood (at MLE)
 ## Fix the return period k = 10 (in years) and estimate the corresponding
 ## return level r
 k <- 10 # fix return period
-r <- qGEV(1-1/k, xi = xi.y, mu = mu.y, sigma = sig.y) # corresponding estimated return level r
+r <- qGEV(1-1/k, shape = xi.y, loc = mu.y, scale = sig.y) # corresponding estimated return level r
 ## Find a suitable initial interval for computing the CI
 I <- c(0.02, 0.1) # found by experimenting with the following plot
 plot_obj(r = seq(I[1], I[2], length.out = 128), k = k, x = M.y, maxLogLik = mLL)
@@ -223,7 +223,7 @@ CI.r10[1] <= rBM && rBM <= CI.r10[2] # => no!
 
 ## The same for k = 50
 k <- 50 # fix return period
-r <- qGEV(1-1/k, xi = xi.y, mu = mu.y, sigma = sig.y) # corresponding estimated return level r
+r <- qGEV(1-1/k, shape = xi.y, loc = mu.y, scale = sig.y) # corresponding estimated return level r
 ## Find a suitable initial interval for computing the CI
 I <- c(0.02, 0.3) # found by experimenting with the following plot
 plot_obj(r = seq(I[1], I[2], length.out = 128), k = k, x = M.y, maxLogLik = mLL)
@@ -252,7 +252,7 @@ plot_obj(r = seq(I[1], I[2], length.out = 128), k = k, x = M.y, maxLogLik = mLL,
 ## Fix the return level r (as on Black Monday) and estimate the corresponding
 ## return period k
 r <- rBM # fix return level
-k <- 1/(1-pGEV(r, xi = xi.y, mu = mu.y, sigma = sig.y)) # corresponding estimated return period k
+k <- 1/(1-pGEV(r, shape = xi.y, loc = mu.y, scale = sig.y)) # corresponding estimated return period k
 ## Find a suitable initial interval for computing the CI
 I <- c(10, 1e5) # found by experimenting with the following plot
 plot_obj(r = r, k = seq(I[1], I[2], length.out = 128), x = M.y, maxLogLik = mLL)
@@ -268,11 +268,11 @@ CI.low$root
 ### 3.2 Based on biannual maxima ###############################################
 
 ## Fit GEV to half-yearly maxima
-fit.hy <- fit_GEV(M.hy) # likelihood-based estimation of the GEV; see ?fit_GEV
-(xi.hy <- fit.hy$par[1]) # ~= 0.3401 => Frechet domain with infinite ceiling(1/xi.hy) = 3rd moment
-(mu.hy  <- fit.hy$par[2])
-(sig.hy <- fit.hy$par[3])
-sqrt(diag(fit.hy$Cov)) # standard errors
+fit.hy <- fit_GEV_MLE(M.hy) # maximum likelihood estimator
+(xi.hy <- fit.hy$par[["shape"]]) # ~= 0.3401 => Frechet domain with infinite ceiling(1/xi.hy) = 3rd moment
+(mu.hy  <- fit.hy$par[["loc"]])
+(sig.hy <- fit.hy$par[["scale"]])
+fit.hy$SE # standard errors
 mLL <- fit.hy$value # ~= 191.3122; maximum log-likelihood (at MLE)
 
 
@@ -281,7 +281,7 @@ mLL <- fit.hy$value # ~= 191.3122; maximum log-likelihood (at MLE)
 ## Fix the return period k = 20 (in half-years) and estimate the corresponding
 ## return level r
 k <- 20 # fix return period
-r <- qGEV(1-1/k, xi = xi.hy, mu = mu.hy, sigma = sig.hy) # corresponding estimated return level r
+r <- qGEV(1-1/k, shape = xi.hy, loc = mu.hy, scale = sig.hy) # corresponding estimated return level r
 ## Find a suitable initial interval for computing the CI
 I <- c(0.03, 0.1) # found by experimenting with the following plot
 plot_obj(r = seq(I[1], I[2], length.out = 128), k = k, x = M.hy, maxLogLik = mLL)
@@ -296,7 +296,7 @@ CI.r20[1] <= rBM && rBM <= CI.r20[2] # => no!
 
 ## The same for k = 100
 k <- 100 # fix return period
-r <- qGEV(1-1/k, xi = xi.hy, mu = mu.hy, sigma = sig.hy) # corresponding estimated return level r
+r <- qGEV(1-1/k, shape = xi.hy, loc = mu.hy, scale = sig.hy) # corresponding estimated return level r
 ## Find a suitable initial interval for computing the CI
 I <- c(0.04, 0.25) # found by experimenting with the following plot
 plot_obj(r = seq(I[1], I[2], length.out = 128), k = k, x = M.hy, maxLogLik = mLL)
@@ -322,7 +322,7 @@ abline(v = r)
 ## Fix the return level r (as on Black Monday) and estimate the corresponding
 ## return period k
 r <- rBM # fix return level
-k <- 1/(1-pGEV(r, xi = xi.hy, mu = mu.hy, sigma = sig.hy)) # corresponding estimated return period k
+k <- 1/(1-pGEV(r, shape = xi.hy, loc = mu.hy, scale = sig.hy)) # corresponding estimated return period k
 ## Find a suitable initial interval for computing the CI
 I <- c(10, 1e5) # found by experimenting with the following plot
 plot_obj(r = r, k = seq(I[1], I[2], length.out = 128), x = M.hy, maxLogLik = mLL)

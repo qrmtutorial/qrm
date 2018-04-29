@@ -3,7 +3,7 @@
 ## Libraries required
 library(xts)
 library(mvtnorm)
-library(QRM)
+library(QRM) # for fit.mst()
 library(qrmdata)
 
 ## Simulate multivariate Student

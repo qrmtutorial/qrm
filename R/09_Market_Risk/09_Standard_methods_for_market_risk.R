@@ -7,7 +7,7 @@
 ### Setup ######################################################################
 
 library(mvtnorm) # for sampling from a multivariate t distribution
-library(QRM) # for fit.mst(), fit.GPD()
+library(QRM) # for fit.mst()
 library(xts) # for na.fill()
 library(qrmdata) # for the data
 library(qrmtools) # for the data analysis
@@ -132,14 +132,14 @@ risk_measure <- function(S, lambda, alpha,
                stopifnot(hasArg(q)) # check if the quantile-threshold 'q' has been provided
                L. <- loss_operator(X, weights = w.) # historical losses
                u <- quantile(L., probs = list(...)$q, names = FALSE) # determine the threshold as the q-quantile of the historical losses
-               fit <- fit.GPD(L., threshold = u) # fit a GPD to the excesses (note: fit.GPD() requires the losses)
-               xi <- fit$par.ests[["xi"]] # fitted xi
-               beta <- fit$par.ests[["beta"]] # fitted beta
+               excess <- L.[L. > u] - u
+               fit <- fit_GPD_MLE(excess) # fit a GPD to the excesses
+               xi <- fit$par[["shape"]] # fitted xi
+               beta <- fit$par[["scale"]] # fitted beta
                if(xi <= 0) stop("Risk measures only implemented for xi > 0.")
                ## Now compute semi-parametric VaR and ES estimates
                ## G_{xi,beta}(x) = 1-(1+xi*x/beta)^{-1/xi} if xi != 0
-               L.. <- L.[L. > u] - u # compute the excesses over u
-               Fbu <- length(L..) / length(L.) # number of excesses / number of losses = N_u / n
+               Fbu <- length(excess) / length(L.) # number of excesses / number of losses = N_u / n
                VaR <- u + (beta/xi)*(((1-alpha)/Fbu)^(-xi)-1) # see McNeil, Frey, Embrechts (2015, Section 5.2.3)
                ES <- (VaR + beta-xi*u) / (1-xi) # see McNeil, Frey, Embrechts (2015, Section 5.2.3)
                if(xi >= 1) ES <- Inf # adjust to be Inf if xi >= 1 (i.e., ES < 0); see Coles (2001, p. 79)
@@ -151,7 +151,7 @@ risk_measure <- function(S, lambda, alpha,
                     beta   = beta, # fitted beta
                     converged = fit$converged, # did the fitting algorithm converge?
                     u      = u, # threshold
-                    excess = L..) # excesses over u
+                    excess = excess) # excesses over u
            },
            stop("Wrong 'method'"))
 }
@@ -185,11 +185,11 @@ MC.t     <- risk_measure(S, lambda = lambda, alpha = alpha, method = "MC.t", N =
 excess <- POT$excess # excesses over the threshold
 xi.hat <- POT$xi # estimated xi
 beta.hat <- POT$beta # estimated beta
-z <- pGPD(excess, xi = xi.hat, beta = beta.hat) # should be U[0,1]
+z <- pGPD(excess, shape = xi.hat, scale = beta.hat) # should be U[0,1]
 plot(z, ylab = "Fitted GPD applied to the excesses") # looks fine
 
 ## We can also consider a (more sophisticated) Q-Q plot for this task.
-qq_plot(excess, FUN = function(p) qGPD(p, xi = xi.hat, beta = beta.hat),
+qq_plot(excess, FUN = function(p) qGPD(p, shape = xi.hat, scale = beta.hat),
         main = paste0("Q-Q plot for the fitted GPD(", round(xi.hat, 2),", ",
                       round(beta.hat, 2),") distribution")) # looks fine
 

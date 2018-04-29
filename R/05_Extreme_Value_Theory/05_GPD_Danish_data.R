@@ -3,74 +3,118 @@
 
 ### Setup ######################################################################
 
-library(QRM)
+library(xts)
+library(qrmtools)
+data(fire)
 
 
-### 1 Find the threshold(s) and fitting GPD(s) #################################
+### 1 Find the threshold(s) ####################################################
 
 ## Plot
-plot(danish)
+plot.zoo(fire, ylab = "Danish fire insurance claim losses in 1M DKK")
 
 ## Sample mean excess plot (with two plausible thresholds)
-MEplot(danish) # sample mean excess plot; omits largest three points ('omit = 3')
+mean_excess_plot(fire) # sample mean excess plot; omits largest three points ('omit = 3')
 u10 <- 10 # threshold 1
 u20 <- 20 # threshold 2
-abline(v = u10)
-abline(v = u20)
+abline(v = c(u10, u20))
 
 ## Effect of changing the threshold on xi
-xiplot(danish) # => variance increases for larger thresholds
-
-## Fit GPD models
-str(fit.GPD) # => gets the original data as 'data' and 'threshold' or 'nextremes'
-(mod.u10 <- fit.GPD(danish, threshold = u10))
-(mod.u20 <- fit.GPD(danish, threshold = u20))
+GPD_shape_plot(fire)
+abline(v = c(u10, u20))
+abline(h = 0.5) # models above line have infinite variance (E(X^k) = Inf <=> xi >= 1/k; k = 2 here)
 
 
-### 2 Plot the sample excess df hat{F}_{u,n} and the fitted excess df (GPD) at x-u
+### 2 Fit GPDs to the excesses #################################################
 
-## Understanding plotFittedGPDvsEmpiricalExcesses()
-plotFittedGPDvsEmpiricalExcesses # => compare with GPD-based tail bar{F}; note: mod$data = data[data > u]
-## Note: F_u(x-u) = P(X-u <= x-u | X > u) = P(X <= x | X > u)
-##       => hat{F}_{u,n}(x-u) = hat{F}_n(x) where hat{F}_n is based on all X > u
-##       => that's what's internally used, see 'edf(mod$data)'
-stopifnot(mod.u10$data == danish[danish > u10])
-
-## Plot the sample excess df hat{F}_{u,n} at x-u and the fitted excess df (GPD)
-## at x-u for x >= u
-plotFittedGPDvsEmpiricalExcesses(danish, threshold = u10) # hat{F}_{u,n}(x-u) vs G_{hat{xi},hat{beta}}(x-u)
-legend("bottomright", bty = "n", lty = 0:1, pch = c(19, NA), col = c("blue", "black"),
-       legend = c("Empirical excess df", "Theoretical excess df (GPD)"))
-
-## Threshold 2
-plotFittedGPDvsEmpiricalExcesses(danish, threshold = u20)
-legend("bottomright", bty = "n", lty = 0:1, pch = c(19, NA), col = c("blue", "black"),
-       legend = c("Empirical excess df", "Theoretical excess df (GPD)"))
+## Fit GPD models to excesses via MLE
+exceed.u10 <- fire[fire > u10] # exceedances
+exceed.u20 <- fire[fire > u20] # exceedances
+excess.u10 <- exceed.u10 - u10 # excesses
+excess.u20 <- exceed.u20 - u20 # excesses
+(fit.u10 <- fit_GPD_MLE(excess.u10)) # MLE
+shape.u10 <- fit.u10$par[["shape"]]
+scale.u10 <- fit.u10$par[["scale"]]
+(fit.u20 <- fit_GPD_MLE(excess.u20)) # MLE
+shape.u20 <- fit.u20$par[["shape"]]
+scale.u20 <- fit.u20$par[["scale"]]
 
 
-### 3 Compute semi-parametric risk measure estimates ###########################
+### 3 Visually compare the sample excess df and the fitted (GPD) excess df #####
 
-## Risk measure estimates
-RiskMeasures # => compare with GPD-based VaR and ES formulas
-(RM.u10 <- RiskMeasures(mod.u10, p = c(0.99, 0.995)))
+df.u10 <- function(q) # define fitted GPD
+    pGPD(q, shape = shape.u10, scale = scale.u10) # fitted GPD
+df.u20 <- function(q) # define fitted GPD
+    pGPD(q, shape = shape.u20, scale = scale.u20) # fitted GPD
 
-## Threshold 2
-(RM.u20 <- RiskMeasures(mod.u20, p = c(0.99, 0.995)))
+## Plot empiricial excess df vs fitted GPD
+## u10
+res <- edf_plot(excess.u10, log = "x")
+z <- tail(res$t, n = -1)
+lines(z, pGPD(z, shape = shape.u10, scale = scale.u10)) # fitted GPD
+## u20
+res <- edf_plot(excess.u20, log = "x")
+z <- tail(res$t, n = -1)
+lines(z, pGPD(z, shape = shape.u20, scale = scale.u20)) # fitted GPD
+
+## Plot empiricial exceedance df vs shifted fitted GPD
+## u10
+res <- edf_plot(exceed.u10, log = "x")
+z <- tail(res$t, n = -1)
+lines(z, pGPD(z-u10, shape = shape.u10, scale = scale.u10)) # shifted fitted GPD
+## u20
+res <- edf_plot(exceed.u20, log = "x")
+z <- tail(res$t, n = -1)
+lines(z, pGPD(z-u20, shape = shape.u20, scale = scale.u20)) # shifted fitted GPD
+
+## Corresponding Q-Q plots (more meaningful)
+qf.u10 <- function(p) # quantile function of df
+    qGPD(p, shape = shape.u10, scale = scale.u10)
+qf.u20 <- function(p) # quantile function of df
+    qGPD(p, shape = shape.u20, scale = scale.u20)
+qq_plot(excess.u10, FUN = qf.u10)
+qq_plot(excess.u20, FUN = qf.u20)
+qq_plot(exceed.u10, FUN = function(p) u10 + qf.u10(p))
+qq_plot(exceed.u20, FUN = function(p) u20 + qf.u20(p))
 
 
-### 4 Compute semi-parametric tail estimators and implied risk measures ########
+### 4 Compute semi-parametric risk measure estimators ##########################
 
-## Semi-parametric Smith/tail estimator and implied risk measures
+## VaR_alpha, ES_alpha for two alphas and both thresholds
+alpha <- c(0.99, 0.995)
+(VaR.u10 <- VaR_POT(alpha, threshold = u10, p.exceed = mean(fire > u10),
+                    shape = shape.u10, scale = scale.u10))
+(VaR.u20 <- VaR_POT(alpha, threshold = u20, p.exceed = mean(fire > u20),
+                    shape = shape.u20, scale = scale.u20))
+(ES.u10 <- ES_POT(alpha, threshold = u10, p.exceed = mean(fire > u10),
+                  shape = shape.u10, scale = scale.u10))
+(ES.u20 <- ES_POT(alpha, threshold = u20, p.exceed = mean(fire > u20),
+                  shape = shape.u20, scale = scale.u20))
+
+
+### 5 Semi-parametric Smith estimator including VaR_0.99 #######################
+
+## Empirical tail probabilities with Smith estimator overlaid
+## u = 10
+tail_plot(fire, threshold = u10, shape = shape.u10, scale = scale.u10)
+abline(h = 1-alpha[1], v = VaR.u10[1], lty = 2) # 0.99, VaR_0.99
+abline(h = 1-alpha[1], v = ES.u10[1],  lty = 2) # 0.99, ES_0.99
+## u = 20
+tail_plot(fire, threshold = u20, shape = shape.u20, scale = scale.u20)
+abline(h = 1-alpha[1], v = VaR.u20[1], lty = 2) # 0.99, VaR_0.99
+abline(h = 1-alpha[1], v = ES.u20[1],  lty = 2) # 0.99, ES_0.99
+
+## A version including confidence intervals for VaR_0.99 and ES_0.99
+## u = 10
 opar <- par(mar = c(5, 4, 4, 2) + c(0, 1, 0, 0))
-plotTail(mod.u10, main = "Semi-parametric Smith/tail estimator") # hat(bar(F))(x), x >= u
-showRM(mod.u10, alpha = 0.99, RM = "VaR", method = "BFGS") # with VaR estimate and CIs
-showRM(mod.u10, alpha = 0.99, RM = "ES",  method = "BFGS") # with ES  estimate and CIs
+fit.u10. <- QRM::fit.GPD(fire, u10)
+QRM::showRM(fit.u10., alpha = 0.99, RM = "VaR", method = "BFGS") # with VaR estimate and CIs
+QRM::showRM(fit.u10., alpha = 0.99, RM = "ES",  method = "BFGS") # with ES  estimate and CIs
 par(opar)
-
-## Threshold 2
+## u = 20
 opar <- par(mar = c(5, 4, 4, 2) + c(0, 1, 0, 0))
-plotTail(mod.u20, main = "Semi-parametric Smith/tail estimator") # hat(bar(F))(x), x >= u
-showRM(mod.u20, alpha = 0.99, RM = "VaR", method = "BFGS") # with VaR estimate and CIs
-showRM(mod.u20, alpha = 0.99, RM = "ES",  method = "BFGS") # with ES  estimate and CIs
+fit.u20. <- QRM::fit.GPD(fire, u20)
+QRM::showRM(fit.u20., alpha = 0.99, RM = "VaR", method = "BFGS") # with VaR estimate and CIs
+QRM::showRM(fit.u20., alpha = 0.99, RM = "ES",  method = "BFGS") # with ES  estimate and CIs
 par(opar)
 ## => CIs quite a bit wider (as we have less data)

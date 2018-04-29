@@ -4,7 +4,6 @@
 ### Setup ######################################################################
 
 library(xts)
-library(QRM)
 library(qrmdata)
 library(qrmtools)
 
@@ -48,7 +47,8 @@ round(cbind(p.LB.raw, p.LB.abs, p.LB.raw.m, p.LB.abs.m), 2)
 ## QRM book (2015) (see also Table 4.1 in the QRM book (2005)):
 
 ## Note: This uses older DJ data from 'QRM'
-DJ.old <- as.xts(DJ)
+DJ.QRM <- QRM::DJ
+DJ.old <- as.xts(DJ.QRM)
 DJ.old <- DJ.old['1993-01-01/2000-12-31']
 X.old <- returns(DJ.old)
 X.old.m <- apply.monthly(X.old, FUN = colSums)
@@ -68,7 +68,8 @@ p.LB.abs.m <- sapply(LB.abs.m, `[[`, "p.value")
 
 ## Note: The minor differences to the tables in the book come from a different
 ##       approach. The tables in the book were produces without 'xts' objects:
-X.old. <- timeSeries::returns(DJ)
+library(timeSeries) # Caution: returns() now from timeSeries
+X.old. <- returns(DJ.QRM)
 X.old. <- window(X.old., start = timeDate("1993-01-01"), end = timeDate("2000-12-31"))
 X.old.m. <- aggregate(X.old., by = unique(timeLastDayInMonth(time(X.old.))), sum)
 ## Compute (lists of) Ljung--Box tests
@@ -85,5 +86,4 @@ p.LB.abs.m. <- sapply(LB.abs.m., `[[`, "p.value")
 (res. <- round(cbind(p.LB.raw., p.LB.abs., p.LB.raw.m., p.LB.abs.m.), 2))
 ## Differences
 summary(res-res.)
-
 

@@ -92,28 +92,28 @@ M.hy <- period.apply(X., INDEX = endpts, FUN = max) # half-yearly maxima
 ## Fit the GEV distribution H_{xi,mu,sigma} to the (half-)yearly maxima
 
 ## Yearly maxima
-fit.y <- fit_GEV(M.y) # likelihood-based estimation of the GEV; see ?fit.GEV
+fit.y <- fit_GEV_MLE(M.y) # maximum likelihood estimator
 stopifnot(fit.y$convergence == 0) # => converged
-(xi.y <- fit.y$par[1]) # ~= 0.2972 => Frechet domain with infinite ceiling(1/xi.y) = 4th moment
-(mu.y  <- fit.y$par[2])
-(sig.y <- fit.y$par[3])
-sqrt(diag(fit.y$Cov)) # standard errors
+(xi.y <- fit.y$par[["shape"]]) # ~= 0.2972 => Frechet domain with infinite ceiling(1/xi.y) = 4th moment
+(mu.y  <- fit.y$par[["loc"]])
+(sig.y <- fit.y$par[["scale"]])
+fit.y$SE # standard errors
 
 ## Half-yearly maxima
-fit.hy <- fit_GEV(M.hy)
+fit.hy <- fit_GEV_MLE(M.hy)
 stopifnot(fit.hy$convergence == 0) # => converged
-(xi.hy <- fit.hy$par[1]) # ~= 0.3401 => Frechet domain with infinite ceiling(1/xi.hy) = 3rd moment
-(mu.hy  <- fit.hy$par[2])
-(sig.hy <- fit.hy$par[3])
-sqrt(diag(fit.hy$Cov)) # standard errors
+(xi.hy <- fit.hy$par[["shape"]]) # ~= 0.3401 => Frechet domain with infinite ceiling(1/xi.hy) = 3rd moment
+(mu.hy  <- fit.hy$par[["loc"]])
+(sig.hy <- fit.hy$par[["scale"]])
+fit.hy$SE # standard errors
 
 
 ### 3 Compute exceedance probabilities, return levels and return periods #######
 
 ## Q: What is the probability that next year's maximal risk-factor change
 ##    exceeds all previous ones?
-1-pGEV(max(head(M.y, n = -1)),  xi = xi.y,  mu = mu.y,  sigma = sig.y) # exceedance prob. ~= 2.58%
-1-pGEV(max(head(M.hy, n = -1)), xi = xi.hy, mu = mu.hy, sigma = sig.hy) # exceedance prob. ~= 1.48%
+1-pGEV(max(head(M.y, n = -1)),  shape = xi.y,  loc = mu.y,  scale = sig.y) # exceedance prob. ~= 2.58%
+1-pGEV(max(head(M.hy, n = -1)), shape = xi.hy, loc = mu.hy, scale = sig.hy) # exceedance prob. ~= 1.48%
 ## Note: mu and sig also differ for half-yearly vs yearly data; if it was only xi,
 ##       the exceedance probability based on half-yearly data would be estimated
 ##       larger than the one based on yearly data (as xi is larger => heavier tailed GEV)
@@ -121,11 +121,11 @@ sqrt(diag(fit.hy$Cov)) # standard errors
 ## Q: What is the 10-year and 50-year return level?
 ##    Recall: k n-block return level = r_{n,k} = H^-(1-1/k) = level which is
 ##            expected to be exceeded in one out of every k n-blocks.
-qGEV(1-1/10, xi = xi.y, mu = mu.y, sigma = sig.y) # r_{n = 260, k = 10} ~= 4.42%; n ~ 1y
-qGEV(1-1/50, xi = xi.y, mu = mu.y, sigma = sig.y) # r_{n = 260, k = 50} ~= 7.49%
+qGEV(1-1/10, shape = xi.y, loc = mu.y, scale = sig.y) # r_{n = 260, k = 10} ~= 4.42%; n ~ 1y
+qGEV(1-1/50, shape = xi.y, loc = mu.y, scale = sig.y) # r_{n = 260, k = 50} ~= 7.49%
 ## 20-half-year and 100-half-year return levels
-qGEV(1-1/20,  xi = xi.hy, mu = mu.hy, sigma = sig.hy) # r_{n = 130, k = 20}  ~= 4.56%; n ~ 1/2y
-qGEV(1-1/100, xi = xi.hy, mu = mu.hy, sigma = sig.hy) # r_{n = 130, k = 100} ~= 7.90%
+qGEV(1-1/20,  shape = xi.hy, loc = mu.hy, scale = sig.hy) # r_{n = 130, k = 20}  ~= 4.56%; n ~ 1/2y
+qGEV(1-1/100, shape = xi.hy, loc = mu.hy, scale = sig.hy) # r_{n = 130, k = 100} ~= 7.90%
 ## => Close to r_{n = 260, k = 10} and r_{n = 260, k = 50}, respectively (reassuring).
 
 ## Q: What is the return period of a risk-factor change at least as large as
@@ -134,9 +134,9 @@ qGEV(1-1/100, xi = xi.hy, mu = mu.hy, sigma = sig.hy) # r_{n = 130, k = 100} ~= 
 ##            expect to see a single n-block exceeding u (= risk-factor change
 ##            as on Black Monday)
 1/(1-pGEV(as.numeric(X['1987-10-19']),
-          xi = xi.y, mu = mu.y, sigma = sig.y)) # ~= 1873 years
+          shape = xi.y, loc = mu.y, scale = sig.y)) # ~= 1873 years
 1/(1-pGEV(as.numeric(X['1987-10-19']),
-          xi = xi.hy, mu = mu.hy, sigma = sig.hy)) # ~= 2302 half-years = 1151 years
+          shape = xi.hy, loc = mu.hy, scale = sig.hy)) # ~= 2302 half-years = 1151 years
 
 
 ### 4 Behind the scenes ########################################################
@@ -156,45 +156,44 @@ qGEV(1-1/100, xi = xi.hy, mu = mu.hy, sigma = sig.hy) # r_{n = 130, k = 100} ~= 
 
 ## Fit based on half-yearly maxima with the case 'xi = 0' as initial values
 x <- M.hy # for simplicity
-sig.init <- sqrt(6 * var(x)) / pi # initial sigma for the 'xi = 0' case
-mu.init <- mean(x) - sig.init * 0.5772157
-init <- c(0, mu.init, sig.init) # initial xi, mu, sigma
-fit.hy. <- fit_GEV(M.hy, init = init) # likelihood-based estimation of the GEV; see ?fit.GEV
+scale.init <- sqrt(6 * var(x)) / pi # initial sigma for the 'xi = 0' case
+loc.init <- mean(x) - scale.init * 0.5772157
+init <- c(0, loc.init, scale.init) # initial xi, mu, sigma
+fit.hy. <- fit_GEV_MLE(M.hy, init = init) # maximum likelihood estimator
 stopifnot(fit.hy.$convergence == 0) # => converged, but...
-(xi.hy. <- fit.hy.$par[1]) # => ~= -7e-17, suspicious
-if(FALSE) {
+fit.hy.$par[["shape"]] # => ~= -7e-17, suspicious shape
+if(FALSE)
     ## Let's look at a trace
-    fit_GEV(M.hy, init = init, control = list(trace = TRUE)) # => nothing obvious
+    fit_GEV_MLE(M.hy, init = init, control = list(trace = TRUE)) # => nothing obvious
     ## On a second thought (comparing the log-likelihoods below (~ 191) with the
     ## ones of this trace), Nelder--Mead seems to 'jump' on the second reflection.
-}
 
 ## Check a different optimizer
-fit_GEV(M.hy, init = init, method = "BFGS") # ~= 0.3265 => ok
+fit_GEV_MLE(M.hy, init = init, method = "BFGS") # ~= 0.3265 => ok
 
 ## Check a whole sequence of xi's (for the same mu, sigma)
 s <- 2^(-seq(3, 20, by = 0.5)) # sequence concentrating near 0
-xi.init <- c(-s, 0, rev(s)) # sequence concentrating around 0
-fit.hy.xis <- lapply(xi.init, function(xi) fit_GEV(M.hy, init = c(xi, init[2:3])))
+shape.init <- c(-s, 0, rev(s)) # sequence concentrating around 0
+fit.hy.xis <- lapply(shape.init, function(xi) fit_GEV_MLE(M.hy, init = c(xi, init[2:3])))
 stopifnot(sapply(fit.hy.xis, function(f) f$convergence) == 0) # => converged
-fitted.xi <- lapply(fit.hy.xis, function(f) f$par[1]) # fitted xi's
-plot(xi.init, fitted.xi, type = "b",
+shape.fit <- lapply(fit.hy.xis, function(f) f$par[["shape"]]) # fitted xi's
+plot(shape.init, shape.fit, type = "b",
      xlab = expression("initial"~xi), ylab = expression("fitted"~xi))
 ## => The optimization method Nelder--Mead fails exactly for xi = 0...
 
 ## ... with no obvious reason (at least not when looking at the log-likelihood
 ## as a function of xi
-logL <- sapply(xi.init, function(xi) logLik_GEV(c(xi, init[2:3]), M.hy))
-plot(xi.init, logL, type = "b") # => ok; see also 'logL'
+logL <- sapply(shape.init, function(xi) logLik_GEV(c(xi, init[2:3]), M.hy))
+plot(shape.init, logL, type = "b") # => ok; see also 'logL'
 
 ## For initial |xi| small but nonzero, fitting works.
-fit_GEV(M.hy, init = c( .Machine$double.eps, init[2:3])) # ~= 0.3401 => ok
-fit_GEV(M.hy, init = c(-.Machine$double.eps, init[2:3])) # ~= 0.3401 => ok
+fit_GEV_MLE(M.hy, init = c( .Machine$double.eps, init[2:3])) # ~= 0.3401 => ok
+fit_GEV_MLE(M.hy, init = c(-.Machine$double.eps, init[2:3])) # ~= 0.3401 => ok
 ## ... and this and another trick are in fact used internally.
 ## In some other R packages, initial xi are more brutally set as 0.01.
 
 ## Note:
-## 1) fit_GEV() internally also provides more algorithms for finding
+## 1) fit_GEV_MLE() internally also provides more algorithms for finding
 ##    initial values, and they also (roughly) lead to xi ~= 0.3402.
 ## 2) The problem overall is significantly more severe and challenging
 ##    when computing profile log-likelihood based confidence intervals

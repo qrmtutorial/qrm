@@ -48,6 +48,7 @@
 
 ### Setup ######################################################################
 
+library(sfsmisc) # for eaxis()
 library(qrmtools)
 
 n <- 2500 # sample size (~= 10y of daily data)
@@ -57,38 +58,38 @@ B <- 1000 # number of bootstrap replications (= number or realizations of VaR, E
 ### 1 Auxiliary functions ######################################################
 
 ##' @title Empirically estimate confidence intervals (default: 95%)
-##' @param x The values
-##' @param beta The significance level
-##' @return Estimated (lower, upper) beta confidence interval
+##' @param x values
+##' @param alpha significance level
+##' @return estimated (lower, upper) beta confidence interval
 ##' @author Marius Hofert
-CI <- function(x, beta = 0.05, na.rm = FALSE)
-    quantile(x, probs = c(beta/2, 1-beta/2), na.rm = na.rm, names = FALSE)
+CI <- function(x, alpha = 0.05, na.rm = FALSE)
+    quantile(x, probs = c(alpha/2, 1-alpha/2), na.rm = na.rm, names = FALSE)
 
 ##' @title Bootstrap the nonparametric VaR or ES estimator for all alpha
-##' @param x The vector of losses
-##' @param B The number of bootstrap replications
-##' @param alpha The confidence level
-##' @param method The risk measure used
+##' @param x vector of losses
+##' @param B number of bootstrap replications
+##' @param level confidence level
+##' @param method risk measure used
 ##' @return (length(alpha), B)-matrix where the bth column contains the estimated
 ##'         risk measure at each alpha based on the bth bootstrap sample of the
 ##'         losses
 ##' @author Marius Hofert
-##' @note Vectorized in x and alpha
-bootstrap <- function(x, B, alpha, method = c("VaR", "ES"))
+##' @note vectorized in x and level
+bootstrap <- function(x, B, level, method = c("VaR", "ES"))
 {
     stopifnot(is.vector(x), (n <- length(x)) >= 1, B >= 1) # sanity checks
-    ## Define the risk measure (as a function of x, alpha)
+    ## Define the risk measure (as a function of x, level)
     method <- match.arg(method) # check and match 'method'
     rm <- if(method == "VaR") {
         VaR_np # see qrmtools; essentially quantile(, type = 1)
     } else {
-        function(x, alpha) ES_np(x, alpha = alpha, verbose = TRUE) # uses '>' and 'verbose'
+        function(x, level) ES_np(x, level = level, verbose = TRUE) # uses '>' and 'verbose'
     }
     ## Construct the bootstrap samples (by drawing with replacement)
     ## from the underlying empirical distribution function
     x.boot <- matrix(sample(x, size = n * B, replace = TRUE), ncol = B) # (n, B)-matrix
     ## For each bootstrap sample, estimate the risk measure
-    apply(x.boot, 2, rm, alpha = alpha) # (length(alpha), B)-matrix
+    apply(x.boot, 2, rm, level = level) # (length(level), B)-matrix
 }
 
 
@@ -98,15 +99,15 @@ bootstrap <- function(x, B, alpha, method = c("VaR", "ES"))
 ## the performance of the estimators)
 set.seed(271) # set a seed (for reproducibility)
 th <- 2 # Pareto parameter (true underlying distribution; *just* infinite Var)
-L <- rPar(n, theta = th) # simulate losses with the 'inversion method'
+L <- rPar(n, shape = th) # simulate losses with the 'inversion method'
 plot(L)
 
 
 ### 2.1 Nonparametric estimates of VaR_alpha and ES_alpha for a fixed alpha ####
 
 alpha <- 0.99
-(VaR. <- VaR_np(L, alpha = alpha))
-(ES.  <-  ES_np(L, alpha = alpha, verbose = TRUE))
+(VaR. <- VaR_np(L, level = alpha))
+(ES.  <-  ES_np(L, level = alpha, verbose = TRUE))
 ## ... but single numbers don't tell us much
 ## More interesting: The behavior in alpha
 
@@ -116,13 +117,14 @@ alpha <- 0.99
 ## Compute the nonparametric VaR_alpha and ES_alpha estimators as functions of alpha
 alpha <- 1-1/10^seq(0.5, 5, by = 0.05) # alphas we investigate (concentrated near 1)
 stopifnot(0 < alpha, alpha < 1)
-VaR. <- VaR_np(L, alpha = alpha) # estimate VaR_alpha for all alpha
-ES.  <-  ES_np(L, alpha = alpha, verbose = TRUE) # estimate  ES_alpha for all alpha
-warnings()
+VaR. <- VaR_np(L, level = alpha) # estimate VaR_alpha for all alpha
+ES.  <-  ES_np(L, level = alpha, verbose = TRUE) # estimate  ES_alpha for all alpha
+if(FALSE)
+    warnings()
 
 ## True values (known here)
-VaR.Par. <- VaR_Par(alpha, theta = th) # theoretical VaR_alpha values
-ES.Par.  <-  ES_Par(alpha, theta = th) # theoretical ES_alpha values
+VaR.Par. <- VaR_Par(alpha, shape = th) # theoretical VaR_alpha values
+ES.Par.  <-  ES_Par(alpha, shape = th) # theoretical ES_alpha values
 
 ## Plot estimates with true VaR_alpha and ES_alpha values
 ran <- range(ES.Par., ES., VaR.Par., VaR., na.rm = TRUE)
@@ -206,7 +208,7 @@ legend("topright", bty = "n", y.intersp = 1.2, lty = rep(1, 3),
 
 ## Bootstrap the VaR estimator
 set.seed(271)
-VaR.boot <- bootstrap(L, B = B, alpha = alpha) # (length(alpha), B)-matrix containing the bootstrapped VaR estimators
+VaR.boot <- bootstrap(L, B = B, level = alpha) # (length(alpha), B)-matrix containing the bootstrapped VaR estimators
 stopifnot(all(!is.na(VaR.boot))) # no NA or NaN
 
 ## Compute statistics
@@ -218,8 +220,9 @@ VaR.boot.CI  <- apply(VaR.boot, 1, CI) # bootstrapped 95% CIs; (2, length(alpha)
 ### 3.2 ES_alpha ###############################################################
 
 ## Bootstrap the ES estimator
-system.time(ES.boot <- bootstrap(L, B = B, alpha = alpha, method = "ES")) # (length(alpha), B)-matrix containing the bootstrapped ES estimators
-warnings()
+system.time(ES.boot <- bootstrap(L, B = B, level = alpha, method = "ES")) # (length(alpha), B)-matrix containing the bootstrapped ES estimators
+if(FALSE)
+    warnings()
 
 ## Investigate appearing NaNs (due to too few losses exceeding hat(VaR)_alpha)
 isNaN <- is.nan(ES.boot) # => contains some NaN
@@ -249,7 +252,6 @@ ES.boot.CI  <- apply(ES.boot, 1, CI, na.rm = na.rm) # bootstrapped 95% CIs; (2, 
 ## 3) The bootstrapped mean of hat{VaR}_alpha and hat{ES}_alpha
 ## 4) The bootstrapped variance of hat{VaR}_alpha and hat{ES}_alpha
 ## 5) The bootstrapped 95% confidence intervals for VaR_alpha and ES_alpha
-library(sfsmisc) # for eaxis()
 ran <- range(VaR.Par., # true VaR
              VaR., # nonparametric estimate
              VaR.boot., # bootstrapped estimate (variance Var(VaR.)/B)
@@ -273,17 +275,16 @@ lines(1-alpha, ES.boot.CI[1,], lty = "dotted", col = "maroon3") # bootstrapped 9
 lines(1-alpha, ES.boot.CI[2,], lty = "dotted", col = "maroon3")
 ## Also adding peaks-over-threshold-based estimators (as motivation for Chapter 5)
 u <- quantile(L, probs = 0.95, names = FALSE)
-library(QRM) # for fit.GPD()
-fit <- fit.GPD(L, threshold = u) # fit a GPD to the excesses (note: fit.GPD() requires the losses)
-xi <- fit$par.ests[["xi"]] # fitted xi
-beta <- fit$par.ests[["beta"]] # fitted beta
-if(xi <= 0) stop("Risk measures only implemented for xi > 0.")
 L. <- L[L > u] - u # compute the excesses over u
+fit <- fit_GPD_MLE(L.) # fit a GPD to the excesses
+xi <- fit$par[["shape"]] # fitted shape xi
+beta <- fit$par[["scale"]] # fitted scale beta
+if(xi <= 0) stop("Risk measures only implemented for xi > 0.")
 Fbu <- length(L.) / length(L) # number of excesses / number of losses = N_u / n
 VaR.POT <- u + (beta/xi)*(((1-alpha)/Fbu)^(-xi)-1) # see McNeil, Frey, Embrechts (2015, Section 5.2.3)
 ES.POT <- (VaR.POT + beta-xi*u) / (1-xi) # see McNeil, Frey, Embrechts (2015, Section 5.2.3)
 lines(1-alpha, VaR.POT, lty = "dashed")
-lines(1-alpha, ES.POT, lty = "dashed")
+lines(1-alpha, ES.POT,  lty = "dashed")
 ## Misc
 eaxis(1) # a nicer exponential y-axis
 eaxis(2) # a nicer exponential y-axis

@@ -10,7 +10,6 @@
 
 ### Setup ######################################################################
 
-library(QRM)
 library(qrmtools)
 
 n <- 50000 # sample size
@@ -27,8 +26,8 @@ xi <- 0.4
 beta <- 3
 stopifnot(xi < 1, beta > 0) # for E|X| < Inf
 set.seed(271)
-x <- rGPD(n, xi = xi, beta = beta)
-MEplot(x)
+x <- rGPD(n, shape = xi, scale = beta)
+mean_excess_plot(x)
 abline(a = beta/(1-xi), b = xi/(1-xi), col = "royalblue3") # intercept, slope
 ## => Okay, but seems to look worse for smaller n (even n = 5000) and larger xi
 
@@ -41,8 +40,8 @@ abline(a = beta/(1-xi), b = xi/(1-xi), col = "royalblue3") # intercept, slope
 th <- 3
 stopifnot(th > 1) # for E|X| < Inf
 set.seed(271)
-x <- rPar(n, theta = 3)
-MEplot(x)
+x <- rPar(n, shape = 3)
+mean_excess_plot(x)
 abline(a = 1/(th-1), b = 1/(th-1), col = "royalblue3") # intercept, slope
 ## => Okay
 
@@ -56,12 +55,12 @@ nu <- 3
 stopifnot(nu > 1) # for E|X| < Inf
 set.seed(271)
 x <- rt(n, df = nu)
-MEplot(x) # => should maybe also omit the *smallest* three points (here)
+mean_excess_plot(x) # => should maybe also omit the *smallest* three points (here)
 ## Formula (*) and the substitution v = t_nu(x) provide us with e(u)
 ## (with numerical integration on a compact interval)
 f <- function(v) (1-v) / dt(qt(v, df = nu), df = nu)
 mef <- function(u) integrate(f, lower = pt(u, df = nu), upper = 1)$value / pt(u, df = nu, lower.tail = FALSE)
-sx <- head(sort(x), n = -3) # omits the largest three (see 'omit = 3' argument of MEplot())
+sx <- head(sort(x), n = -3) # omits the largest three unique values
 u <- seq(sx[4], tail(sx, n = 1), length.out = 129) # omit the first 3, too
 y <- sapply(u, mef)
 lines(u, y, col = "royalblue3")
@@ -80,7 +79,7 @@ lam <- 3
 stopifnot(lam > 0)
 set.seed(271)
 x <- rexp(n, rate = lam)
-MEplot(x)
+mean_excess_plot(x)
 abline(a = 1/lam, b = 0, col = "royalblue3")
 ## => Okay
 
@@ -93,12 +92,12 @@ abline(a = 1/lam, b = 0, col = "royalblue3")
 ## Hence xi is 0 and e(u) = (beta(u) + 0 * u) / (1 - 0) = beta(u) eventually.
 set.seed(271)
 x <- rnorm(n)
-MEplot(x)
+mean_excess_plot(x)
 ## Formula (*) and the substitution v = Phi(x) provide us with e(u)
 ## (with numerical integration on a compact interval)
 f <- function(v) (1-v) / dnorm(qnorm(v))
 mef <- function(u) integrate(f, lower = pnorm(u), upper = 1)$value / pnorm(u, lower.tail = FALSE)
-sx <- head(sort(x), n = -3) # omits the largest three (see 'omit = 3' argument of MEplot())
+sx <- head(sort(x), n = -3) # omits the largest three unique values
 u <- seq(sx[4], tail(sx, n = 1), length.out = 129) # omit the first 3, too
 y <- sapply(u, mef)
 lines(u, y, col = "royalblue3")
@@ -112,7 +111,7 @@ lines(u, y, col = "royalblue3")
 set.seed(271)
 x. <- rlnorm(n)
 stopifnot(all.equal(log(x.), x)) # sanity check
-MEplot(x., omit = 0)
+mean_excess_plot(x.)
 ## Formula (*) and substitutions y = log(x) and v = Phi(y) provide us with e(u)
 ## (with numerical integration on a compact interval)
 f <- function(v) {
@@ -120,7 +119,7 @@ f <- function(v) {
     (1-v) * exp(q.v) / dnorm(q.v)
 }
 mef <- function(u) integrate(f, lower = pnorm(log(u)), upper = 1)$value / pnorm(log(u), lower.tail = FALSE)
-sx <- head(sort(x.), n = -3) # omits the largest three (see 'omit = 3' argument of MEplot())
+sx <- head(sort(x.), n = -3) # omits the largest three unique values
 u <- seq(0, tail(sx, n = 1), length.out = 129)
 y <- sapply(u, mef)
 lines(u, y, col = "royalblue3")
@@ -134,8 +133,8 @@ lines(u, y, col = "royalblue3")
 ## as e(u) = (1/2 - u * (1-u/2)) / (1-u)
 set.seed(271)
 x <- runif(n)
-MEplot(x, col = adjustcolor("black", alpha.f = 0.002))
-sx <- head(sort(x), n = -3) # omits the largest three (see 'omit = 3' argument of MEplot())
+mean_excess_plot(x, col = adjustcolor("black", alpha.f = 0.002))
+sx <- head(sort(x), n = -3) # omits the largest three unique values
 u <- seq(0, tail(sx, n = 1), length.out = 129)
 mef <- function(u) (0.5-u*(1-u/2)) / (1-u)
 y <- sapply(u, mef)
