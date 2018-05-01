@@ -8,7 +8,7 @@
 05_GEV_BMM_SP500.R
    Block maxima method applied to daily S&P 500 data from 1960 to 1987 crash
 05_GEV_BMM_SP500_CIs_rlevels_rperiods.R
-   Profile-likelihood-based confidence intervals for return levels and periods (belongs to 05_GEV_BMM_SP500.R)
+   Profile-likelihood-based CIs for return levels and periods (belongs to 05_GEV_BMM_SP500.R)
 05_Mean_excess_plots.R
    Basic mean excess plots
 05_GPD_Danish_data

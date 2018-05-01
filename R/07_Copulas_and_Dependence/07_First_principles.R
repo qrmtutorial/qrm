@@ -64,7 +64,7 @@ U <- pobs(X) # probability transformation with the empirically estimated margins
 pairs2(U, cex = 0.4, col = adjustcolor("black", alpha.f = 0.5))
 
 ## Map the t copula sample to one with N(0,1) and Par(3) margins
-Y <- cbind(qPar(U[,1], theta = 3), qnorm(U[,2:5])) # quantile transformation
+Y <- cbind(qPar(U[,1], shape = 3), qnorm(U[,2:5])) # quantile transformation
 pairs2(Y, cex = 0.4, col = adjustcolor("black", alpha.f = 0.5),
        labels.null.lab = "Y")
 ## ... and the components have the same dependence structure as those of X above!
