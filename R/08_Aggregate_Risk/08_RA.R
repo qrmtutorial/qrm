@@ -135,8 +135,8 @@ time <- c("2006-01-03", "2015-12-31") # time period
 S <- SP500_const[paste0(time, collapse = "/"), stocks] # data
 stopifnot(all(!is.na(S)))
 X <- -returns(S) # -log-returns
-## Note: We would need to fit time-series models here (deGARCHing), but omit
-##       that step here and treat the -log-returns as iid.
+## Note: One would need to fit time-series models here (deGARCHing), but
+##       we omit that step here and treat the -log-returns as iid.
 
 ## Determine thresholds for POT method
 mean_excess_plot(X[X[,"GOOGL"] > 0, "GOOGL"])

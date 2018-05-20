@@ -1,13 +1,17 @@
 ### Suggested order of R scripts for Chapter 11
 
+11_Distribution_of_number_of_defaults_under_dependence.R
+   Computing the probability mass function (pmf) of the number of defaults under
+   exchangeable one-factor Bernoulli mixture models.
 11_FFT_for_CF.R
-   Illustrates how the characteristic function for a portfolio credit risk model can be inverted
-   using Fast Fourier Transform (FFT) to obtain the probability mass function
+   Illustrates how the characteristic function for a portfolio credit risk model
+   can be inverted using Fast Fourier Transform (FFT) to obtain the probability
+   mass function
 11_CreditRisk+.R
    Calculation of the loss distribution for CreditRisk+ using the FFT
 11_Monte_Carlo_for_credit.R
-   Estimation of the loss distribution for one-factor Bernoulli mixture implied by a Gaussian
-   threshold model using importance sampling
+   Estimation of the loss distribution for one-factor Bernoulli mixture implied
+   by a Gaussian threshold model using importance sampling
 11_Credit_estimation.R
    Estimating parameters of portfolio models from default data
 11_Credit_factor_models.R

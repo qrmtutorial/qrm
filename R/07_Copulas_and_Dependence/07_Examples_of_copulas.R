@@ -37,7 +37,7 @@ cloud2(U[,1:3], # d = 3
 pairs2(U) # d = 5
 
 
-### 1.2 Frechet-Hoeffding bounds W and M #######################################
+### 1.2 Frechet--Hoeffding bounds W and M ######################################
 
 ## Copulas (wire frame and level curves)
 n.grid <- 26 # number of grid points

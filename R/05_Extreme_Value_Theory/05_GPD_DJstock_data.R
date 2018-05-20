@@ -77,10 +77,10 @@ qq_plot(exceed, FUN = function(p) u + qf(p))
 
 ## VaR_alpha, ES_alpha for two alphas
 alpha <- c(0.99, 0.995)
-(VaR <- VaR_POT(alpha, threshold = u, p.exceed = mean(data > u),
-                shape = shape.u, scale = scale.u))
-(ES  <-  ES_POT(alpha, threshold = u, p.exceed = mean(data > u),
-                shape = shape.u, scale = scale.u))
+(VaR <- VaR_GPDtail(alpha, threshold = u, p.exceed = mean(data > u),
+                    shape = shape.u, scale = scale.u))
+(ES  <-  ES_GPDtail(alpha, threshold = u, p.exceed = mean(data > u),
+                    shape = shape.u, scale = scale.u))
 
 
 ### 6 Semi-parametric Smith estimator including VaR_0.99 #######################

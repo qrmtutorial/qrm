@@ -83,7 +83,7 @@ bootstrap <- function(x, B, level, method = c("VaR", "ES"))
     rm <- if(method == "VaR") {
         VaR_np # see qrmtools; essentially quantile(, type = 1)
     } else {
-        function(x, level) ES_np(x, level = level, verbose = TRUE) # uses '>' and 'verbose'
+        function(x, level) ES_np(x, level = level, verbose = TRUE) # see qrmtools; uses '>' and 'verbose'
     }
     ## Construct the bootstrap samples (by drawing with replacement)
     ## from the underlying empirical distribution function

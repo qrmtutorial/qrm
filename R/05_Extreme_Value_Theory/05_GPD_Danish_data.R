@@ -82,14 +82,14 @@ qq_plot(exceed.u20, FUN = function(p) u20 + qf.u20(p))
 
 ## VaR_alpha, ES_alpha for two alphas and both thresholds
 alpha <- c(0.99, 0.995)
-(VaR.u10 <- VaR_POT(alpha, threshold = u10, p.exceed = mean(fire > u10),
-                    shape = shape.u10, scale = scale.u10))
-(VaR.u20 <- VaR_POT(alpha, threshold = u20, p.exceed = mean(fire > u20),
-                    shape = shape.u20, scale = scale.u20))
-(ES.u10 <- ES_POT(alpha, threshold = u10, p.exceed = mean(fire > u10),
-                  shape = shape.u10, scale = scale.u10))
-(ES.u20 <- ES_POT(alpha, threshold = u20, p.exceed = mean(fire > u20),
-                  shape = shape.u20, scale = scale.u20))
+(VaR.u10 <- VaR_GPDtail(alpha, threshold = u10, p.exceed = mean(fire > u10),
+                        shape = shape.u10, scale = scale.u10))
+(VaR.u20 <- VaR_GPDtail(alpha, threshold = u20, p.exceed = mean(fire > u20),
+                        shape = shape.u20, scale = scale.u20))
+(ES.u10 <- ES_GPDtail(alpha, threshold = u10, p.exceed = mean(fire > u10),
+                      shape = shape.u10, scale = scale.u10))
+(ES.u20 <- ES_GPDtail(alpha, threshold = u20, p.exceed = mean(fire > u20),
+                      shape = shape.u20, scale = scale.u20))
 
 
 ### 5 Semi-parametric Smith estimator including VaR_0.99 #######################
