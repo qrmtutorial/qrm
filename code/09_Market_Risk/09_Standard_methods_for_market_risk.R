@@ -44,8 +44,8 @@ plot(X, cex = 0.4)
 
 ##' @title Compute the Loss Operator
 ##' @param x Matrix of risk-factor changes
-##' @param weights Weights \tilde{w} = lambda_j * S_{t,j}
-##' @return Losses
+##' @param weights Weights tilde{w}_{t,j} = lambda_j * S_{t,j}
+##' @return Losses -sum_{j=1}^d(tilde{w}_{t,j}(exp(X_{t+1,j})-1))
 ##' @author Marius Hofert
 loss_operator <- function(x, weights)
     -rowSums(expm1(x) * matrix(weights, nrow = nrow(x), ncol = length(weights), byrow = TRUE))
@@ -73,7 +73,7 @@ risk_measure <- function(S, lambda, alpha,
     X <- returns(S) # compute risk-factor changes
     if(!length(X)) stop("'S' should have more than just one line") # check
     S. <- as.numeric(tail(S, n = 1)) # pick out last available stock prices ("today")
-    w. <- lambda * S. # weights \tilde{w} today
+    w. <- lambda * S. # weights tilde{w} today
 
     ## Method switch (now consider the various methods)
     switch(method,
@@ -81,7 +81,7 @@ risk_measure <- function(S, lambda, alpha,
                ## Estimate a multivariate normal distribution
                mu.hat <- colMeans(X) # estimate the mean vector mu
                Sigma.hat  <- var(X) # estimate the covariance matrix Sigma
-               L.delta.mean <- -sum(w. * mu.hat) # mean of the approx. normal df of the linearized loss L^{\Delta}
+               L.delta.mean <- -sum(w. * mu.hat) # mean of the approx. normal df of the linearized loss L^{Delta}
                L.delta.sd <- sqrt(t(w.) %*% Sigma.hat %*% w.) # corresponding standard deviation
                ## Compute VaR and ES and return
                qa <- qnorm(alpha)
@@ -168,7 +168,7 @@ set.seed(271) # set a seed so that all simulation results are reproducible; see 
 var.cov  <- risk_measure(S, lambda = lambda, alpha = alpha, method = "Var.Cov")
 hist.sim <- risk_measure(S, lambda = lambda, alpha = alpha, method = "hist.sim")
 MC.N     <- risk_measure(S, lambda = lambda, alpha = alpha, method = "MC.N", N = N)
-POT      <- risk_measure(S, lambda = lambda, alpha = alpha, method = "POT", N = N, q = 0.9)
+POT      <- risk_measure(S, lambda = lambda, alpha = alpha, method = "POT",  N = N, q = 0.9)
 MC.t     <- risk_measure(S, lambda = lambda, alpha = alpha, method = "MC.t", N = N)
 
 ## Pick out VaR and ES for all methods
@@ -198,7 +198,7 @@ qq_plot(excess, FUN = function(p) qGPD(p, shape = xi.hat, scale = beta.hat),
 
 ## Compute historical losses (for creating a histogram); see risk.measure()
 S. <- as.numeric(tail(S, n = 1)) # pick out last available stock prices ("today")
-w. <- lambda * S. # weights \tilde{w}
+w. <- lambda * S. # weights tilde{w}
 L <- loss_operator(X, weights = w.) # historical losses
 summary(L) # get important statistics about the losses
 
@@ -220,14 +220,14 @@ legend("topright", bty = "n", inset = 0.02, lty = lty, lwd = lwd,
 ## Results:
 ## - The Monte Carlo method based on a fitted multivariate normal distribution
 ##   and the variance-covariance method lead to similar results
-##   (they both assume multivariate normal distributed risk-factor changes),
-##   both underestimating VaR and ES in comparison to the historical simulation
+##   (they both assume multivariate normal distributed risk-factor changes but
+##    differ in the computation of the loss distribution (analytical vs empirical)).
+## - Both underestimate VaR and ES in comparison to the historical simulation
 ##   method.
-## - The historical simulation method, however, implies that the loss
-##   distribution is more heavy-tailed. This is captured quite well by
-##   POT method and (possibly too well by) the Monte Carlo method for
-##   multivariate t distributed risk-factor changes
-##   (degrees of freedom are MC.t$df ~= 2.4).
+## - The historical simulation method implies that the loss distribution is
+##   more heavy-tailed. This is captured quite well by POT method and
+##   (possibly too well by) the Monte Carlo method for multivariate t
+##   distributed risk-factor changes (degrees of freedom are MC.t$df ~= 2.4).
 ## - It's overall reassuring that several methods (historical simulation,
 ##   POT method and -- with slight departure for ES --
 ##   MC for a Student t) lead to similar results. Somewhere in this range,

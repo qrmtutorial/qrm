@@ -2,10 +2,7 @@
 
 ## Simulate an ARMA(1,1)-GARCH(1,1) process, fit such a process to
 ## the simulated data, estimate and backtest VaR, predict, simulate B paths,
-## and compute corresponding VaR prediction and confidence intervals.
-
-## Note: This is a slightly improved version over vignette("ARMA_GARCH_VaR.Rmd")
-##       of 'qrmtools'
+## and compute corresponding VaR prediction with confidence intervals.
 
 
 ### Setup ######################################################################
@@ -16,10 +13,15 @@ library(qrmtools)
 
 ### 1 Simulation ###############################################################
 
-## Model specification
+## Model specification (for simulation)
 nu <- 3 # d.o.f. of the standardized distribution of Z_t
-fixed.p <- list(mu = 0, ar1 = 0.5, ma1 = 0.3, omega = 4, alpha1 = 0.4, beta1 = 0.2,
-                shape = nu) # parameters according to which we simulate
+fixed.p <- list(mu = 0, # our mu (intercept)
+                ar1 = 0.5, # our phi_1 (AR(1) parameter of mu_t)
+                ma1 = 0.3, # our theta_1 (MA(1) parameter of mu_t)
+                omega = 4, # our alpha_0 (intercept)
+                alpha1 = 0.4, # our alpha_1 (GARCH(1) parameter of sigma_t^2)
+                beta1 = 0.2, # our beta_1 (GARCH(1) parameter of sigma_t^2)
+                shape = nu) # d.o.f. nu for standardized t_nu innovations
 armaOrder <- c(1,1) # ARMA order
 garchOrder <- c(1,1) # GARCH order
 varModel <- list(model = "sGARCH", garchOrder = garchOrder)
@@ -27,8 +29,8 @@ spec <- ugarchspec(varModel, mean.model = list(armaOrder = armaOrder),
                    fixed.pars = fixed.p, distribution.model = "std") # t standardized residuals
 
 ## Simulate (X_t)
-n <- 1000 # sample size
-x <- ugarchpath(spec, n.sim = n, m.sim = 1, rseed = 271) # n = length of simulated path; m = number of paths
+n <- 1000 # sample size (= length of simulated paths)
+x <- ugarchpath(spec, n.sim = n, m.sim = 1, rseed = 271) # n.sim length of simulated path; m.sim = number of paths
 ## Note the difference:
 ## - ugarchpath(): simulate from a specified model
 ## - ugarchsim():  simulate from a fitted object
@@ -87,7 +89,8 @@ qq_plot(Z, FUN = function(p) sqrt((nu-2)/nu) * qt(p, df = nu),
 
 ### 3 VaR estimates, checks and backtest #######################################
 
-alpha <- 0.99 # VaR confidence level we consider here
+## VaR confidence level we consider here
+alpha <- 0.99
 
 ## Extract fitted VaR_alpha
 VaR. <- as.numeric(quantile(fit, probs = alpha))
@@ -98,14 +101,24 @@ VaR.. <- as.numeric(mu. + sig. * sqrt((nu.-2)/nu.) * qt(alpha, df = nu.)) # VaR_
 stopifnot(all.equal(VaR.., VaR.))
 ## => quantile(<rugarch object>, probs = alpha) provides VaR_alpha = hat{mu}_t + hat{sigma}_t * q_Z(alpha)
 
-## Backtest VaR_alpha
-btest <- VaRTest(alpha, actual = X, VaR = VaR., conf.level = 0.95)
-btest$expected.exceed # number of expected exceedances = alpha * n
+
+### 4 Backtest VaR estimates ###################################################
+
+## Note: VaRTest() is written for the lower tail (not sign-adjusted losses)
+##       (hence the complicated call here, requiring to refit the process to -X)
+btest <- VaRTest(1-alpha, actual = -X,
+                 VaR = quantile(ugarchfit(spec, data = -X), probs = 1-alpha))
+btest$expected.exceed # number of expected exceedances = (1-alpha) * n
 btest$actual.exceed # actual exceedances
-btest$uc.Decision # unconditional test decision (note: cc.Decision is NA here)
+## Unconditional test
+btest$uc.H0 # corresponding null hypothesis
+btest$uc.Decision # test decision
+## Conditional test
+btest$cc.H0 # corresponding null hypothesis
+btest$cc.Decision # test decision
 
 
-### 4 Predict (X_t) and VaR_alpha ##############################################
+### 5 Predict (X_t) and VaR_alpha ##############################################
 
 ## Predict from the fitted process
 fspec <- getspec(fit) # specification of the fitted process
@@ -128,7 +141,7 @@ VaR.predict. <- as.numeric(mu.predict + sig.predict * sqrt((nu.-2)/nu.) *
 stopifnot(all.equal(VaR.predict., VaR.predict))
 
 
-### 5 Simulate B paths from the fitted model ###################################
+### 6 Simulate B paths from the fitted model ###################################
 
 ## Simulate B paths
 B <- 1000
@@ -144,7 +157,7 @@ VaR.sim <- (X.sim - eps.sim) + sig.sim * sqrt((nu.-2)/nu.) * qt(alpha, df = nu.)
 VaR.CI <- apply(VaR.sim, 1, function(x) quantile(x, probs = c(0.025, 0.975)))
 
 
-### 6 Plot #####################################################################
+### 7 Plot #####################################################################
 
 ## Setup
 yran <- range(X, # simulated path
@@ -161,7 +174,7 @@ lines(as.numeric(mu.), col = adjustcolor("darkblue", alpha.f = 0.5)) # hat{\mu}_
 lines(VaR., col = "darkred") # estimated VaR_alpha
 mtext(paste0("Expected exceed.: ",btest$expected.exceed,"   ",
              "Actual exceed.: ",btest$actual.exceed,"   ",
-             "Test: ", btest$uc.Decision),
+             "Test: ", btest$cc.Decision),
       side = 4, adj = 0, line = 0.5, cex = 0.9) # label
 
 ## Predictions
