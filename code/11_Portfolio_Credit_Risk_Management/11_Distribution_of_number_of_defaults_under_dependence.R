@@ -15,30 +15,30 @@
 ##    - all functions p_j equal to p ('exchangeable')
 ##    - define q = p_1(psi) and Q = p_1(Psi) ~ G
 ##    => P(Y = y | Q = q) = prod_{j=1}^m q^{y_j} (1-q)^{1-y_j}
-##                        = q^{sum_{j=1}^m y_j} (1-q)^{1-sum_{j=1}^m y_j}
-## 3) Now consider the number of defaults M = sum_{j=1}^m Y_j:
+##                        = q^{sum_{j=1}^m y_j} (1-q)^{m-sum_{j=1}^m y_j}
+## 3) Implied default probabilities:
+##    - jth component: pi_1 = P(Y_j = 1) = 1 * P(Y_j = 1) + 0 * P(Y_j = 0)
+##                          = E(Y_j) = E(E(Y_j | Q)) = E(Q) (as (Y_j | Q) ~ B(1, Q))
+##    - k components jointly: pi_k = P(Y_{j_1} = ... = Y_{j_k} = 1)
+##                                 = E(Y_{j_1} * ... * Y_{j_k})
+##                                 = E(E(Y_{j_1} * ... * Y_{j_k} | Q))
+##                                 = E(E(Y_{j_1} | Q) * ... * E(Y_{j_k} | Q))
+##                                 = E(Q^k) since E(Y_{j_k} | Q) ~ B(1, Q) with mean Q
+## 4) Implied default correlation:
+##    rho_Y = Cor(Y_i, Y_j) = (E(Y_i * Y_j) - E(Y_i) E(Y_j)) /
+##                            (sqrt{E(Y_i)(1-E(Y_i))} * sqrt{E(Y_j)(1-E(Y_j))})
+##    by 3) => rho_Y = (pi_2 - pi_1^2) / (pi_1 (1 - pi_1)) = (E(Q^2) - E(Q)^2) / (E(Q)(1-E(Q)))
+## 5) For a df G of Q, match its first two moments with the desired individual
+##    default probability and the default correlation => parameters of G.
+##    - pi_1 = E(Q); see 3)
+##    - rho_Y = (E(Q^2) - E(Q)^2) / (E(Q)(1-E(Q))); see 4)
+## 6) Now consider the number of defaults M = sum_{j=1}^m Y_j:
 ##    - P(M = k | Q = q) = choose(m, k) q^k (1-q)^{m-k}
 ##      => (M | Q = q) ~ B(m, q)
 ##      => P(M = k) = int_0^1 P(M = k | Q = q) dG(q)
 ##                  = choose(m, k) int_0^1 q^k (1-q)^{m-k} dG(q)
 ##    - Note: If Q = q is constant, then P(M = k) = choose(m, k) q^k (1-q)^{m-k}
 ##            so M ~ B(m, q).
-## 4) Implied default probabilities:
-##    - jth component: pi = P(Y_j = 1) = 1 * P(Y_j = 1) + 0 * P(Y_j = 0)
-##                        = E(Y_j) = E(E(Y_j | Q)) = E(Q) (as (Y_j | Q) ~ B(1, Q))
-##    - k components jointly: pi_k = P(Y_{j_1} = ... = Y_{j_k} = 1, others 0)
-##                                 = E(Y_{j_1} * ... * Y_{j_k})
-##                                 = E(E(Y_{j_1} * ... * Y_{j_k} | Q))
-##                                 = E(E(Y_{j_1} | Q) * ... * E(Y_{j_k} | Q))
-##                                 = E(Q^k) since E(Y_{j_k} | Q) ~ B(1, Q) with mean Q
-## 5) Implied default correlation:
-##    rho_Y = Cor(Y_i, Y_j) = (E(Y_i * Y_j) - E(Y_i) E(Y_j)) /
-##                            (sqrt{E(Y_i)(1-E(Y_i))} * sqrt{E(Y_j)(1-E(Y_j))})
-##    by 4) => rho_Y = (pi_2 - pi^2) / (pi (1 - pi)) = (E(Q^2) - E(Q)^2) / (E(Q)(1-E(Q)))
-## 6) For a df G of Q, match its first two moments with the desired individual
-##    default probability and the default correlation => parameters of G.
-##    - pi = E(Q); see 4)
-##    - rho_Y = (E(Q^2) - E(Q)^2) / (E(Q)(1-E(Q))); see 5)
 
 
 ### Setup ######################################################################
@@ -65,8 +65,8 @@ pmf.indep <- dbinom(k, size = m, prob = pi.) # pmf
 ## We consider Q ~ B(a,b). M then follows a so-called 'beta-binomial' distribution.
 ## McNeil et al. (2015, Example 11.7) provides pi and rho_Y as functions
 ## of a, b; as in 6) above. Solving for a, b leads to:
-a <- pi. * (1/rho. - 1)
-b <- 1/rho. - 1 - a
+(a <- pi. * (1/rho. - 1))
+(b <- a*(1/pi. - 1))
 stopifnot(a > 0, b > 0)
 
 ## Define the beta-binomial pmf of M; see McNeil et al. (2015, Example 11.7).
@@ -79,16 +79,17 @@ pmf.betaBinom <- dbetaBinom(k, size = m, a = a, b = b)
 ## Plot P(M = k) for the given k including the independence case
 ylim <- range(pmf.betaBinom, pmf.indep)
 plot(k, pmf.betaBinom, type = "l", ylim = ylim, col = "maroon3",
-     xlab = "Number of losses", ylab = "Probability")
+     xlab = "Number of losses", ylab = "")
 lines(k, pmf.indep) # add pmf under independence
 legend("topright", bty = "n", lty = 1, col = c("maroon3", "black"),
-       legend = c("beta-binomial", "independence"))
+       legend = c("Probability under beta-binomial", "Probability under independence"))
 
 ## Plot their quotient
-plot(k, pmf.betaBinom/pmf.indep, type = "l", log = "y",
-     xlab = "Number of losses",
-     ylab = "Probability under beta-binomial / Probability under independence")
+plot(k, pmf.betaBinom/pmf.indep, type = "l", log = "y", xlab = "Number of losses", ylab = "")
 abline(h = 1, lty = 2)
+legend("topleft", bty = "n", lty = c(1, 2), legend = c(expression(frac("Probability under beta-binomial",
+                                                                       "Probability under independence")),
+                                                       "Reference line y = 1"))
 
 
 ### 3 Compute default probabilities under the probit-normal model ##############
@@ -108,7 +109,7 @@ beta <- uniroot(root, interval = 0:1, p = pi., p2 = pi2)$root
 ## p_1(psi) = Phi(mu + sig * psi) and from From McNeil et al. (2015, (11.21)) we
 ## know that p_1(psi) = Phi((Phi^{-1}(pi) + sqrt(beta) * psi) / sqrt(1-beta)).
 ## Matching the two leads to:
-mu    <- qnorm(pi.) / sqrt(1 - beta)
+mu  <- qnorm(pi.) / sqrt(1 - beta)
 sig <- sqrt(beta/(1 - beta))
 
 ## Define the probit-normal pmf of M; see McNeil et al. (2015, (11.14)).
@@ -132,8 +133,10 @@ pmf.probitNorm <- dprobitNorm(k, size = m, mu = mu, sigma = sig)
 ## Plot P(M = k) for the given k including the independence case
 ylim <- range(pmf.probitNorm, pmf.indep)
 plot(k, pmf.probitNorm, type = "l", ylim = ylim, col = "royalblue3",
-     xlab = "Number of losses", ylab = "Probability")
+     xlab = "Number of losses", ylab = "")
 lines(k, pmf.betaBinom, col = "maroon3") # add pmf under beta-binomial
 lines(k, pmf.indep) # add pmf under independence
 legend("topright", bty = "n", lty = 1, col = c("maroon3", "royalblue3", "black"),
-       legend = c("beta-binomial", "probit-normal", "independence"))
+       legend = c("Probability under beta-binomial", "Probability under probit-normal",
+                  "Probability under independence"))
+
