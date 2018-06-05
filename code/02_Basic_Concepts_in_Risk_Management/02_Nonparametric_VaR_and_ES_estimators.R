@@ -108,6 +108,7 @@ plot(L)
 alpha <- 0.99
 (VaR. <- VaR_np(L, level = alpha))
 (ES.  <-  ES_np(L, level = alpha, verbose = TRUE))
+abline(h = c(VaR., ES.), lty = 2)
 ## ... but single numbers don't tell us much
 ## More interesting: The behavior in alpha
 

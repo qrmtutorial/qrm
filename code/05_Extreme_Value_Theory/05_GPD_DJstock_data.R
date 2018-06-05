@@ -56,12 +56,12 @@ scale.u <- fit$par[["scale"]]
 
 ### 4 Visually compare the sample excess df and the fitted (GPD) excess df #####
 
-## Plot empiricial excess df vs fitted GPD
+## Plot empirical excess df vs fitted GPD
 res <- edf_plot(excess, log = "x")
 z <- tail(res$t, n = -1)
 lines(z, pGPD(z, shape = shape.u, scale = scale.u)) # fitted GPD
 
-## Plot empiricial exceedance df vs shifted fitted GPD
+## Plot empirical exceedance df vs shifted fitted GPD
 res <- edf_plot(exceed, log = "x")
 z <- tail(res$t, n = -1)
 lines(z, pGPD(z-u, shape = shape.u, scale = scale.u)) # shifted fitted GPD

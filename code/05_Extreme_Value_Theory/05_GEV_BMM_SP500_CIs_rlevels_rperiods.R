@@ -177,33 +177,34 @@ plot_obj <- function(r, k, x, maxLogLik, alpha = 0.05, control = list(reltol = 0
 
 ### 1 Working with the data ####################################################
 
-## Load the data and compute the negative log-returns (risk-factor changes X)
+## Load the data and compute the losses (-log-returns)
 data(SP500)
 S <- SP500 # 'xts'/'zoo' object
-X <- -returns(S) # -log-returns X_t = -log(S_t/S_{t-1})
-X. <- X['1960-01-01/1987-10-16'] # grab out data we work with
+X <- returns(S) # log-returns X_t = log(S_t/S_{t-1}) as risk factor changes
+L <- -X # losses
+L. <- L['1960-01-01/1987-10-16'] # grab out losses we work with
 
-## Extract (half-)yearly maxima method
-M.y <- period.apply(X., INDEX = endpoints(X., "years"), FUN = max) # yearly maxima
-endpts <- endpoints(X., "quarters") # end indices for quarters
+## Extract (half-)yearly maxima
+M.y <- period.apply(L., INDEX = endpoints(L., "years"), FUN = max) # yearly maxima
+endpts <- endpoints(L., "quarters") # end indices for quarters
 endpts <- endpts[seq(1, length(endpts), by = 2)] # end indices for half-years
-M.hy <- period.apply(X., INDEX = endpts, FUN = max) # half-yearly maxima
+M.hy <- period.apply(L., INDEX = endpts, FUN = max) # half-yearly maxima
 
 
-### 3 Profile-likelihood-based CIs for return levels and return periods ########
+### 2 Profile-likelihood-based CIs for return levels and return periods ########
 
-### 3.1 Based on annual maxima #################################################
+### 2.1 Based on annual maxima #################################################
 
 ## Fit GEV to yearly maxima
 fit.y <- fit_GEV_MLE(M.y) # maximum likelihood estimator
-(xi.y <- fit.y$par[["shape"]]) # ~= 0.2972 => Frechet domain with infinite ceiling(1/xi.y) = 4th moment
+(xi.y <- fit.y$par[["shape"]]) # ~= 0.2971 => Frechet domain with infinite ceiling(1/xi.y) = 4th moment
 (mu.y  <- fit.y$par[["loc"]])
 (sig.y <- fit.y$par[["scale"]])
 fit.y$SE # standard errors
 mLL <- fit.y$value # ~= 88.5288; maximum log-likelihood (at MLE)
 
 
-### 3.1.1 CI for 10-year and 50-year return level ##############################
+### 2.1.1 CI for 10-year and 50-year return level ##############################
 
 ## Fix the return period k = 10 (in years) and estimate the corresponding
 ## return level r
@@ -218,7 +219,7 @@ CI.low <- uniroot(obj, lower = I[1], upper = r,    k = k, x = M.y, maxLogLik = m
 CI.up  <- uniroot(obj, lower = r,    upper = I[2], k = k, x = M.y, maxLogLik = mLL)
 (CI.r10 <- c(CI.low$root, CI.up$root)) # 95%-CI for 10-year return level r; [0.0346, 0.0757]
 ## Does it contain a drop as large as on Black Monday?
-rBM <- as.numeric(X['1987-10-19']) # return level on Black Monday
+rBM <- as.numeric(L['1987-10-19']) # return level on Black Monday
 CI.r10[1] <= rBM && rBM <= CI.r10[2] # => no!
 
 ## The same for k = 50
@@ -233,7 +234,7 @@ CI.low <- uniroot(obj, lower = I[1], upper = r,    k = k, x = M.y, maxLogLik = m
 CI.up  <- uniroot(obj, lower = r,    upper = I[2], k = k, x = M.y, maxLogLik = mLL)
 (CI.r50 <- c(CI.low$root, CI.up$root)) # 95%-CI for 50-year return level r; [0.0488, 0.2483]
 ## Does it contain a drop as large as on Black Monday?
-rBM <- as.numeric(X['1987-10-19']) # return level on Black Monday
+rBM <- as.numeric(L['1987-10-19']) # return level on Black Monday
 CI.r50[1] <= rBM && rBM <= CI.r50[2] # => yes!
 
 ## Note: If obj() is called *without* smaller relative tolerance
@@ -247,7 +248,7 @@ plot_obj(r = seq(I[1], I[2], length.out = 128), k = k, x = M.y, maxLogLik = mLL,
 ## => Always watch out for numerical issues!
 
 
-### 3.1.2 CI for the return period of a loss as on Black Monday ################
+### 2.1.2 CI for the return period of a loss as on Black Monday ################
 
 ## Fix the return level r (as on Black Monday) and estimate the corresponding
 ## return period k
@@ -265,7 +266,7 @@ CI.low <- uniroot(obj, lower = I[1], upper = k, r = r, x = M.y, maxLogLik = mLL)
 CI.low$root
 
 
-### 3.2 Based on biannual maxima ###############################################
+### 2.2 Based on biannual maxima ###############################################
 
 ## Fit GEV to half-yearly maxima
 fit.hy <- fit_GEV_MLE(M.hy) # maximum likelihood estimator
@@ -276,7 +277,7 @@ fit.hy$SE # standard errors
 mLL <- fit.hy$value # ~= 191.3122; maximum log-likelihood (at MLE)
 
 
-### 3.2.1 CI for 20-half-year and 100-half-year return level ###################
+### 2.2.1 CI for 20-half-year and 100-half-year return level ###################
 
 ## Fix the return period k = 20 (in half-years) and estimate the corresponding
 ## return level r
@@ -289,9 +290,9 @@ abline(v = r) # estimated return level
 ## Compute 95%-CI for the 20-half-year return level r
 CI.low <- uniroot(obj, lower = I[1], upper = r,    k = k, x = M.hy, maxLogLik = mLL)
 CI.up  <- uniroot(obj, lower = r,    upper = I[2], k = k, x = M.hy, maxLogLik = mLL)
-(CI.r20 <- c(CI.low$root, CI.up$root)) # 95%-CI for 20-half-year return level r; [0.0355, 0.0728]
+(CI.r20 <- c(CI.low$root, CI.up$root)) # 95%-CI for 20-half-year return level r; [0.0355, 0.0729]
 ## Does it contain a drop as large as on Black Monday?
-rBM <- as.numeric(X['1987-10-19']) # return level on Black Monday
+rBM <- as.numeric(L['1987-10-19']) # return level on Black Monday
 CI.r20[1] <= rBM && rBM <= CI.r20[2] # => no!
 
 ## The same for k = 100
@@ -306,7 +307,7 @@ CI.low <- uniroot(obj, lower = I[1], upper = r,    k = k, x = M.hy, maxLogLik = 
 CI.up  <- uniroot(obj, lower = r,    upper = I[2], k = k, x = M.hy, maxLogLik = mLL)
 (CI.r100 <- c(CI.low$root, CI.up$root)) # 95%-CI for 100-half-year return level r; [0.0504, 0.1912]
 ## Does it contain a drop as large as on Black Monday?
-rBM <- as.numeric(X['1987-10-19']) # return level on Black Monday
+rBM <- as.numeric(L['1987-10-19']) # return level on Black Monday
 CI.r100[1] <= rBM && rBM <= CI.r100[2] # => no!
 
 ## Note: Also here, note that this looks better than it actually is. Watch this:
@@ -317,7 +318,7 @@ abline(v = r)
 ## check with a plot whether the found roots make sense.
 
 
-### 3.2.2 CI for the return period of a loss as on Black Monday ################
+### 2.2.2 CI for the return period of a loss as on Black Monday ################
 
 ## Fix the return level r (as on Black Monday) and estimate the corresponding
 ## return period k

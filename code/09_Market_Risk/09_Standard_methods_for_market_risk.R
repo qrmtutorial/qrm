@@ -27,6 +27,7 @@ str(S)
 head(S) # show the beginning
 tail(S) # show the end
 S <- na.fill(S, fill = "extend") # fill NAs (see also NA_plot(S))
+tail(S)
 colnames(S) <- c("BMW", "SIE")
 
 ## Use scatter plots of each time series to check if anything is 'suspicious'
@@ -36,7 +37,12 @@ plot.zoo(S[,"SIE"], main = "SIEMENS stock data",
          xlab = "Date t", ylab = expression(Stock~price~S[t]))
 
 ## Compute the risk-factor changes and plot them (here: against each other)
-X <- as.matrix(returns(S)) # compute log-returns and range (sign-adjustment in loss operator below)
+X <- returns(S) # compute log-returns (sign-adjustment in loss operator below)
+plot.zoo(X[,"BMW"], main = "BMW log-return data",
+         xlab = "Date t", ylab = expression(Log-returns~X[t]))
+plot.zoo(X[,"SIE"], main = "SIE log-return data",
+         xlab = "Date t", ylab = expression(Log-returns~X[t]))
+X <- as.matrix(X)
 plot(X, cex = 0.4)
 
 

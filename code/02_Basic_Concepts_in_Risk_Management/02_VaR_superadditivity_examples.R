@@ -84,7 +84,7 @@ text(0.82, 0.05, label = "VaR superadditive")
 n <- 1024 # number of alphas
 alpha <- seq(1e-2, 1-1e-8, length.out = n) # range of confidence levels
 
-## Compute VaR_alpha(L_1 + L_2) and  VaR_alpha(L_1) + VaR_alpha(L_2)
+## Compute VaR_alpha(L_1 + L_2) and VaR_alpha(L_1) + VaR_alpha(L_2)
 VaR <- 2*qexp(alpha) # VaR_alpha(L_1) + VaR_alpha(L_2)
 VaR.sum  <- qgamma(alpha, shape = 2) # VaR_alpha(L_1 + L_2) for L_1, L_2 ind. Exp(1)
 alpha.super <- max(alpha[VaR.sum > VaR]) # ~ 0.7145 (max. alpha for which VaR superadd.)

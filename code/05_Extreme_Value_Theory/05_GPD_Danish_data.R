@@ -22,19 +22,21 @@ abline(v = c(u10, u20))
 ## Effect of changing the threshold on xi
 GPD_shape_plot(fire)
 abline(v = c(u10, u20))
-abline(h = 0.5) # models above line have infinite variance (E(X^k) = Inf <=> xi >= 1/k; k = 2 here)
+abline(h = 0.5, lty = 3) # models above line have infinite variance (E(X^k) = Inf <=> xi >= 1/k; k = 2 here)
 
 
 ### 2 Fit GPDs to the excesses #################################################
 
 ## Fit GPD models to excesses via MLE
+## u = 10
 exceed.u10 <- fire[fire > u10] # exceedances
-exceed.u20 <- fire[fire > u20] # exceedances
 excess.u10 <- exceed.u10 - u10 # excesses
-excess.u20 <- exceed.u20 - u20 # excesses
 (fit.u10 <- fit_GPD_MLE(excess.u10)) # MLE
 shape.u10 <- fit.u10$par[["shape"]]
 scale.u10 <- fit.u10$par[["scale"]]
+## u = 20
+exceed.u20 <- fire[fire > u20] # exceedances
+excess.u20 <- exceed.u20 - u20 # excesses
 (fit.u20 <- fit_GPD_MLE(excess.u20)) # MLE
 shape.u20 <- fit.u20$par[["shape"]]
 scale.u20 <- fit.u20$par[["scale"]]
@@ -42,39 +44,36 @@ scale.u20 <- fit.u20$par[["scale"]]
 
 ### 3 Visually compare the sample excess df and the fitted (GPD) excess df #####
 
-df.u10 <- function(q) # define fitted GPD
-    pGPD(q, shape = shape.u10, scale = scale.u10) # fitted GPD
-df.u20 <- function(q) # define fitted GPD
-    pGPD(q, shape = shape.u20, scale = scale.u20) # fitted GPD
-
-## Plot empiricial excess df vs fitted GPD
-## u10
-res <- edf_plot(excess.u10, log = "x")
+## Plot empiricial excess df vs fitted GPD G_{xi,beta}
+## u = 10
+res <- edf_plot(excess.u10)
 z <- tail(res$t, n = -1)
 lines(z, pGPD(z, shape = shape.u10, scale = scale.u10)) # fitted GPD
-## u20
-res <- edf_plot(excess.u20, log = "x")
+## u = 20
+res <- edf_plot(excess.u20)
 z <- tail(res$t, n = -1)
 lines(z, pGPD(z, shape = shape.u20, scale = scale.u20)) # fitted GPD
 
-## Plot empiricial exceedance df vs shifted fitted GPD
-## u10
-res <- edf_plot(exceed.u10, log = "x")
+## Plot empiricial exceedance df vs shifted fitted GPD G_{xi,beta}(x-u)
+## u = 10
+res <- edf_plot(exceed.u10)
 z <- tail(res$t, n = -1)
 lines(z, pGPD(z-u10, shape = shape.u10, scale = scale.u10)) # shifted fitted GPD
-## u20
-res <- edf_plot(exceed.u20, log = "x")
+## u = 20
+res <- edf_plot(exceed.u20)
 z <- tail(res$t, n = -1)
 lines(z, pGPD(z-u20, shape = shape.u20, scale = scale.u20)) # shifted fitted GPD
 
 ## Corresponding Q-Q plots (more meaningful)
+## u = 10
 qf.u10 <- function(p) # quantile function of df
     qGPD(p, shape = shape.u10, scale = scale.u10)
+qq_plot(excess.u10, FUN = qf.u10)
+qq_plot(exceed.u10, FUN = function(p) u10 + qf.u10(p))
+## u = 20
 qf.u20 <- function(p) # quantile function of df
     qGPD(p, shape = shape.u20, scale = scale.u20)
-qq_plot(excess.u10, FUN = qf.u10)
 qq_plot(excess.u20, FUN = qf.u20)
-qq_plot(exceed.u10, FUN = function(p) u10 + qf.u10(p))
 qq_plot(exceed.u20, FUN = function(p) u20 + qf.u20(p))
 
 
