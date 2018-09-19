@@ -11,14 +11,14 @@
 ## Building a covariance/correlation matrix
 
 ## Covariance matrix
-L <- matrix(c( 4, 0,
+A <- matrix(c( 4, 0,
               -1, 1), ncol = 2, byrow = TRUE) # Cholesky factor of the ...
-(Sigma <- L %*% t(L)) # ... symmetric, positive definite (covariance) matrix Sigma
+(Sigma <- A %*% t(A)) # ... symmetric, positive definite (covariance) matrix Sigma
 
 ## Corresponding correlation matrix
-P. <- outer(1:2, 1:2, Vectorize(function(r, c)
-            Sigma[r,c]/(sqrt(Sigma[r,r])*sqrt(Sigma[c,c])))) # construct the corresponding correlation matrix
-(P  <- cov2cor(Sigma)) # a more elegant solution, see the source of cov2cor()
+P <- outer(1:2, 1:2, Vectorize(function(r, c)
+           Sigma[r,c]/(sqrt(Sigma[r,r])*sqrt(Sigma[c,c])))) # construct the corresponding correlation matrix
+(P.  <- cov2cor(Sigma)) # a more elegant solution, see the source of cov2cor()
 stopifnot(all.equal(P., P))
 ## Another option would be as.matrix(Matrix::nearPD(Sigma, corr = TRUE, maxit = 1000)$mat)
 ## which works differently, though (by finding a correlation matrix close to the
@@ -31,21 +31,27 @@ stopifnot(all.equal(P., P))
 ## matrix P) as Sigma = AA^T. To this end there are several possibilities.
 
 ## The Cholesky decomposition
-A <- t(chol(Sigma)) # the Cholesky factor (lower triangular with real entries > 0)
-stopifnot(all.equal(A, L), all.equal(A %*% t(A) , Sigma))
+A. <- t(chol(Sigma)) # the Cholesky factor (lower triangular with real entries > 0)
+stopifnot(all.equal(A. %*% t(A.) , Sigma), # checking decomposition
+          all.equal(A., A)) # checking uniqueness of the Cholesky decomposition
 
-## Another decomposition of Sigma as A %*% t(A)
+## Other decompositions of Sigma than A %*% t(A) are possible, too
 if(FALSE) {
-    ## The eigendecomposition (or spectral decomposition)
+    ## Eigendecomposition (or spectral decomposition)
     eig <- eigen(Sigma) # eigenvalues and eigenvectors
     V <- eig$vectors # matrix of eigenvectors
-    Lambda <- diag(eig$values)
+    Lambda <- diag(pmax(eig$values, 0))
     stopifnot(all.equal(Sigma, V %*% Lambda %*% t(V))) # for real, symmetric matrices
-    A. <- V %*% sqrt(Lambda) %*% t(V)
-    Sigma. <- A. %*% t(A.)
-    stopifnot(all.equal(Sigma, Sigma.))
-    ## However, not that A and A. are different (A. is not a lower triangular matrix!)
-    A-A.
+    A.eig <- V %*% sqrt(Lambda) %*% t(V)
+    Sigma.eig <- A.eig %*% t(A.eig)
+    stopifnot(all.equal(Sigma.eig, Sigma))
+    ## ... but A.. (non-triangular) and A (triangular) are different
+
+    ## Singular-value decomposition
+    sv <- svd(Sigma) # singular values, U, V (left/right singular vectors) such that Sigma = U diag(<singular values>) V^T
+    A.sv <- sv$u %*% sqrt(diag(pmax(sv$d, 0))) %*% t(sv$v)
+    Sigma.sv <- A.sv %*% t(A.sv)
+    stopifnot(all.equal(Sigma.sv, Sigma))
 }
 
 
@@ -55,7 +61,7 @@ if(FALSE) {
 n <- 1000 # sample size
 d <- 2 # dimension
 set.seed(271) # set a seed (for reproducibility)
-Z <- matrix(rnorm(n*d), ncol = d) # sample iid N(0,1) random variates
+Z <- matrix(rnorm(n * d), ncol = d) # sample iid N(0,1) random variates
 mabs <- max(abs(Z))
 lim <- c(-mabs, mabs)
 plot(Z, xlim = lim, ylim = lim,
@@ -77,12 +83,12 @@ plot(X.norm, xlim = xlim, ylim = ylim,
 ## See also Hofert (2013, "On Sampling from the Multivariate t Distribution")
 
 ## Plot (even smaller correlation (larger absolute correlation))
-P. <- matrix(c(   1, -0.95,
-               -0.95, 1), ncol = d, byrow = TRUE)
+P. <- matrix(c(    1, -0.95,
+               -0.95,  1), ncol = d, byrow = TRUE)
 Sigma. <- outer(1:d, 1:d, Vectorize(function(r, c)
                 P.[r,c] * (sqrt(Sigma[r,r])*sqrt(Sigma[c,c])))) # construct the corresponding Sigma
-## Alternatively, change the off-diagonal entry of Sigma while making sure that
-## |Sigma.[1,2]| <= sqrt(Sigma.[1,1]) * sqrt(Sigma.[2,2])
+## Note: When manually changing the off-diagonal entry of Sigma make sure that
+##       |Sigma.[1,2]| <= sqrt(Sigma.[1,1]) * sqrt(Sigma.[2,2]) still holds
 A. <- t(chol(Sigma.)) # new Cholesky factor
 X.norm. <- rep(mu, each = n) + t(A. %*% t(Z)) # generate the sample
 plot(rbind(X.norm, X.norm.), xlim = xlim, ylim = ylim,
@@ -104,12 +110,12 @@ legend("bottomright", bty = "n", pch = c(1,1), col = c("black", "royalblue3"),
        legend = c(expression(N(mu,Sigma)),
                   expression("Correlation sign switched")))
 
-## Note: This has all been done based on the same Z (and we use the same below)!
+## Note: This has all been done based on the same Z (and we also recycle it below)!
 
 
 ### 3 Sampling from the multiv. t distribution (and other normal variance mixtures)
 
-## We use the sample with positive correlation as starting point
+## We recycle the sample with positive correlation
 X.norm <- X.norm.
 A <- A.
 Sigma <- A %*% t(A)
@@ -134,11 +140,34 @@ legend("bottomright", bty = "n", pch = c(1,1), col = c("black", "maroon3"),
 ## what can go wrong!), see Hofert (2013, "On Sampling from the Multivariate t Distribution")
 
 
-### 3.2 An *uncorrelated* multivariate t_nu distribution vs an independent one
+### 3.2 A 2-point distribution for W (= two 'overlaid' multiv. normals) ########
 
-A. <- sqrt(diag(diag(Sigma))) # Cholesky factor of the diagonal matrix containing the variances
+## Let's change the distribution of W to a 2-point distribution with
+## W = 1 with prob. 0.5 and W = 2 with prob. 0.5. What we will see are two 'overlaid'
+## normal distributions (as each of W = 1 and W = 2 corresponds to one).
+W.binom <- 1 + rbinom(n, size = 1, prob = 0.5)
+cols <- rep("royalblue3", n)
+cols[W.binom == 2] <- "maroon3"
+X.W.binom <- rep(mu, each = n) + sqrt(W.binom) * t(A %*% t(Z))
+plot(rbind(X.t, X.W.binom), xlab = expression(X[1]), ylab = expression(X[2]),
+     col = c(rep("black", n), cols))
+legend("topright", bty = "n", pch = rep(1, 3), col = c("royalblue3", "maroon3", "black"),
+       legend = c(expression(N(mu,W*Sigma)~"for W = 1"),
+                  expression(N(mu,W*Sigma)~"for W = 2"),
+                  expression(italic(t)[nu](mu,Sigma))))
+## => With probability 0.5 we sample from a normal variance mixture with W = 1
+##    and with probability 0.5 we sample from one with W = 2. By using a df for
+##    W with infinite upper endpoint, we can reach further out in the tails than
+##    with any multivariate normal distribution by overlaying normals
+##    with different (unbounded) covariance matrices (and this is what is
+##    creating heavier tails for the t distribution than the normal).
+
+
+### 3.3 An *uncorrelated* multivariate t_nu distribution vs an independent one
+
+A. <- diag(sqrt(diag(Sigma))) # Cholesky factor of the diagonal matrix containing the variances
 X.t.uncor <- rep(mu, each = n) + sqrt(W) * t(A. %*% t(Z)) # uncorrelated t samples
-X.t.ind   <- rep(mu, each = n) + matrix(rt(n*d, df = nu), ncol = d) # independent t samples
+X.t.ind   <- rep(mu, each = n) + matrix(rt(n * d, df = nu), ncol = d) # independent t samples
 plot(rbind(X.t.uncor, # uncorrelated t; dependence only introduced by sqrt(W) => shifted spherical distribution
            X.t, # full t; dependence introduced by sqrt(W) *and* correlation
            X.t.ind), # independence
@@ -154,45 +183,22 @@ legend("topright", bty = "n", pch = rep(1, 3), col = c("black", "royalblue3", "m
 ##    t samples show the most mass in the joint tails.
 
 
-### 3.3 A 2-point distribution for W (= two 'overlaid' multiv. normals) ########
-
-## Let's change the distribution of W to a 2-point distribution with
-## W = 1 with prob. 0.5 and W = 2 with prob. 0.5. What we will see are two 'overlaid'
-## normal distributions (as each of W = 1 and W = 2 corresponds to one).
-W <- 1 + rbinom(n, size = 1, prob = 0.5)
-cols <- rep("royalblue3", n)
-cols[W == 2] <- "maroon3"
-X.Wbinom <- rep(mu, each = n) + sqrt(W) * t(A %*% t(Z))
-plot(rbind(X.t, X.Wbinom), xlab = expression(X[1]), ylab = expression(X[2]),
-     col = c(rep("black", n), cols))
-legend("topright", bty = "n", pch = rep(1, 3), col = c("royalblue3", "maroon3", "black"),
-       legend = c(expression(N(mu,W*Sigma)~"for W = 1"),
-                  expression(N(mu,W*Sigma)~"for W = 2"),
-                  expression(italic(t)[nu](mu,Sigma))))
-## => With probability 0.5 we sample from a normal variance mixture with W = 1
-##    and with probability 0.5 we sample from one with W = 2. By using a df for
-##    W with infinite upper endpoint, we can reach further out in the tails than
-##    with any multivariate normal distribution by overlaying normals
-##    with different (unbounded) covariance matrices (and this is what is
-##    creating heavier tails for the t distribution than the normal).
-
-
 ### 3.4 A normal *mean*-variance mixture #######################################
 
 ## Now let's also 'mix' the mean (replace mu by mu(W)), to get a normal
 ## mean-variance mixture; here: choosing between two different locations mu
 ## depending on W.
-mu. <- t(sapply(W, function(w) mu + if(w == 1) 0 else c(15, 0)))
-X.mean.var <- mu. + sqrt(W) * t(A %*% t(Z))
-plot(rbind(X.Wbinom, X.mean.var), xlab = expression(X[1]), ylab = expression(X[2]),
+mu. <- t(sapply(W.binom, function(w) mu + if(w == 1) 0 else c(15, 0)))
+X.mean.var <- mu. + sqrt(W.binom) * t(A %*% t(Z))
+plot(rbind(X.W.binom, X.mean.var), xlab = expression(X[1]), ylab = expression(X[2]),
      col = c(rep("black", n), cols))
-legend("bottomright", bty = "n", pch = rep(1, 3), col = c("black", "royalblue3", "maroon3"),
+legend("topleft", bty = "n", pch = rep(1, 3), col = c("black", "royalblue3", "maroon3"),
        legend = c(expression(N(mu,W*Sigma)~"for W"%in%"{1,2}"),
-                  "Mean-var. mixture for W = 1",
-                  "Mean-var. mixture for W = 2"))
+                  "Mean-var. mix for W = 1",
+                  "Mean-var. mix for W = 2"))
 ## => Not only do the red points show more variation, they *also* have a different
-##    location; clearly, this (blue + red points as one sample) is not an
-##    elliptical distribution anymore.
+##    location; clearly, this sample (blue + red points together) is not
+##    elliptically distributed anymore.
 
 
 ### 4 Sampling elliptical distributions ########################################
@@ -201,7 +207,7 @@ legend("bottomright", bty = "n", pch = rep(1, 3), col = c("black", "royalblue3",
 
 ## Sample from the uniform distribution on the unit sphere (spherical distribution)
 set.seed(271)
-Z <- matrix(rnorm(n*d), ncol = d)
+Z <- matrix(rnorm(n * d), ncol = d)
 S <- Z/sqrt(rowSums(Z^2)) # Z/||Z||
 lim <- c(-1.3, 1.3)
 par(pty = "s")
@@ -220,8 +226,8 @@ plot(X., xlim = lim, ylim = lim,
 
 ## Add radial part of a t_nu distribution (spherical distribution)
 nu <- 5
-R <- sqrt(d*rf(n, df1 = d, df2 = nu))
-X.. <- R*X.
+R <- sqrt(d * rf(n, df1 = d, df2 = nu))
+X.. <- R * X.
 ran <- c(min(X.., -max(X..)), max(X.., -min(X..)))
 par(pty = "s")
 plot(X.., xlim = ran, ylim = ran, xlab = expression(X[1]), ylab = expression(X[2]))
@@ -235,7 +241,7 @@ plot(X, xlim = ran, ylim = ran, xlab = expression(X[1]), ylab = expression(X[2])
 
 ### 4.2 A 2-point distribution for R ###########################################
 
-R <- 1 + rbinom(n, size = 1, prob = 2/3) # prob. 2/3 to be 2
+R <- 1 + rbinom(n, size = 1, prob = 2/3) # P(R = 1) = 1/3, P(R = 2) = 2/3
 cols <- rep("royalblue3", n)
 cols[R == 2] <- "maroon3" # prob. 2/3
 X <- rep(mu, each = n) + t(A %*% t(R*S)) # same mu, A, S

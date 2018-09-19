@@ -68,13 +68,13 @@ lines(z, pGPD(z-u20, shape = shape.u20, scale = scale.u20)) # shifted fitted GPD
 ## u = 10
 qf.u10 <- function(p) # quantile function of df
     qGPD(p, shape = shape.u10, scale = scale.u10)
-qq_plot(excess.u10, FUN = qf.u10)
-qq_plot(exceed.u10, FUN = function(p) u10 + qf.u10(p))
+qq_plot(excess.u10, FUN = qf.u10) # Q-Q plot of the empirical excesses vs fitted GPD quantile function
+qq_plot(exceed.u10, FUN = function(p) u10 + qf.u10(p)) # equal up to scaling
 ## u = 20
 qf.u20 <- function(p) # quantile function of df
     qGPD(p, shape = shape.u20, scale = scale.u20)
-qq_plot(excess.u20, FUN = qf.u20)
-qq_plot(exceed.u20, FUN = function(p) u20 + qf.u20(p))
+qq_plot(excess.u20, FUN = qf.u20) # Q-Q plot of the empirical excesses vs fitted GPD quantile function
+qq_plot(exceed.u20, FUN = function(p) u20 + qf.u20(p)) # equal up to scaling
 
 
 ### 4 Compute semi-parametric risk measure estimators ##########################

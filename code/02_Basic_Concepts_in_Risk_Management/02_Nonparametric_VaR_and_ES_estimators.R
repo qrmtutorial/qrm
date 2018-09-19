@@ -97,8 +97,8 @@ bootstrap <- function(x, B, level, method = c("VaR", "ES"))
 
 ## Simulate losses (as we don't have real ones and we want to investigate
 ## the performance of the estimators)
-set.seed(271) # set a seed (for reproducibility)
 th <- 2 # Pareto parameter (true underlying distribution; *just* infinite Var)
+set.seed(271) # set a seed (for reproducibility)
 L <- rPar(n, shape = th) # simulate losses with the 'inversion method'
 plot(L)
 
@@ -119,7 +119,7 @@ abline(h = c(VaR., ES.), lty = 2)
 alpha <- 1-1/10^seq(0.5, 5, by = 0.05) # alphas we investigate (concentrated near 1)
 stopifnot(0 < alpha, alpha < 1)
 VaR. <- VaR_np(L, level = alpha) # estimate VaR_alpha for all alpha
-ES.  <-  ES_np(L, level = alpha, verbose = TRUE) # estimate  ES_alpha for all alpha
+ES.  <-  ES_np(L, level = alpha, verbose = TRUE) # estimate ES_alpha for all alpha
 if(FALSE)
     warnings()
 
