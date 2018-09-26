@@ -45,6 +45,7 @@ Xindex <- apply.monthly(X., FUN = colSums)
 plot(Xindex, type = "h", xlab = "Time t", ylab = expression(X[t]),
      main = "Monthly risk-factor changes (log-returns) of Dow Jones index")
 
+
 ### 2 Model fitting ############################################################
 
 ## Principal component analysis

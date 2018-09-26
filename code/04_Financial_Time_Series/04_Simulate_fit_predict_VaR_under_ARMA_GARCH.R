@@ -14,16 +14,16 @@ library(qrmtools)
 ### 1 Simulation ###############################################################
 
 ## Model specification (for simulation)
+armaOrder <- c(1,1) # ARMA order
+garchOrder <- c(1,1) # GARCH order
 nu <- 3 # d.o.f. of the standardized distribution of Z_t
 fixed.p <- list(mu = 0, # our mu (intercept)
                 ar1 = 0.5, # our phi_1 (AR(1) parameter of mu_t)
                 ma1 = 0.3, # our theta_1 (MA(1) parameter of mu_t)
                 omega = 4, # our alpha_0 (intercept)
-                alpha1 = 0.4, # our alpha_1 (GARCH(1) parameter of sigma_t^2)
+                alpha1 = 0.4, # our alpha_1 (ARCH(1) parameter of sigma_t^2)
                 beta1 = 0.2, # our beta_1 (GARCH(1) parameter of sigma_t^2)
                 shape = nu) # d.o.f. nu for standardized t_nu innovations
-armaOrder <- c(1,1) # ARMA order
-garchOrder <- c(1,1) # GARCH order
 varModel <- list(model = "sGARCH", garchOrder = garchOrder)
 spec <- ugarchspec(varModel, mean.model = list(armaOrder = armaOrder),
                    fixed.pars = fixed.p, distribution.model = "std") # t standardized residuals
@@ -53,6 +53,10 @@ plot(eps, type = "l", xlab = "t", ylab = expression(epsilon[t]))
 
 ### 2 Fitting and checks #######################################################
 
+## Now we do as if we don't know the data-generating model. One would then
+## normally fit models of various orders and decide which one to take. This
+## step is omitted here for the sake of simplicity.
+
 ## Fit an ARMA(1,1)-GARCH(1,1) model
 spec <- ugarchspec(varModel, mean.model = list(armaOrder = armaOrder),
                    distribution.model = "std") # without fixed parameters here
@@ -80,11 +84,13 @@ stopifnot(all.equal(fit@fit$residuals, resi))
 plot(resi, type = "l", xlab = "t", ylab = expression(epsilon[t])) # check residuals epsilon_t
 
 ## Q-Q plot of the standardized residuals Z_t against their specified t
-## (t_nu with variance 1)
+## (t_nu with variance 1); as we generated the data, we know the exact t
+## innovation distribution
 Z <- fit@fit$z
 stopifnot(all.equal(Z, as.numeric(resi/sig.)))
 qq_plot(Z, FUN = function(p) sqrt((nu-2)/nu) * qt(p, df = nu),
-        main = substitute("Q-Q plot of ("*Z[t]*") against a standardized"~t[nu.], list(nu. = nu)))
+        main = substitute("Q-Q plot of ("*Z[t]*") against the (here: correct) standardized"~
+                              t[nu.], list(nu. = nu)))
 
 
 ### 3 VaR estimates, checks and backtest #######################################
@@ -92,9 +98,8 @@ qq_plot(Z, FUN = function(p) sqrt((nu-2)/nu) * qt(p, df = nu),
 ## VaR confidence level we consider here
 alpha <- 0.99
 
-## Extract fitted VaR_alpha
+## Compute VaR_alpha based on fitted mu_t and sigma_t
 VaR. <- as.numeric(quantile(fit, probs = alpha))
-
 ## Build manually and compare the two
 nu. <- fit@fit$coef["shape"] # extract (fitted) d.o.f. nu
 VaR.. <- as.numeric(mu. + sig. * sqrt((nu.-2)/nu.) * qt(alpha, df = nu.)) # VaR_alpha computed manually
@@ -166,7 +171,6 @@ yran <- range(X, # simulated path
 myran <- max(abs(yran))
 yran <- c(-myran, myran) # y-range for the plot
 xran <- c(1, length(X) + m) # x-range for the plot
-
 ## Simulated (original) data (X_t), fitted conditional mean mu_t and VaR_alpha
 plot(X, type = "l", xlim = xran, ylim = yran, xlab = "Time t", ylab = "",
      main = "Simulated ARMA-GARCH, fit, VaR, VaR predictions and CIs")
@@ -176,7 +180,6 @@ mtext(paste0("Expected exceed.: ",btest$expected.exceed,"   ",
              "Actual exceed.: ",btest$actual.exceed,"   ",
              "Test: ", btest$cc.Decision),
       side = 4, adj = 0, line = 0.5, cex = 0.9) # label
-
 ## Predictions
 t. <- length(X) + seq_len(m) # future time points
 lines(t., mu.predict, col = "blue") # predicted process X_t (or mu_t)
@@ -190,4 +193,4 @@ legend("bottomright", bty = "n", lty = rep(1, 6), lwd = 1.6,
                   expression("Predicted"~mu[t]~"(or"~X[t]*")"),
                   substitute(widehat(VaR)[a], list(a = alpha)),
                   substitute("Predicted"~VaR[a], list(a = alpha)),
-                  substitute("95%-CI for"~VaR[a], list(a = alpha))))
+                  substitute("Simulated 95%-CI for"~VaR[a], list(a = alpha))))

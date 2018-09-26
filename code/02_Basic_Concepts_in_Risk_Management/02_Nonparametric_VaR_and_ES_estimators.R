@@ -116,7 +116,7 @@ abline(h = c(VaR., ES.), lty = 2)
 ### 2.2 As functions in alpha vs true values ###################################
 
 ## Compute the nonparametric VaR_alpha and ES_alpha estimators as functions of alpha
-alpha <- 1-1/10^seq(0.5, 5, by = 0.05) # alphas we investigate (concentrated near 1)
+alpha <- 1-10^-seq(0.5, 5, by = 0.05) # alphas we investigate (concentrated near 1)
 stopifnot(0 < alpha, alpha < 1)
 VaR. <- VaR_np(L, level = alpha) # estimate VaR_alpha for all alpha
 ES.  <-  ES_np(L, level = alpha, verbose = TRUE) # estimate ES_alpha for all alpha
@@ -221,6 +221,7 @@ VaR.boot.CI  <- apply(VaR.boot, 1, CI) # bootstrapped 95% CIs; (2, length(alpha)
 ### 3.2 ES_alpha ###############################################################
 
 ## Bootstrap the ES estimator
+set.seed(271)
 system.time(ES.boot <- bootstrap(L, B = B, level = alpha, method = "ES")) # (length(alpha), B)-matrix containing the bootstrapped ES estimators
 if(FALSE)
     warnings()

@@ -49,20 +49,20 @@ plot(X, cex = 0.4)
 ### 2 Implement (and document) some auxiliary functions ########################
 
 ##' @title Compute the Loss Operator
-##' @param x Matrix of risk-factor changes
-##' @param weights Weights tilde{w}_{t,j} = lambda_j * S_{t,j}
-##' @return Losses -sum_{j=1}^d(tilde{w}_{t,j}(exp(X_{t+1,j})-1))
+##' @param x matrix of risk-factor changes
+##' @param weights weights tilde{w}_{t,j} = lambda_j * S_{t,j}
+##' @return losses -sum_{j=1}^d(tilde{w}_{t,j}(exp(X_{t+1,j})-1))
 ##' @author Marius Hofert
 loss_operator <- function(x, weights)
     -rowSums(expm1(x) * matrix(weights, nrow = nrow(x), ncol = length(weights), byrow = TRUE))
 
 ##' @title Estimate VaR and ES
-##' @param S Stock data, an (n, d)-matrix
-##' @param lambda Number of shares of each stock
-##' @param alpha Confidence level for VaR and ES
-##' @param method A character string specifying the estimator
-##' @param ... Additional arguments passed to the various methods
-##' @return A list containing the estimated risk measures VaR and ES, and
+##' @param S stock data, an (n, d)-matrix
+##' @param lambda number of shares of each stock
+##' @param alpha confidence level for VaR and ES
+##' @param method character string specifying the estimator
+##' @param ... additional arguments passed to the various methods
+##' @return list containing the estimated risk measures VaR and ES, and
 ##'         possibly other results (depending on the estimator)
 ##' @author Marius Hofert
 risk_measure <- function(S, lambda, alpha,
@@ -86,17 +86,19 @@ risk_measure <- function(S, lambda, alpha,
            "Var.Cov" = { # variance-covariance method
                ## Estimate a multivariate normal distribution
                mu.hat <- colMeans(X) # estimate the mean vector mu
-               Sigma.hat  <- var(X) # estimate the covariance matrix Sigma
+               Sigma.hat <- var(X) # estimate the covariance matrix Sigma
                L.delta.mean <- -sum(w. * mu.hat) # mean of the approx. normal df of the linearized loss L^{Delta}
                L.delta.sd <- sqrt(t(w.) %*% Sigma.hat %*% w.) # corresponding standard deviation
                ## Compute VaR and ES and return
                qa <- qnorm(alpha)
                list(VaR = L.delta.mean + L.delta.sd * qa,
-                    ES  = L.delta.mean + L.delta.sd * dnorm(qa) / (1-alpha))
-               ## => We could just return a bivariate vector here, but
-               ##    for other methods, we might want to return additional
-               ##    auxiliary results, and we should *always* return similar
-               ##    objects (here: lists)
+                    ES  = L.delta.mean + L.delta.sd * dnorm(qa) / (1-alpha),
+               ## => We could just return a vector here, but for other methods,
+               ##    we might want to return additional auxiliary results,
+               ##    and we should *always* return similar objects (here: lists)
+               ## Additional quantities returned here
+                    mu    = mu.hat, # fitted mean vector
+                    Sigma = Sigma.hat) # fitted covariance matrix
            },
            "hist.sim" = { # historical simulation method
                ## Using nonparametrically estimated risk measures
@@ -212,8 +214,7 @@ summary(L) # get important statistics about the losses
 hist(L, breaks = "Scott", probability = TRUE, xlim = c(0, max(L, rm)), main = "",
      xlab = substitute("Losses L > 0 from"~sd~"to"~ed~"with"~
                                          widehat(VaR)[a] <= widehat(ES)[a],
-                       list(sd = time[1], ed = time[2], a = alpha)), col = "gray90") # histogram
-box() # box around histogram
+                       list(sd = time[1], ed = time[2], a = alpha)), col = "gray90"); box() # histogram
 lty <- c(3, 2, 1, 4, 5)
 lwd <- c(1.2, 1.6, 1, 1.2, 1.2)
 cols <- c("maroon3", "black", "black", "royalblue3", "darkorange2")

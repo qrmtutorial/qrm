@@ -392,14 +392,14 @@ RNGkind()
 ### Writing a function #########################################################
 
 ##' @title Nonparametric Expected Shortfall Estimator
-##' @param x The vector of losses
-##' @param alpha The confidence level
-##' @param method
-##' @param ... Additional arguments passed to quantile(); if 'type = 1',
+##' @param x vector of losses
+##' @param alpha confidence level
+##' @param method method used for determining exceedances
+##' @param ... additional arguments passed to quantile(); if 'type = 1',
 ##'        the quantile of the empirical distribution function is taken.
-##' @return Nonparametric ES_alpha estimate (derived under the assumption of continuity)
+##' @return nonparametric ES_alpha estimate (derived under the assumption of continuity)
 ##' @author Marius Hofert
-##' @note - Vectorized in x and alpha
+##' @note - vectorized in x and alpha
 ##'       - ">" : Mathematically correct for discrete dfs, but
 ##'               produces NaN for alpha > (n-1)/n (=> F^-(alpha) = x_{(n)} but
 ##'               there is no loss strictly beyond x_{(n)})
