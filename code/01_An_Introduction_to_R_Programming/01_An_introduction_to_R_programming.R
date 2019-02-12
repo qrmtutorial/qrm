@@ -359,7 +359,7 @@ str(.Random.seed)
 ##   (highest decimal). The remaining integers denote the actual seed.
 ## - The default kind is the "Mersenne Twister" (which needs an integer(624)
 ##   as seed and the current position in this sequence, so 625 numbers).
-RNGkind() # => Mersenne Twister, Inversion is used for generating N(0,1)
+RNGkind() # => Mersenne Twister, inversion is used for generating N(0,1)
 (Y <- rnorm(2)) # => another two N(0,1) random variates (obviously different)
 
 ## How can we make sure to obtain the same results (for *reproducibility*?)
@@ -378,9 +378,9 @@ all.equal(X, Y) # => TRUE
 ## seed is L'Ecuyer's combined multiple-recursive generator (CMRG); see
 ## MRG32k3a.c and MRG32k3a.h on http://simul.iro.umontreal.ca/rng (R's version
 ## only makes minor modifications to this). Let's see how we can call it from R.
-RNGkind() # => Mersenne Twister, Inversion is used for generating N(0,1)
+RNGkind() # => Mersenne Twister, inversion is used for generating N(0,1)
 RNGkind("L'Ecuyer-CMRG")
-RNGkind() # => L'Ecuyer's CMRG, Inversion is used for generating N(0,1)
+RNGkind() # => L'Ecuyer's CMRG, inversion is used for generating N(0,1)
 .Random.seed # => now of length 7: first number as above + the seed
 Z <- rnorm(2) # use L'Ecuyer's CMRG for generating random numbers
 .Random.seed <- nextRNGStream(.Random.seed) # advance seed by 2^127; requires 'parallel'

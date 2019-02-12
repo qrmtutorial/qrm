@@ -13,23 +13,23 @@ library(qrmtools)
 ## Dow Jones constituent data
 data("DJ_const")
 
-## We extract a time period and take 29 of 30 DJ stocks
-## (omit 'Visa' as it has a very short history in the index)
+## We extract a time period and remove the time series 'Visa' (as it only has
+## a very short history in the index)
 DJdata <- DJ_const['2006-12-29/2015-12-31',-which(names(DJ_const) == "V")]
 
 ## Use plot for zoo objects to get multiple plots
 plot.zoo(DJdata, xlab = "Time", main = "DJ component series (without Visa)")
 
 ## Build log-returns and aggregate to obtain monthly log-returns
-X <- returns(DJdata)
+X <- returns(DJdata) # could also work with negative log-returns
 X.m <- apply.monthly(X, FUN = colSums)
 
 
-### 2 Apply Ljung--Box tests ###################################################
+### 2 Ljung--Box tests of serial independence of stationary data ###############
 
 ## Compute (lists of) Ljung--Box tests
 LB.raw   <- apply(X,        2, Box.test, lag = 10, type = "Ljung-Box")
-LB.abs   <- apply(abs(X),   2, Box.test, lag = 10, type = "Ljung-Box")
+LB.abs   <- apply(abs(X),   2, Box.test, lag = 10, type = "Ljung-Box") # could also work with squared log-returns
 LB.raw.m <- apply(X.m,      2, Box.test, lag = 10, type = "Ljung-Box")
 LB.abs.m <- apply(abs(X.m), 2, Box.test, lag = 10, type = "Ljung-Box")
 

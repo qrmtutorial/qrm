@@ -1,6 +1,6 @@
 ## By Marius Hofert
 
-## Testing univariate normality
+## Tests of univariate normality
 
 
 ### Setup ######################################################################
@@ -13,7 +13,7 @@ library(qrmdata)
 library(qrmtools)
 
 
-### 1 Generate data from N(mu, sig^2) and t_nu(mu, sig^2) ######################
+### 1 Generate data ############################################################
 
 n <- 1000 # sample size
 mu <- 1 # location
@@ -21,11 +21,11 @@ sig <- 2 # scale
 nu <- 3 # degrees of freedom
 set.seed(271) # set seed (for reproducibility)
 X.N <- rnorm(n, mean = mu, sd = sig) # sample from N(mu, sig^2)
-X.t <- mu + sig * rt(n, df = nu) * sqrt((nu-2)/nu) # sample from t_nu(mu, sqrt((nu-2)/nu)*sig^2) (same variance as N(mu, sig^2))
+X.t <- mu + sig * rt(n, df = nu) * sqrt((nu-2)/nu) # sample from t_nu(mu, sqrt((nu-2)/nu)*sig^2) (also variance sig^2)
 if(FALSE) {
     var(X.N)
     var(X.t)
-    ## => quite apart (but closer for larger n)
+    ## => quite apart, but closer for larger n
 }
 
 

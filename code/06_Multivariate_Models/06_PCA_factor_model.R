@@ -27,11 +27,11 @@ plot.zoo(DJ.const, xlab = "Time t", main = "Dow Jones Constituents")
 
 ## Build and plot log-returns
 ## Index
-X. <- diff(log(DJ.))[-1,] # compute -log-returns
+X. <- returns(DJ.) # compute log-returns
 plot.zoo(X., xlab = "Time t", ylab = expression(X[t]),
          main = "Risk-factor changes (log-returns) of Dow Jones index")
 ## Constituents
-X.const <- diff(log(DJ.const))[-1,] # compute -log-returns
+X.const <- returns(DJ.const) # compute log-returns
 if(FALSE) # more time-consuming
     pairs(as.matrix(X.const), gap = 0, pch = ".",
           main = "Scatter plot matrix of risk-factor changes (log-returns) of Dow Jones constituents")

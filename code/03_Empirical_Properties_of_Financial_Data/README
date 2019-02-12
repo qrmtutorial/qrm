@@ -2,8 +2,8 @@
 
 03_Exploring_financial_time_series.R
    Loading, exploring, merging, aggregating and presenting financial time series
-03_Ljung-Box_correlation_tests.R
-   Implements Ljung-Box correlation tests
+03_Ljung-Box_test_of_serial_independence.R
+   Ljung-Box tests of independence
 03_Univariate_stylized_facts.R
    Illustrates univariate stylized facts for financial return series
 03_Testing_univariate_normality.R

@@ -21,6 +21,9 @@ apply(data, 2, shapiro.test)
 MardiaTest(data)
 jointnormalTest(data)
 
+
+
+
 ## QQplots against Student t
 qplotfunc <- function(data){
     qqplot(qt(ppoints(data), df = nu), data, xlab = "Theoretical", ylab = "Empirical")
@@ -36,6 +39,10 @@ Ddata <- mahalanobis(data, center = FALSE, cov = var(data))/d
 qqplot(qf(ppoints(Ddata), df1 = d, df2 = nu), Ddata,
        xlab = "Theoretical", ylab = "Empirical")
 qqline(Ddata, dist = function(p) qf(p,df1 = d, df2 = nu))
+
+
+
+
 
 ## Estimate multivariate Student
 
@@ -54,6 +61,7 @@ fit.mvnorm <- function(data){
     ll.max <- sum(dmvnorm(data, mean = mu.hat, sigma = Sigma.hat, log = TRUE))
     list(mu = mu.hat, Sigma = Sigma.hat, ll.max = ll.max)
 }
+
 
 ## Fit normal
 mod.w.norm = fit.mvnorm(as.matrix(Xdata.w))

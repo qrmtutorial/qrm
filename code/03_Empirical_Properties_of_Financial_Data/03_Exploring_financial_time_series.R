@@ -94,21 +94,23 @@ plot.zoo(X, xlab = "Time", main = "Log-returns of exchange rates to USD",
 
 ### Zero-coupon bond yields ####################################################
 
-## Load zero-coupon bond yield data (in CAD)
-data("ZCB_CA")
-dim(ZCB_CA)
-head(ZCB_CA)
-
-## Change to percentages and select period
-ZCB <- 100 * ZCB_CA['2002-01-02/2011-12-30']
-cols <- c("royalblue3", "darkorange2", RColorBrewer::brewer.pal(8, name = "Dark2"))
-plot.zoo(ZCB[,1:10], xlab = "Time", main = "Percentage yields (first 10 maturities)",
-         col = cols)
+## Load zero-coupon bond yield data (in USD)
+## Note: Typically, yield = ((face value / current bond price)^(1/maturity) - 1) * 100%
+##       (as face value = current price * (1 + yield)^maturity
+data("ZCB_US")
+dim(ZCB_US) # => 30-dimensional; each dimension is a maturity
+head(ZCB_US)
+ZCB <- ZCB_US['2002-01-02/2011-12-30']
+plot.zoo(ZCB, xlab = "Time", main = "Percentage yields")
 
 ## Compute differences (first row is removed)
 X <- returns(ZCB, method = "diff")
 
 ## Pick 3 maturities
-X3 <- X[, c(1, 8, 40)]
-plot.zoo(X3, xlab = "Time", main = "Differences (3 maturities)", col = cols[c(9, 5, 7)])
+X3 <- X[, c(1, 5, 30)]
+plot.zoo(X3, xlab = "Time", main = "Differences (3 maturities)")
 pairs(as.zoo(X3), gap = 0, cex = 0.4)
+
+## Plot the corresponding "pseudo-observations" (componentwise scaled ranks)
+U3 <- apply(X3, 2, rank) / (ncol(X3) + 1)
+pairs(as.zoo(U3), gap = 0, cex = 0.4)

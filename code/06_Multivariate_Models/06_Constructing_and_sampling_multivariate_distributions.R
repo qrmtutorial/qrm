@@ -8,24 +8,24 @@
 
 ### 1 Basic 'ingredients' ######################################################
 
-## Building a covariance/correlation matrix
+### 1.1 Building a covariance/correlation matrix
 
 ## Covariance matrix
-A <- matrix(c( 4, 0,
-              -1, 1), ncol = 2, byrow = TRUE) # Cholesky factor of the ...
+A <- matrix(c(4, 0,
+              1, 1), ncol = 2, byrow = TRUE) # Cholesky factor of the ...
 (Sigma <- A %*% t(A)) # ... symmetric, positive definite (covariance) matrix Sigma
 
 ## Corresponding correlation matrix
-P <- outer(1:2, 1:2, Vectorize(function(r, c)
-           Sigma[r,c]/(sqrt(Sigma[r,r])*sqrt(Sigma[c,c])))) # construct the corresponding correlation matrix
-(P.  <- cov2cor(Sigma)) # a more elegant solution, see the source of cov2cor()
+(P <- outer(1:2, 1:2, Vectorize(function(r, c)
+    Sigma[r,c]/(sqrt(Sigma[r,r])*sqrt(Sigma[c,c]))))) # construct the corresponding correlation matrix
+(P.  <- cov2cor(Sigma)) # for a more elegant solution, see the source of cov2cor()
 stopifnot(all.equal(P., P))
 ## Another option would be as.matrix(Matrix::nearPD(Sigma, corr = TRUE, maxit = 1000)$mat)
 ## which works differently, though (by finding a correlation matrix close to the
 ## given matrix in the Frobenius norm) and thus gives a different answer.
 
 
-## Decomposing a covariance/correlation matrix
+### 1.2 Decomposing a covariance/correlation matrix
 
 ## We frequently need to decompose a covariance matrix Sigma (or correlation
 ## matrix P) as Sigma = AA^T. To this end there are several possibilities.
@@ -82,9 +82,9 @@ plot(X.norm, xlim = xlim, ylim = ylim,
 ## Think about why the rep() and why the t()'s above!
 ## See also Hofert (2013, "On Sampling from the Multivariate t Distribution")
 
-## Plot (even smaller correlation (larger absolute correlation))
-P. <- matrix(c(    1, -0.95,
-               -0.95,  1), ncol = d, byrow = TRUE)
+## Plot (even larger correlation)
+P. <- matrix(c(   1, 0.95,
+               0.95, 1), ncol = d, byrow = TRUE)
 Sigma. <- outer(1:d, 1:d, Vectorize(function(r, c)
                 P.[r,c] * (sqrt(Sigma[r,r])*sqrt(Sigma[c,c])))) # construct the corresponding Sigma
 ## Note: When manually changing the off-diagonal entry of Sigma make sure that
@@ -114,12 +114,6 @@ legend("bottomright", bty = "n", pch = c(1,1), col = c("black", "royalblue3"),
 
 
 ### 3 Sampling from the multiv. t distribution (and other normal variance mixtures)
-
-## We recycle the sample with positive correlation
-X.norm <- X.norm.
-A <- A.
-Sigma <- A %*% t(A)
-
 
 ### 3.1 A sample from a multivariate t_nu distribution #########################
 
