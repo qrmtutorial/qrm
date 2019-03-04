@@ -181,13 +181,12 @@ MC.t     <- risk_measure(S, lambda = lambda, alpha = alpha, method = "MC.t", N =
 
 ## Pick out VaR and ES for all methods
 (rm <- rbind("MC (normal)"    = unlist(MC.N[c("VaR", "ES")]),
-             "Var.-cov."      = unlist(var.cov),
-             "Hist. sim."     = unlist(hist.sim),
+             "Var.-cov."      = unlist(var.cov[c("VaR", "ES")]),
+             "Hist. sim."     = unlist(hist.sim[c("VaR", "ES")]),
              "POT"            = unlist(POT [c("VaR", "ES")]),
              "MC (Student t)" = unlist(MC.t[c("VaR", "ES")])))
 
-### Graphical goodness-of-fit check for the fitted GPD
-
+## Graphical assessment of the fitted GPD
 ## Transform the excesses with the fitted GPD distribution function.
 ## The resulting sample should roughly follow a standard uniform distribution.
 excess <- POT$excess # excesses over the threshold
@@ -216,12 +215,10 @@ hist(L, breaks = "Scott", probability = TRUE, xlim = c(0, max(L, rm)), main = ""
                                          widehat(VaR)[a] <= widehat(ES)[a],
                        list(sd = time[1], ed = time[2], a = alpha)), col = "gray90"); box() # histogram
 lty <- c(3, 2, 1, 4, 5)
-lwd <- c(1.2, 1.6, 1, 1.2, 1.2)
-cols <- c("maroon3", "black", "black", "royalblue3", "darkorange2")
-for(k in seq_len(nrow(rm))) abline(v = rm[k,], lty = lty[k], lwd = lwd[k],
-                                   col = cols[k]) # colored vertical lines indicating VaR and ES
-legend("topright", bty = "n", inset = 0.02, lty = lty, lwd = lwd,
-       col = cols, legend = rownames(rm),
+lwd <- c(1.6, 2, 1, 1.2, 1.2)
+for(k in seq_len(nrow(rm)))
+    abline(v = rm[k,], lty = lty[k], lwd = lwd[k]) # colored vertical lines indicating VaR and ES
+legend("topright", bty = "n", inset = 0.02, lty = lty, lwd = lwd, legend = rownames(rm),
        title = as.expression(substitute(widehat(VaR)[a] <= widehat(ES)[a], list(a = alpha)))) # legend
 
 ## Results:
@@ -229,8 +226,7 @@ legend("topright", bty = "n", inset = 0.02, lty = lty, lwd = lwd,
 ##   and the variance-covariance method lead to similar results
 ##   (they both assume multivariate normal distributed risk-factor changes but
 ##    differ in the computation of the loss distribution (analytical vs empirical)).
-## - Both underestimate VaR and ES in comparison to the historical simulation
-##   method.
+## - Both underestimate VaR and ES as estimated by historical simulation.
 ## - The historical simulation method implies that the loss distribution is
 ##   more heavy-tailed. This is captured quite well by POT method and
 ##   (possibly too well by) the Monte Carlo method for multivariate t
