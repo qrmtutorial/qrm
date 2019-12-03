@@ -9,11 +9,11 @@
    Tests of multivariate normality
 06_Dow_Jones_constituents_model.R
    Fitting symmetric and skewed t, NIG and GH models to selected Dow Jones constituents
-06_Fundamental_factor_model.R
+06_Factor_model_fundamental.R
    Estimating a fundamental factor model using cross-sectional regression
-06_Macroeconomic_factor_model.R
+06_Factor_model_macroeconomic.R
    Estimating a macroeconomic factor model using time-series regression
-06_PCA_factor_model.R
-   Using PCA to construct a factor model
+06_Factor_model_statistical_PCA.R
+   Using PCA to construct a statistical factor model
 06_Projections_of_uniform_on_sphere.R
    Investigating projections of distributions uniform on the unit sphere

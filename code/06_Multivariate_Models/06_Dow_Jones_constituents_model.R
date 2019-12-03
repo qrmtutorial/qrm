@@ -7,8 +7,6 @@
 ### Setup ######################################################################
 
 library(xts)
-library(mvtnorm)
-library(QRM)
 library(qrmtools)
 library(qrmdata)
 library(ghyp)
@@ -36,15 +34,17 @@ plot.zoo(X.w)
 
 ## Daily log-returns
 apply(X.d, 2, function(x) shapiro.test(x)$p.value) # tests of marginal normality
-jointnormalTest(as.matrix(X.d), plot = FALSE) # Kolmogorov--Smirnov test of squared Mahalanobis distances being chi_d^2
-MardiaTest(as.matrix(X.d)) # Mardia's test of joint normality
+maha2_test(X.d) # Anderson--Darling test of squared Mahalanobis distances being chi_d^2
+mardia_test(X.d) # Mardia's kurtosis test of joint normality based on squared Mahalanobis distances
+mardia_test(X.d, type = "skewness") # Mardia's skewness test of joint normality based on Mahalanobis angles
 
 ## Weekly log-returns
 apply(X.w, 2, function(x) shapiro.test(x)$p.value) # tests of marginal normality
-jointnormalTest(as.matrix(X.w), plot = FALSE) # Kolmogorov--Smirnov test of squared Mahalanobis distances being chi_d^2
-MardiaTest(as.matrix(X.w)) # Mardia's test of joint normality
+maha2_test(X.w) # Anderson--Darling test of squared Mahalanobis distances being chi_d^2
+mardia_test(X.w) # Mardia's kurtosis test of joint normality based on squared Mahalanobis distances
+mardia_test(X.w, type = "skewness") # Mardia's skewness test of joint normality based on Mahalanobis angles
 
-## => All p-values << 0.05 => The data is certainly not normally distributed.
+## => All p-values << 0.05 => The data is not normally distributed.
 
 
 ## Visual tests of normality
@@ -76,7 +76,7 @@ fit.GH.sym.d  <- fit.ghypmv(X.d, symmetric = TRUE, nit = max.iter, silent = TRUE
 fit.t.skw.d   <- fit.tmv   (X.d, symmetric = FALSE, nit = max.iter, silent = TRUE) # t
 fit.NIG.skw.d <- fit.NIGmv (X.d, symmetric = FALSE, nit = max.iter, silent = TRUE) # normal inverse Gaussian
 fit.GH.skw.d  <- fit.ghypmv(X.d, symmetric = FALSE, nit = max.iter, silent = TRUE) # generalized hyperbolic
-## Note: Warnings are due to deprecated recycling of an array of length 1
+## Note: Warnings are due to deprecated recycling of an array of length 1 ('ghyp' problem)
 
 fit.GH.skw.d@gamma # skewness parameters
 

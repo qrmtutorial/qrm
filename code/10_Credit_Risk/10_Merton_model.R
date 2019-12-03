@@ -1,4 +1,4 @@
-### by Alexander McNeil
+## By Alexander McNeil
 
 ## required packages
 library(qrmtools)
@@ -22,9 +22,8 @@ for (i in 1:npaths)
  head(paths)
 
 ## plot paths
-
-times <- (1:(N+1))/(N+1)
 opar <- par(mar = c(3,3,2,1), mgp = c(2,1,0))
+times <- (1:(N+1))/(N+1)
 plot(times,paths[,1],type="l",xlab="t",ylab=expression(V[t]),ylim=range(paths))
 for (i in 1:npaths){
 	lines(times,paths[,i],col=sample(1:20,1))
@@ -64,5 +63,4 @@ lines(times,B*exp(-r*(T-times)),col=3)
 # Add defaultable debt
 Bt <- B*exp(-r*(T-times)) - Black_Scholes(times,Vt,r,sigmaV,B,T,type="put")
 lines(times,Bt,col=2)
-
-par(def.par)
+par(opar)

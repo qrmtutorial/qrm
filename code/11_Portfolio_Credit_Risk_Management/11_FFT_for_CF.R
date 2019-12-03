@@ -1,4 +1,4 @@
-# by Alexander McNeil
+## By Alexander McNeil
 
 # Script illustrating calculation of loss distribution using FFT
 
@@ -19,7 +19,7 @@ pd <- c(rep(0.1,10),rep(0.05,10))
 
 N <- sum(exposure)+1
 t <- 2*pi*(0:(N-1))/N
-cfunction <- laplace.transform(-t*(1i),pd,exposure) 
+cfunction <- laplace.transform(-t*(1i),pd,exposure)
 plot(cfunction)
 # note that the characteristic function is the LT at -i*t
 
@@ -62,7 +62,7 @@ exposure <- sample(1:10,m,replace=TRUE)
 pd <- sample(c(0.05,0.01,0.005,0.001),m,replace=TRUE)
 N <- sum(exposure)+1
 t <- 2*pi*(0:(N-1))/N
-cfunction <- laplace.transform(-t*(1i),pd,exposure) 
+cfunction <- laplace.transform(-t*(1i),pd,exposure)
 plot(cfunction)
 fft.out <- round(Re(fft(cfunction)),digits=20)
 probs <- fft.out/N

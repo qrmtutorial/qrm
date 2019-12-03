@@ -1,4 +1,5 @@
-#### by Alexander McNeil
+## By Alexander McNeil
+
 library(expm)
 Aaa.rates = c(0,0.082,0.0063,0,0.0003,0,0,0,0)
 Aa.rates = c(0.0091,0,0.0843,0.0049,0.0006,0.0002,0.0001,0,0.0002)

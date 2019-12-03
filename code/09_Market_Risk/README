@@ -5,7 +5,7 @@
 09_ZCB_yields_Nelson_Siegel.R
    Factor modelling of the yield curve using the Nelson-Siegel approach
 09_ZCB_yields_PCA.R
-   Factor modelling of the yield curve using PCA approach
+   Factor modelling of the yield curve using the PCA approach
 09_Standard_methods_for_market_risk.R
    Estimating the risk measures VaR and ES with standard methods based on (BMW, Siemens) data.
 09_Backtesting.R

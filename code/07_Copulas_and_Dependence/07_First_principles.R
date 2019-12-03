@@ -6,11 +6,9 @@
 
 ### Setup ######################################################################
 
-library(mvtnorm) # for sampling from N(0, P)
+library(nvmix) # for rNorm()
 library(copula) # for pairs2()
 library(qrmtools) # for qPar()
-
-set.seed(271) # for reproducibility
 
 
 ### 1 Normal copula sample #####################################################
@@ -20,7 +18,7 @@ P <- matrix(0.7, nrow = 2, ncol = 2) # correlation matrix; play with the entry!
 diag(P) <- 1 # set diagonals to 1
 n <- 1000 # sample size
 set.seed(271) # for reproducibility
-X <- rmvnorm(n, sigma = P) # sample from N(0, P)
+X <- rNorm(n, scale = P) # sample from N(0, P)
 plot(X, xlab = expression(X[1]), ylab = expression(X[2])) # scatter plot
 
 ## Marginally apply probability transforms (with the corresponding dfs)
@@ -56,7 +54,7 @@ diag(P) <- 1
 P
 
 ## Sample from a multivariate t distribution
-X <- rmvt(n, sigma = P, df = nu) # sample from t_{P, nu}
+X <- rStudent(n, df = nu, scale = P) # sample from t_{P, nu}
 pairs2(X, labels.null.lab = "X", cex = 0.4, col = adjustcolor("black", alpha.f = 0.5))
 
 ## Marginally apply probability transforms (here: empirically estimated dfs)

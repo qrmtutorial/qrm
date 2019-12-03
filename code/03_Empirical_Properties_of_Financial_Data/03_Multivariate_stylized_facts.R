@@ -12,7 +12,7 @@
 ### Setup ######################################################################
 
 library(xts)
-library(mvtnorm)
+library(nvmix) # for rNorm(), rStudent()
 library(qrmdata)
 library(qrmtools)
 
@@ -71,8 +71,8 @@ abline(reg)
 
 ## EXERCISE: Now try and compare with these SWN (strict white noise) data
 set.seed(271)
-X.t <- xts(rmvt(n = nrow(X), df = 3, sigma = cor(X)), time(X))
-X.N <- xts(rmvnorm(n = nrow(X),      sigma = cor(X)), time(X))
+X.t <- xts(rStudent(n = nrow(X), df = 3, scale = cor(X)), time(X))
+X.N <- xts(rNorm(n = nrow(X), scale = cor(X)), time(X))
 
 
 ### 4 (M4) #####################################################################

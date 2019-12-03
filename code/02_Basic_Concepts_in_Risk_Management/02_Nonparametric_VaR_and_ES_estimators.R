@@ -283,8 +283,8 @@ xi <- fit$par[["shape"]] # fitted shape xi
 beta <- fit$par[["scale"]] # fitted scale beta
 if(xi <= 0) stop("Risk measures only implemented for xi > 0.")
 Fbu <- length(L.) / length(L) # number of excesses / number of losses = N_u / n
-VaR.POT <- u + (beta/xi)*(((1-alpha)/Fbu)^(-xi)-1) # see McNeil, Frey, Embrechts (2015, Section 5.2.3)
-ES.POT <- (VaR.POT + beta-xi*u) / (1-xi) # see McNeil, Frey, Embrechts (2015, Section 5.2.3)
+VaR.POT <- u + (beta/xi)*(((1-alpha)/Fbu)^(-xi)-1) # see MFE (2015, Section 5.2.3)
+ES.POT <- (VaR.POT + beta-xi*u) / (1-xi) # see MFE (2015, Section 5.2.3)
 lines(1-alpha, VaR.POT, lty = "dashed")
 lines(1-alpha, ES.POT,  lty = "dashed")
 ## Misc

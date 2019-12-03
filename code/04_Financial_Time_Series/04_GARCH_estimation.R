@@ -30,7 +30,7 @@ plot.zoo(X, xlab = "Time")
 uspec.N <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(1,1)),
                       mean.model = list(armaOrder = c(1,0), # AR(1) part
                                         include.mean = TRUE), # with mean
-                      distribution.model = "norm") # normal innovations
+                      distribution.model = "norm") # standard normal innovations
 (fit.N <- ugarchfit(spec = uspec.N, data = X))
 ## Note: Fit to 'X', not 'SPdata'!
 
@@ -53,7 +53,7 @@ layout(1) # restore layout
 ## Now consider t innovations
 uspec.t <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(1,1)),
                       mean.model = list(armaOrder = c(1,0), include.mean = TRUE),
-                      distribution.model = "std") # Student t innovations
+                      distribution.model = "std") # standardized Student t innovations
 fit.t <- ugarchfit(spec = uspec.t, data = X)
 
 ## The pictures are similar, but the Q-Q plot looks "better"

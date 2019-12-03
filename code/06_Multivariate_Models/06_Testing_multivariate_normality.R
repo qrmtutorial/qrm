@@ -5,9 +5,8 @@
 
 ### Setup ######################################################################
 
-library(QRM)
 library(qrmtools)
-library(mvtnorm) # for rmvnorm() and rmvt()
+library(nvmix) # for rNorm() and rStudent()
 library(moments) # for jarque.test()
 library(xts) # for time-series related functions
 
@@ -25,8 +24,8 @@ diag(Sigma) <- rep(1, d) # => now Sigma is a correlation matrix
 Sigma <- Sigma * (sd %*% t(sd)) # covariance matrix
 nu <- 3 # degrees of freedom
 set.seed(271) # set seed (for reproducibility)
-X.N <- rmvnorm(n, mean = mu, sigma = Sigma) # sample from N(mu, Sigma)
-X.t <- rmvt(n, sigma = ((nu-2)/nu) * Sigma, df = nu, delta = mu) # sample from t_d(nu, mu, Sigma) (same covariance as N(mu, Sigma))
+X.N <- rNorm(n, loc = mu, scale = Sigma) # sample from N(mu, Sigma)
+X.t <- rStudent(n, df = nu, loc = mu, scale = ((nu-2)/nu) * Sigma) # sample from t_d(nu, mu, ((nu-2)/nu) * Sigma) (same covariance as N(mu, Sigma))
 X.t.N <- sapply(1:d, function(j) qnorm(rank(X.t[,j]) / (nrow(X.t) + 1),
                                        mean = mu[j], sd = sqrt(Sigma[j, j]))) # t dependence with normal margins; see Chapter 7
 if(FALSE) {
@@ -55,10 +54,10 @@ stopifnot(apply(X.N, 2, function(x) jarque.test(x) $p.value) > 0.05) # Jarque--B
 ## Note: Careful with 'multiple testing'
 
 ## Joint normality
-mardia <- MardiaTest(X.N) # Mardia's test
-KSmaha2 <- jointnormalTest(X.N, plot = FALSE) # Kolmogorov--Smirnov test of squared Mahalanobis distances being chi_d^2
-stopifnot(mardia[["K3 p-value"]] > 0.05, mardia[["K4 p-value"]] > 0.05,
-          KSmaha2[["KS p-value"]] > 0.05)
+ADmaha2 <- maha2_test(X.N) # Anderson--Darling test of squared Mahalanobis distances being chi_d^2
+mardiaK <- mardia_test(X.N) # Mardia's kurtosis test of joint normality based on squared Mahalanobis distances
+mardiaS <- mardia_test(X.N, type = "skewness") # Mardia's skewness test of joint normality based on Mahalanobis angles
+stopifnot(mardiaS$p.value > 0.05, mardiaK$p.value > 0.05, ADmaha2$p.value > 0.05)
 
 
 ### 2.1.2 Graphical tests
@@ -84,10 +83,10 @@ stopifnot(apply(X.t, 2, function(x) jarque.test(x) $p.value) <= 0.05) # Jarque--
 ## Note: Careful with 'multiple testing'
 
 ## Joint normality
-mardia <- MardiaTest(X.t) # Mardia's test
-KSmaha2 <- jointnormalTest(X.t, plot = FALSE) # Kolmogorov--Smirnov test of squared Mahalanobis distances being chi_d^2
-stopifnot(mardia[["K3 p-value"]] <= 0.05, mardia[["K4 p-value"]] <= 0.05,
-          KSmaha2[["KS p-value"]] <= 0.05)
+ADmaha2 <- maha2_test(X.t) # Anderson--Darling test of squared Mahalanobis distances being chi_d^2
+mardiaK <- mardia_test(X.t) # Mardia's kurtosis test of joint normality based on squared Mahalanobis distances
+mardiaS <- mardia_test(X.t, type = "skewness") # Mardia's skewness test of joint normality based on Mahalanobis angles
+stopifnot(mardiaS$p.value <= 0.05, mardiaK$p.value <= 0.05, ADmaha2$p.value <= 0.05)
 
 
 ### 2.2.2 Graphical tests
@@ -112,10 +111,10 @@ stopifnot(apply(X.t.N, 2, function(x) shapiro.test(x)$p.value) > 0.05) # Shapiro
 stopifnot(apply(X.t.N, 2, function(x) jarque.test(x) $p.value) > 0.05) # Jarque--Bera
 
 ## Joint normality
-mardia <- MardiaTest(X.t.N) # Mardia's test
-KSmaha2 <- jointnormalTest(X.t.N, plot = FALSE) # Kolmogorov--Smirnov test of squared Mahalanobis distances being chi_d^2
-stopifnot(mardia[["K3 p-value"]] <= 0.05, mardia[["K4 p-value"]] <= 0.05,
-          KSmaha2[["KS p-value"]] <= 0.05)
+ADmaha2 <- maha2_test(X.t.N) # Anderson--Darling test of squared Mahalanobis distances being chi_d^2
+mardiaK <- mardia_test(X.t.N) # Mardia's kurtosis test of joint normality based on squared Mahalanobis distances
+mardiaS <- mardia_test(X.t.N, type = "skewness") # Mardia's skewness test of joint normality based on Mahalanobis angles
+stopifnot(mardiaS$p.value <= 0.05, mardiaK$p.value <= 0.05, ADmaha2$p.value <= 0.05)
 
 
 ### 2.3.2 Graphical tests

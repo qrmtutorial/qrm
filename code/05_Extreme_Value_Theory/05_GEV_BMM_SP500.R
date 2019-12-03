@@ -2,14 +2,14 @@
 
 ## 1) Compute the probability of next year's maximal risk-factor change
 ##    exceeding all previous ones via the BBM based on S&P 500 data;
-##    see McNeil et al. (2015, Example 5.12).
-## 2) Compute a return level;  see McNeil et al. (2015, Example 5.15)
-## 3) Compute a return period; see McNeil et al. (2015, Example 5.15)
+##    see MFE (2015, Example 5.12).
+## 2) Compute a return level;  see MFE (2015, Example 5.15)
+## 3) Compute a return period; see MFE (2015, Example 5.15)
 
 ## Note: Different databases can (and indeed do) provide different stock values
 ##       for the S&P 500. The data below (from qrmdata) is from finance.yahoo.com
 ##       and thus our computed values differ from the values reported
-##       in McNeil et al. (2015). Also, we (mostly) work with log-returns
+##       in MFE (2015). Also, we (mostly) work with log-returns
 ##       instead of classical returns here.
 
 

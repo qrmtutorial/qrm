@@ -11,13 +11,12 @@ library(qrmtools) # for plot_NA() and plot_matrix()
 
 ## standardization function
 standardize <- function(data)
-{
-  apply(data,2,function(v){(v-mean(v))/sd(v)})
-}
+    apply(data,2,function(v){(v-mean(v))/sd(v)})
+
 
 ### 1 Data preparation #########################################################
 
-## Load and extract the data we work with (all available since 1995) 
+## Load and extract the data we work with (all available since 1995)
 ## Index
 data(SP500_const) # index data
 SP500.const <- SP500_const['1995-01-01/',] # all since 1995
@@ -31,9 +30,9 @@ dim(SP500.const)
 par(ask=TRUE)
 nplots <- ceiling(dim(SP500.const)[2]/20)
 for (i in 1:nplots){
-  r1 <- 20*(i-1)+1
-  r2 <- min(20*i,dim(SP500.const)[2])
-  plot.zoo(SP500.const[,r1:r2], xlab="Time t", main="SP500 Constituents")
+    r1 <- 20*(i-1)+1
+    r2 <- min(20*i,dim(SP500.const)[2])
+    plot.zoo(SP500.const[,r1:r2], xlab="Time t", main="SP500 Constituents")
 }
 par(ask=FALSE)
 
@@ -70,6 +69,7 @@ levels(X.sectors) <- c("Con-Disc.","Con-Stap.","Energy",
 
 X <- xts(standardize(X),time(X))
 
+
 ### 2 Model fitting ############################################################
 
 ## Fit a cross-sectional regression model X_t = B*F_t + eps
@@ -103,7 +103,7 @@ plot.zoo(F,type="h")
 ## Construct the systematic terms for each obligor
 A <- model.matrix(mod2)
 F.tilde <- t(A %*% t(F))
-# Check for unit variances
+                                        # Check for unit variances
 apply(F.tilde,2,var)
 
 ## Estimate beta_i terms by regression
@@ -111,8 +111,8 @@ n.stocks <- dim(X)[2]
 beta <- rep(NA,n.stocks)
 names(beta) <- names(X)
 for (i in 1:n.stocks){
-  tmp <- lm(X[,i] ~ F.tilde[,i] - 1)
-  beta[i] <- coef(tmp)^2
+    tmp <- lm(X[,i] ~ F.tilde[,i] - 1)
+    beta[i] <- coef(tmp)^2
 }
 tmp
 summary(beta)
@@ -122,15 +122,15 @@ npa <- par(mfrow=c(3,5),cex=0.5,mar=c(3,3,2,1),mgp=c(2,1,0))
 ## most systematic
 beta.top <- order(-beta)[1:15]
 for (i in beta.top){
-  plot(F.tilde[,i],X[,i],xlab="F.tilde",ylab="X",main=names(X)[i])
-  abline(0,sqrt(beta[i]))
+    plot(F.tilde[,i],X[,i],xlab="F.tilde",ylab="X",main=names(X)[i])
+    abline(0,sqrt(beta[i]))
 }
 
 ## least systematic
 beta.bottom <- order(beta)[1:15]
 for (i in beta.bottom){
-  plot(F.tilde[,i],X[,i],xlab="F.tilde",ylab="X",main=names(X)[i])
-  abline(0,sqrt(beta[i]))
+    plot(F.tilde[,i],X[,i],xlab="F.tilde",ylab="X",main=names(X)[i])
+    abline(0,sqrt(beta[i]))
 }
 
 par(npa)

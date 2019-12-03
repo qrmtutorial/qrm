@@ -97,10 +97,10 @@ plot.zoo(X, xlab = "Time", main = "Log-returns of exchange rates to USD",
 ## Load zero-coupon bond yield data (in USD)
 ## Note: Typically, yield = ((face value / current bond price)^(1/maturity) - 1) * 100%
 ##       (as face value = current price * (1 + yield)^maturity
-data("ZCB_US")
-dim(ZCB_US) # => 30-dimensional; each dimension is a maturity
-head(ZCB_US)
-ZCB <- ZCB_US['2002-01-02/2011-12-30']
+data("ZCB_USD")
+dim(ZCB_USD) # => 30-dimensional; each dimension is a maturity
+head(ZCB_USD)
+ZCB <- ZCB_USD['2002-01-02/2011-12-30']
 plot.zoo(ZCB, xlab = "Time", main = "Percentage yields")
 
 ## Compute differences (first row is removed)

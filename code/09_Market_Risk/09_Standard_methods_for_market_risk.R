@@ -6,8 +6,7 @@
 
 ### Setup ######################################################################
 
-library(mvtnorm) # for sampling from a multivariate t distribution
-library(QRM) # for fit.mst()
+library(nvmix) # for rNorm(), fitStudent(), rStudent()
 library(xts) # for na.fill()
 library(qrmdata) # for the data
 library(qrmtools) # for the data analysis
@@ -112,7 +111,7 @@ risk_measure <- function(S, lambda, alpha,
                N <- list(...)$N # pick out N from '...'
                mu.hat <- colMeans(X) # estimate the mean vector mu
                Sigma.hat  <- var(X) # estimate the covariance matrix Sigma
-               X. <- rmvnorm(N, mean = mu.hat, sigma = Sigma.hat) # simulate risk-factor changes
+               X. <- rNorm(N, loc = mu.hat, scale = Sigma.hat) # simulate risk-factor changes
                L <- loss_operator(X., weights = w.) # compute corresponding (simulated) losses
                ## Compute VaR and ES and return
                list(VaR = VaR_np(L, alpha), # nonparametrically estimate VaR
@@ -124,16 +123,15 @@ risk_measure <- function(S, lambda, alpha,
            "MC.t" = { # Monte Carlo based on a fitted multivariate t
                stopifnot(hasArg(N)) # check if the number 'N' of MC replications has been provided (via '...')
                N <- list(...)$N # pick out N from '...'
-               fit <- fit.mst(X, method = "BFGS") # fit a multivariate t distribution
-               X. <- rmvt(N, sigma = as.matrix(fit$Sigma), df = fit$df, delta = fit$mu) # simulate risk-factor changes
+               fit <- fitStudent(X) # fit a multivariate t distribution
+               X. <- rStudent(N, df = fit$df, loc = fit$loc, scale = fit$scale) # simulate risk-factor changes
                L <- loss_operator(X., weights = w.) # compute corresponding (simulated) losses
                ## Compute VaR and ES and return
                list(VaR = VaR_np(L, alpha), # nonparametrically estimate VaR
                     ES  =  ES_np(L, alpha), # nonparametrically estimate ES
                     ## Additional quantities returned here
-                    mu    = fit$mu, # fitted location vector
-                    sigma = fit$Sigma, # fitted dispersion matrix
-                    Sigma = fit$covariance, # fitted covariance matrix
+                    mu    = fit$loc, # fitted location vector
+                    sigma = fit$scale, # fitted dispersion matrix
                     df    = fit$df) # fitted degrees of freedom
            },
            "POT" = { # simulate losses from a fitted Generalized Pareto distribution (GPD); this is underlying the peaks-over-threshold (POT) method
@@ -148,8 +146,8 @@ risk_measure <- function(S, lambda, alpha,
                ## Now compute semi-parametric VaR and ES estimates
                ## G_{xi,beta}(x) = 1-(1+xi*x/beta)^{-1/xi} if xi != 0
                Fbu <- length(excess) / length(L.) # number of excesses / number of losses = N_u / n
-               VaR <- u + (beta/xi)*(((1-alpha)/Fbu)^(-xi)-1) # see McNeil, Frey, Embrechts (2015, Section 5.2.3)
-               ES <- (VaR + beta-xi*u) / (1-xi) # see McNeil, Frey, Embrechts (2015, Section 5.2.3)
+               VaR <- u + (beta/xi)*(((1-alpha)/Fbu)^(-xi)-1) # see MFE (2015, Section 5.2.3)
+               ES <- (VaR + beta-xi*u) / (1-xi) # see MFE (2015, Section 5.2.3)
                if(xi >= 1) ES <- Inf # adjust to be Inf if xi >= 1 (i.e., ES < 0); see Coles (2001, p. 79)
                ## Return
                list(VaR = VaR, # parametrically estimate VaR

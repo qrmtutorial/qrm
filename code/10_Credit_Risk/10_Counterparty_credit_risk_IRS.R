@@ -1,4 +1,4 @@
-### by Alexander McNeil
+## By Alexander McNeil
 
 library(sde)
 
@@ -33,7 +33,7 @@ Afunc <- function(t,T){
   top <- 2*h*exp((k+h)*(T-t)/2)
   bottom <- 2*h+(k+h)*(exp((T-t)*h)-1)
   (top/bottom)^{2*k*theta/(sigma^2)}
-}  	
+}
 Bfunc <- function(t,T){
   h=sqrt(k^2 + 2*sigma^2)
   top <- 2*(exp((T-t)*h)-1)
@@ -43,10 +43,10 @@ Bfunc <- function(t,T){
 
 # functions for bond prices and yields
 price <- function(t,T,rt){
-  Afunc(t,T)*exp(-Bfunc(t,T)*rt) 
+  Afunc(t,T)*exp(-Bfunc(t,T)*rt)
 }
 yield <- function(t,T,rt,k){
-  -log(price(t,T,rt))/(T-t) 
+  -log(price(t,T,rt))/(T-t)
 }
 
 # Current short rate
@@ -81,10 +81,10 @@ for (i in 1:n.paths){
 
 # We consider a prototypical (forward-start) Interest-Rate Swap
 # This is product on page 13 of Brigo-Mercurio
-# start date Talpha 
-# end date Tbeta 
-# year fraction describing payment intervals is tau 
-# nominal is N 
+# start date Talpha
+# end date Tbeta
+# year fraction describing payment intervals is tau
+# nominal is N
 tau <- 0.25
 N <- 1000
 Talpha <- 1
@@ -99,7 +99,7 @@ Tk <- seq(from=Talpha+tau, to =Tbeta, by = tau)
 # B has a payer IRS (PFS)
 
 PFS <- function(K,Talpha,Tbeta,Tk,N,tau,t,rt){
-  N*(price(t,Talpha,rt)-price(t,Tbeta,rt))  - N*tau*K*sum(price(t,Tk,rt))  
+  N*(price(t,Talpha,rt)-price(t,Tbeta,rt))  - N*tau*K*sum(price(t,Tk,rt))
 }
 
 # determine fixed interest rate that makes contract fair at outset

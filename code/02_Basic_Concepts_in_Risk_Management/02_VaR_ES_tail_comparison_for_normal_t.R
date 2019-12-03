@@ -1,6 +1,6 @@
 ## By Marius Hofert
 
-## See McNeil et al. (2015, Example 2.16)
+## See MFE (2015, Example 2.16)
 
 
 ### Setup ######################################################################

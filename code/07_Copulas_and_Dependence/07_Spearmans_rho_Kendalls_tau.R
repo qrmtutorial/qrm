@@ -91,7 +91,7 @@ Theta <- function(nu, n.MC = 1e5)
 }
 
 ## Spearman's rho for t copulas
-## (see McNeil, Frey, Embrechts (2015, Prop. 7.44 and Eq. (7.42)))
+## (see MFE (2015, Prop. 7.44 and Eq. (7.42)))
 rho_t <- function(rho, nu, n.MC = 1e5)
 {
     stopifnot(-1 <= rho, rho <= 1, nu > 0, n.MC > 0)

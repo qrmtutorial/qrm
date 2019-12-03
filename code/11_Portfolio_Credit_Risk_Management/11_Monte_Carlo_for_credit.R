@@ -1,4 +1,4 @@
-## by Alexander McNeil
+## By Alexander McNeil
 
 ## Importance sampling for a one-factor Gaussian threshold model
 
@@ -8,7 +8,7 @@
 optimtilt <- function(psi,portfolio,threshold)
 {
   tiltfunc <- function(t,psi,portfolio,threshold)
-  { 
+  {
     exposures <- portfolio$exposures
     probitnorm.mu <- qnorm(portfolio$pd)/sqrt(1-portfolio$beta)
     probitnorm.sigma <- sqrt(portfolio$beta/(1-portfolio$beta))
@@ -56,7 +56,7 @@ IStailprob <- function(portfolio,threshold,outerIS=TRUE,innerIS=TRUE,n=5000,n.in
   probitnorm.sigma <- sqrt(portfolio$beta/(1-portfolio$beta))
   mu <- 0
   n1 <- 1
-  if (outerIS) 
+  if (outerIS)
     mu <- muopt(threshold,probitnorm.mu,probitnorm.sigma,innerIS,portfolio,100)
   if (innerIS)
     n1 <- n.inner

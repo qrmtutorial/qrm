@@ -15,8 +15,36 @@
 ## A: - *Packages* (both the available ones and the possibility to write
 ##      your own)
 ##    - Ability to write *readable* code (focus is on main aspects of a problem)
-##    - High(er) level (optimization, run time, debugging, parallel computing etc.)
-##
+##    - High(er) level (plotting, optimization, run time measurement, debugging,
+##      parallel computing etc.)
+
+## Q: How to install R (for daily use)?
+## A: - Install R from https://cran.r-project.org/
+##    - Integrated development environment (IDE):
+##      + RStudio (recommended): http://www.rstudio.com/
+##      + Emacs + ESS (Emacs Speaks Statistics)
+
+## Q: How to install R (contributed) packages?
+## A: - From CRAN (release): install.packages("mypackage")
+##    - From R-Forge (snapshot, development version):
+##      install.packages("mypackage", repos = "http://R-Forge.R-project.org")
+##    - From GitHub: devtools::install_github("maintainer/mypackage")
+##    - From Bioconductor devtools::install_bioc("mypackage") or
+##      BiocManager::install("mypackage")
+##    - From source (.tar.gz):
+##      install.packages ("mypackage.tar.gz", repos = NULL, lib = "/mydirectory")
+##      (if lib is not provided, R takes the first element in .libPaths() which
+##      can be set via R_LIBS_USER=/mydirectory in ∼/.Renviron).
+
+## Q: How to work with R?
+## A: - Create a standalone script myscript.R containing the R source code.
+##    - Run it as follows:
+##      + Execute the script, e.g., line-by-line (CMD + RET)
+##      + Run the whole script with 'Rscript myscript.R > myscript.Rout'
+##        (output only contains actual printed output; better for shell-type
+##        R scripts with first line #!/usr/bin/env Rscript) or with
+##        'R CMD BATCH myscript.R' (output contains whole R session; better
+##        in projects, e.g., when run on a cluster).
 
 ## Q: Where to find R or help on R?
 ## A: - Main website: https://www.r-project.org/
@@ -41,21 +69,6 @@
 ##      + Study the source code (for more ``hidden'' functions, see pp. 43 in
 ##        http://cran.r-project.org/doc/Rnews/Rnews_2006-4.pdf)
 
-## Q: How can I work with R?
-## A: - Software interfaces:
-##      + RStudio (recommended): http://www.rstudio.com/
-##      + Emacs + ESS
-##    - Workflow:
-##      + Write an R script (.R file) containing the source code.
-##      + Execute it line-by-line (paragraph-by-paragraph etc.) or the whole script
-##        at once (if in batch mode, e.g., on a computer cluster).
-
-## Q: How to install (the latest version of) a package?
-## A: - From CRAN (release):
-##      install.packages("mypackage")
-##    - From R-Forge (snapshot):
-##      install.packages("mypackage", repos = "http://R-Forge.R-project.org")
-
 ## Q: What to watch out for when programming?
 ## A: - Theoretical challenges (e.g., curse of dimensionality, e.g., for computing
 ##      P(a < X <= b) in high dimensions)
@@ -75,8 +88,8 @@
 ##    - Scaling (bigger simulations; if possible, use parallel's mclappy() and
 ##      parLapply() for multi-core and multi-node computations)
 
-## Note: The code below is a medley of Appendix A of the manual
-##       "An Introduction to R" on http://cran.r-project.org/manuals.html
+## Note: See also Appendix A of the manual "An Introduction to R" on
+##       http://cran.r-project.org/manuals.html
 
 
 ### Simple manipulations; numbers and vectors ##################################
@@ -165,7 +178,7 @@ is.na(z) # check for NA or NaN
 is.nan(z) # check for just NaN
 is.infinite(z) # check for +/-Inf
 z[(!is.na(z)) &  is.finite(z) &  z >= 2] # pick out all finite numbers >= 2
-z[(!is.na(z)) && is.finite(z) && z >= 2] # watch out (indexing by 'FALSE' => empty vector)
+z[(!is.na(z)) && is.finite(z) && z >= 2] # watch out; used to fail; R >= 3.6.0: z[TRUE] => z
 
 ## Character vectors
 character(0) # the empty character vector
@@ -178,9 +191,6 @@ paste(1:3, c(x, y), sep = " - ") # recycling ("apple" appears again)
 (x <- c("a" = 3, "b" = 2)) # named vector of class 'numeric'
 x["b"] # indexing elements by name (useful!)
 x[["b"]] # drop the name
-
-## Other types of objects are: arrays (incl. matrices), lists, data frames,
-## factors, functions
 
 
 ### Arrays and matrices ########################################################
@@ -199,7 +209,7 @@ cbind(1:3, 5) # recycling
 nrow(A) # number of rows
 ncol(A) # number of columns
 dim(A) # dimension
-diag(A) # 1 2 3 4; diagonal of A
+diag(A) # diagonal of A
 diag(3) # identity (3, 3)-matrix
 (D <- diag(1:3)) # diagonal matrix with elements 1, 2, 3
 D %*% B # matrix multiplication
@@ -263,7 +273,7 @@ is.list(df)
 ## Version 1:
 L[[1]] # get first element of the list
 L[[3]][[1]] # get first element of the sub-list
-## Version 2: # use '$'
+## Version 2: use '$'
 L$group
 L$sublist[[1]]
 ## Version 3 (most readable and fail-safe): use the provided names
@@ -326,18 +336,19 @@ rexp(4,   rate = 2) # draw random variates from Exp(2)
 ### Working with additional packages ###########################################
 
 ## see ?install.packages()
-library(mvtnorm) # load mvtnorm; library = directory location where *packages* reside
+library(nvmix) # load nvmix; library = directory location where *packages* reside
 library(parallel) # needed for nextRNGStream() below
 ## Within functions, use require() (throws a warning and continues if the package
 ## is unavailable) instead of library() (produces an error). See also
 ## http://yihui.name/en/2014/07/library-vs-require/
 
-packageDescription("mvtnorm") # get a short description of the package
-maintainer("mvtnorm") # see citation("mvtnorm") for how to cite a package
+packageDescription("nvmix") # get a short description of the package
+maintainer("nvmix") # maintainer
+citation("nvmix") # bib item for citing the package
 
 ## Generate and plot data from a multivariate t distribution
 set.seed(271) # for reproducibility (see below)
-X <- rmvt(2000, sigma = P, df = 4.5) # generate data from a multivariate t_4.5 distribution
+X <- rStudent(2000, df = 4.5, scale = P) # generate data from a multivariate t_4.5 distribution
 library(lattice) # for the cloud plot
 cloud(X[,3]~X[,1]+X[,2], scales = list(col = 1, arrows = FALSE), col = 1,
       xlab = expression(italic(X[1])), ylab = expression(italic(X[2])),
@@ -352,17 +363,28 @@ pairs(X, gap = 0, pch = ".") # ... but we can use a pairs plot
 
 ## Generate from N(0,1)
 (X <- rnorm(2)) # generate two N(0,1) random variates
-str(.Random.seed)
-## Note:
-## - The first integer in .Random.seed encodes the U(0,1) random number
-##   generator kind (lowest two decimals) and the one for generating N(0,1)
-##   (highest decimal). The remaining integers denote the actual seed.
+str(.Random.seed) # encodes types of random number generators (RNGs) and the seed
+## Note (see ?.Random.seed):
+## - The first integer in .Random.seed encodes the ...
+##   1) U(0,1) RNG (lowest two decimals)
+##   2) N(0,1) RNG (the hundreds)
+##   3) U{1,...,n} RNG (the ten thousands)
+##   Note:
+##   + 3) was newly added in R 3.6.0
+##   + 3) is used in sample() -> sample.int() -> C functions sample and sample2
+##     -> ./src/main/names.c: do_sample and do_sample2 -> ./src/main/random.c
+##     (for do_sample => uses the alias method in the non-uniform case and
+##     R_unif_index in the uniform case) and ./src/main/unique.c (for do_sample2
+##     => uses R_unif_index -> ./src/main/RNG.c which generates (a vector of)
+##     random bits until a number < n appears (rejection algorithm); 'dn' most
+##     likely stands for 'n as a double'.
+## - The remaining integers denote the actual seed.
 ## - The default kind is the "Mersenne Twister" (which needs an integer(624)
 ##   as seed and the current position in this sequence, so 625 numbers).
-RNGkind() # => Mersenne Twister, inversion is used for generating N(0,1)
-(Y <- rnorm(2)) # => another two N(0,1) random variates (obviously different)
+RNGkind() # => Mersenne Twister, with inversion for N(0,1) and rejection for U{1,..,n}
 
 ## How can we make sure to obtain the same results (for *reproducibility*?)
+(Y <- rnorm(2)) # => another two N(0,1) random variates
 all.equal(X, Y) # obviously not equal (here: with probability 1)
 
 ## Set a 'seed' so that computations are reproducible
@@ -381,9 +403,10 @@ all.equal(X, Y) # => TRUE
 RNGkind() # => Mersenne Twister, inversion is used for generating N(0,1)
 RNGkind("L'Ecuyer-CMRG")
 RNGkind() # => L'Ecuyer's CMRG, inversion is used for generating N(0,1)
-.Random.seed # => now of length 7: first number as above + the seed
+.Random.seed # => now of length 7 (first number similarly as above and seed of length 6)
 Z <- rnorm(2) # use L'Ecuyer's CMRG for generating random numbers
-.Random.seed <- nextRNGStream(.Random.seed) # advance seed by 2^127; requires 'parallel'
+library(parallel) # for nextRNGStream() for advancing the seed
+.Random.seed <- nextRNGStream(.Random.seed) # advance seed by 2^127
 Z. <- rnorm(2) # generate from next stream => will be 'sufficiently apart' from Z
 RNGkind("Mersenne-Twister") # switch back to Mersenne-Twister
 RNGkind()

@@ -5,8 +5,7 @@
 
 ### 1 Example: Skewed loss distributions #######################################
 
-## Consider two independently defaultable zero-coupon bonds;
-## see McNeil et al. (2015, Example 2.25)
+## Consider two independently defaultable zero-coupon bonds; see MFE (2015, Example 2.25)
 
 ## Setup
 n <- 1024 # number of alphas
@@ -78,7 +77,7 @@ text(0.82, 0.05, label = "VaR superadditive")
 ### 2 Example: Independent, light-tailed losses and small to moderate alpha ####
 
 ## Consider two independent Exp(1) random variables and small to moderate alpha;
-## see McNeil et al. (2015, Example 7.30)
+## see MFE (2015, Example 7.30)
 
 ## Setup
 n <- 1024 # number of alphas

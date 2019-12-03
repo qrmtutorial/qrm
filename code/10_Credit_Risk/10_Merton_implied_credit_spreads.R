@@ -1,4 +1,4 @@
-### by Alexander McNeil
+## By Alexander McNeil
 
 ## functions
 

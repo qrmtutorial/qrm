@@ -212,8 +212,8 @@ hist(Loss., breaks = "FD", xlim = c(-0.1, 0.95)); box()
 
 ## Risk measures
 alpha <- c(0.95, 0.975, 0.99) # confidence level alpha
-VaR_np(Loss, alpha = alpha, names = TRUE) # VaR
-ES_np(Loss, alpha = alpha, names = TRUE) # ES
+VaR_np(Loss, level = alpha, names = TRUE) # VaR
+ES_np(Loss, level = alpha, names = TRUE) # ES
 ## Remark: For a long horizon (1 year), default risk is highly relevant;
 ##         for a short time horizon it matters only for ES_alpha for large alpha
 

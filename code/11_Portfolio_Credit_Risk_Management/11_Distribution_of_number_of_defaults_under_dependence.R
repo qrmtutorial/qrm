@@ -3,7 +3,7 @@
 ## Computing the probability mass function (pmf) of the number of defaults
 ## under exchangeable one-factor Bernoulli mixture models.
 
-## Recall from McNeil et al. (2015, 11.2.1--11.2.2):
+## Recall from MFE (2015, 11.2.1--11.2.2):
 ## 1) Bernoulli mixture models (in general):
 ##    - jth component: P(Y_j = y_j | Psi = psi) = p_j(psi)^{y_j} (1-p_j(psi))^{1-y_j}
 ##      where Psi is a p-dimensional factor vector, j in {1,...,m}
@@ -63,13 +63,13 @@ pmf.indep <- dbinom(k, size = m, prob = pi.) # pmf
 ### 2 Compute default probabilities under the beta-binomial model ##############
 
 ## We consider Q ~ B(a,b). M then follows a so-called 'beta-binomial' distribution.
-## McNeil et al. (2015, Example 11.7) provides pi and rho_Y as functions
+## MFE (2015, Example 11.7) provides pi and rho_Y as functions
 ## of a, b; as in 6) above. Solving for a, b leads to:
 (a <- pi. * (1/rho. - 1))
 (b <- a*(1/pi. - 1))
 stopifnot(a > 0, b > 0)
 
-## Define the beta-binomial pmf of M; see McNeil et al. (2015, Example 11.7).
+## Define the beta-binomial pmf of M; see MFE (2015, Example 11.7).
 dbetaBinom <- function(x, size, a, b) # x = k, size = m
     exp(lchoose(size, x) + lbeta(a + k, b + size - k) - lbeta(a, b)) # see (11.16)
 
@@ -99,20 +99,20 @@ legend("topleft", bty = "n", lty = c(1, 2), legend = c(expression(frac("Probabil
 ## 'probit-normal' distribution. To find mu and sig, we need more work here.
 
 ## First we need to find the copula parameter (here: Gauss copula parameter beta)
-## such that C(pi, pi) = pi_2; see McNeil et al. (2015, (11.5)).
+## such that C(pi, pi) = pi_2; see MFE (2015, (11.5)).
 root <- function(x, p, p2) # x = Gauss copula parameter; p = pi, p2 = pi_2
     p2 - pCopula(rep(p, 2), copula = normalCopula(x))
 pi2 <- pi.^2 + rho. * (pi. * (1-pi.)) # compute pi_2 from rho_Y and pi; see (11.3)
 beta <- uniroot(root, interval = 0:1, p = pi., p2 = pi2)$root
 
 ## Compute the parameters of the probit-normal model. From (*), we have
-## p_1(psi) = Phi(mu + sig * psi) and from From McNeil et al. (2015, (11.21)) we
+## p_1(psi) = Phi(mu + sig * psi) and from MFE (2015, (11.21)) we
 ## know that p_1(psi) = Phi((Phi^{-1}(pi) + sqrt(beta) * psi) / sqrt(1-beta)).
 ## Matching the two leads to:
 mu  <- qnorm(pi.) / sqrt(1 - beta)
 sig <- sqrt(beta/(1 - beta))
 
-## Define the probit-normal pmf of M; see McNeil et al. (2015, (11.14)).
+## Define the probit-normal pmf of M; see MFE (2015, (11.14)).
 dprobitNorm <- function(x, size, mu, sigma) # x = k, size = m
 {
     ## Define integrand choose(m, k) q^k (1-q)^{m-k} phi((Phi^{-1}(q) - mu) / sigma) /
@@ -122,7 +122,7 @@ dprobitNorm <- function(x, size, mu, sigma) # x = k, size = m
         exp(lchoose(size, k) + k * log(q) + (size-k) * log(1-q) +
             dnorm((qnorm(q)-mu)/sigma, log = TRUE) -
             dnorm(qnorm(q), log = TRUE) - log(sigma))
-    ## Integrate to obtain P(M = k); see McNeil et al. (2015, (11.14))
+    ## Integrate to obtain P(M = k); see MFE (2015, (11.14))
     sapply(1:length(x), function(k)
         integrate(integrand, lower = 0, upper = 1, k = k)$value)
 }

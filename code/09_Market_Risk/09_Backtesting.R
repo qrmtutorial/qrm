@@ -63,10 +63,11 @@ spec.tskew <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(
 ## We now carry out a series of rolling out-of-sample VaR predictions
 ## We refit the model every 10 days
 
-roll.n <- ugarchroll(spec.n, gains.d, n.start = 1000, window.size = 1000, refit.every = 10,
-                     refit.window = "moving", solver = "hybrid", calculate.VaR = TRUE, VaR.alpha = c(0.05, 0.01))
+system.time(roll.n <- ugarchroll(spec.n, gains.d, n.start = 1000, window.size = 1000, refit.every = 10,
+                                 refit.window = "moving", solver = "hybrid", calculate.VaR = TRUE,
+                                 VaR.alpha = c(0.05, 0.01))) # ~= 1.5min
 show(roll.n)
-plot.zoo(roll.n,which = 4)
+plot(roll.n, which = 4)
 report(roll.n, type = "VaR", VaR.alpha = 0.01, conf.level = 0.95)
 
 ## A little more detail on how VaR numbers are extracted
@@ -78,18 +79,19 @@ VaR01.n = VaR.table.n[,2]
 VaRTest(alpha = 0.01, actual = realized, VaR = VaR01.n)
 par.n <- as.data.frame(roll.n, which = "density")
 names(par.n)
-ES05.n = par.n$Mu - par.n$Sigma*ES_t(0.95, df = Inf)
-ES01.n = par.n$Mu - par.n$Sigma*ES_t(0.99, df = Inf)
+ES05.n = par.n$Mu - par.n$Sigma * ES_t(0.95, df = Inf)
+ES01.n = par.n$Mu - par.n$Sigma * ES_t(0.99, df = Inf)
 ESTest(alpha = 0.05, actual = realized, ES = ES05.n, VaR = VaR05.n)
 ESTest(alpha = 0.01, actual = realized, ES = ES01.n, VaR = VaR01.n)
 
 
 ## Now try fitting the Student t Model
 
-roll.t <- ugarchroll(spec.t, gains.d, n.start = 1000, window.size = 1000, refit.every = 10,
-                     refit.window = "moving", solver = "hybrid", calculate.VaR = TRUE, VaR.alpha = c(0.05, 0.01))
+system.time(roll.t <- ugarchroll(spec.t, gains.d, n.start = 1000, window.size = 1000, refit.every = 10,
+                                 refit.window = "moving", solver = "hybrid", calculate.VaR = TRUE,
+                                 VaR.alpha = c(0.05, 0.01))) # ~= 2.5min
 show(roll.t)
-plot(roll.t,which = 4)
+plot(roll.t, which = 4)
 report(roll.t, type = "VaR", VaR.alpha = 0.01, conf.level = 0.95)
 
 
@@ -101,15 +103,16 @@ VaR01.t = VaR.table.t[,2]
 
 par.t <- as.data.frame(roll.t, which = "density")
 names(par.t)
-ES05.t = par.t$Mu - par.t$Sigma*ESst(0.95, df = par.t$Shape, scale = TRUE)
-ES01.t = par.t$Mu - par.t$Sigma*ESst(0.99, df = par.t$Shape, scale = TRUE)
+ES05.t = par.t$Mu - par.t$Sigma * ES_t(0.95, df = par.t$Shape, scale = TRUE)
+ES01.t = par.t$Mu - par.t$Sigma * ES_t(0.99, df = par.t$Shape, scale = TRUE)
 ESTest(alpha = 0.05, actual = realized, ES = ES05.t, VaR = VaR05.t)
 ESTest(alpha = 0.01, actual = realized, ES = ES01.t, VaR = VaR01.t)
 
-## Now try skew-t innovations. SLOW
+## Now try skew-t innovations. Caution: slow
 
-roll.tskew <- ugarchroll(spec.tskew, gains.d, n.start = 1000, window.size = 1000, refit.every = 10,
-                         refit.window = "moving", solver = "hybrid", calculate.VaR = TRUE, VaR.alpha = c(0.05, 0.01))
+system.time(roll.tskew <- ugarchroll(spec.tskew, gains.d, n.start = 1000, window.size = 1000, refit.every = 10,
+                                     refit.window = "moving", solver = "hybrid", calculate.VaR = TRUE,
+                                     VaR.alpha = c(0.05, 0.01))) # ~= 4min
 show(roll.tskew)
 plot(roll.tskew, which = 4)
 report(roll.tskew, type = "VaR", VaR.alpha = 0.01, conf.level = 0.95)

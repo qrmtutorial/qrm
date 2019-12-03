@@ -2,9 +2,8 @@
 
 ## Visually explaining Sklar's Theorem and the invariance principle
 
-
-library(mvtnorm)
-
+## Setup
+library(nvmix) # for rStudent()
 set.seed(271)
 
 ## Sample from a t copula
@@ -15,7 +14,7 @@ P <- matrix(rho, nrow = d, ncol = d) # build the correlation matrix P
 diag(P) <- 1
 nu <- 3.5 # degrees of freedom
 set.seed(271)
-X <- rmvt(n, sigma = P, df = nu) # n multiv. t observations
+X <- rStudent(n, df = nu, scale = P) # n multiv. t observations
 U <- pt(X, df = nu) # n ind. realizations from the corresponding t copula
 Y <- qexp(U) # transform U (t copula) to Exp(1) margins
 

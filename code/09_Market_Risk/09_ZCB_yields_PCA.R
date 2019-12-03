@@ -1,62 +1,60 @@
-### By Alexander J. McNeil
+## By Alexander J. McNeil and Marius Hofert
 
+## Factor modelling of the yield curve using the PCA approach
+
+
+## Setup
 library(xts)
+library(qrmtools)
 library(qrmdata)
-library(termstrc)
-data(ZCB_CA)
 
+## Data preparation
+data(ZCB_CAD)
+ZCB10yr <- ZCB_CAD['2002-01-02/2011-12-30'] # "zero-yields" object with 10 years of data
+yields <- 100 * ZCB10yr
+X <- returns(yields, method = "diff") # risk-factor changes
 
-## Create a "zero-yields" object with 10 years of data now
-ZCB10yr <- ZCB_CA['2002-01-02/2011-12-30']
+## PCA of daily changes in yields
+PCA <- prcomp(X)
+summary(PCA)
+plot(PCA, xlab = "Principal component"); box() # show important components
 
-yields <- 100*as.matrix(ZCB10yr)
-dates <- time(ZCB10yr)
-maturities = (1:120)*0.25
-datazeroyields = zeroyields(maturities, yields, dates)
-datazeroyields
+## Extracting all information
+Gamma <- PCA$rotation # principal axes (jth column is orthonormal eigenvector of cov(X) corresponding to jth largest eigenvalue) or 'loadings'
+mu <- PCA$center # estimated centers
+Y <- PCA$x # estimated principal components of X or 'scores'; (2012, 10)-matrix
+var <- PCA$sdev^2 # explained variances per principal component
 
+## Proportion of variability explained by the first three principal axes
+npr <- 3
+prop <- cumsum(var)/sum(var)
+prop[npr] # => ~= 97.46% of the variance is explained by the first npr principal axes/loadings
 
+## Loadings (= principal axes) of the first three principal axes (= first three eigenvectors)
+Gamma[,1:3] # (could be plotted as component samples, so each column)
 
-## PCA Analysis of daily changes in yields
-## We first difference the yields
+## Pick out the first npr-many principal axes/loadings and plot each
+## of them over time
+Gamma. <- Gamma[,seq_len(npr)] # first npr-many principal axes/loadings
+maturities <- seq_len(ncol(X))/4
+plot(NA, xlim = range(maturities), ylim = range(Gamma.),
+     xlab = "Time to maturity (years)",
+     ylab = "Principal axes value (loading)")
+abline(h = 0)
+for(j in seq_len(npr))
+    lines(maturities, Gamma.[,j], lty = j+1)
+legend("topright", bty = "n", lty = 1:(npr+1),
+       legend = c("Reference line", paste("PC", seq_len(npr))))
 
-Xyields <- apply(yields, 2, diff)
-head(Xyields)
-Xyields.series <- xts(Xyields, dates[-1])
-plot.zoo(Xyields.series[,1:10])
+## Build time series of the first npr-many principal components of X and plot them
+Y. <- xts(Y[,seq_len(npr)], time(X)) # factor series
+plot.zoo(Y., type = "h", xlab = "Time", ylab = paste("Component", seq_len(npr)),
+         main = "Principal components of X", panel = function(x, ...) {
+             lines(x, ...)
+             abline(v = as.Date("2008-09-15"), col = "maroon3") # Lehman Brothers bankruptcy
+         })
 
-## Carry out PCA analysis
-tmp <- princomp(Xyields)
-(results <- summary(tmp))
-
-loads <- loadings(tmp)
-loads[,1:3]
-
-plot((1:120)/4, loads[,1], ylim = range(loads[,1:3]), type="l", xlab="Maturity", ylab="Loading")
-lines((1:120)/4, loads[,2], col = 2)
-lines((1:120)/4, loads[,3], col = 3)
-abline(h = 0, lty = 2)
-legend(x = c(15,30), y = c(0.2,0.45), legend = c("PC 1","PC 2","PC 3"), col = 1:3, lty = c(1,1,1))
-
-
-plot(tmp)
-scores <- tmp$scores
-factors <- scores[,1:3]
-
-factors.series <- xts(factors, dates[-1])
-plotfunc <- function(x, ...)
-{
-    lines(x, ...)
-    abline(v = as.Date("2008-09-15"), col = 4)
-}
-
-plot.zoo(factors.series, yax.flip = TRUE, panel = plotfunc)
-
-cor(factors)
-acf(factors)
-acf(abs(factors))
-
-
-
-
-
+## Checks
+stopifnot(all.equal(cor(Y.), diag(3), check.attributes = FALSE)) # Cor ~= identity
+acf(Y.) # => uncorrelated
+acf(abs(Y.)) # ... but not independent

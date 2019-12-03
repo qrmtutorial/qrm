@@ -49,8 +49,7 @@ abline(a = 1/(th-1), b = 1/(th-1), col = "royalblue3") # intercept, slope
 ### 1.3 t_nu on the positive real line #########################################
 
 ## t_nu is also in the MDA of a Frechet, with xi = 1/nu (which can be shown
-## based on the t_nu density and Karamata's Theorem; see McNeil, Frey,
-## Embrechts (2015, Theorem A.7))
+## based on the t_nu density and Karamata's Theorem; see MFE (2015, Theorem A.7))
 nu <- 3
 stopifnot(nu > 1) # for E|X| < Inf
 set.seed(271)

@@ -2,7 +2,7 @@
 
 ## This illustrates a potential numerical issue when evaluating exp(x)-1
 ## appearing in the loss operator in a standard stock portfolio;
-## see McNeil et al. (2015, Example 2.1).
+## see MFE (2015, Example 2.1).
 
 
 ### Setup ######################################################################
@@ -29,8 +29,8 @@ legend("bottomright", legend = c("exp(x)-1", "expm1(x)"), bty = "n",
 
 ### Illustrating how expm1(x) works ############################################
 
-## See the source under ./src/nmath/expm1.c
-
+## Note that this is how expm1() worked < 3.5.0 (where ./src/nmath/expm1.c
+## existed). For >= 3.5.0, expm1() is taken from gcc and also more complicated.
 plot(x, y., type = "l", lwd = 2, log = "xy", col = "royalblue3",
      xlab = "x", ylab = "expm1(x)", xaxt = "n", yaxt = "n") # expm1(x)
 eaxis(1, f.smalltcl = 2/5) # x-axis
