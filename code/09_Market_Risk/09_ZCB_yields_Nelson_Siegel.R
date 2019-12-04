@@ -3,14 +3,14 @@
 library(xts)
 library(qrmdata)
 library(termstrc)
-data(ZCB_CA)
+data(ZCB_CAD)
 
 ## NELSON-SIEGEL FACTOR MODEL OF THE YIELD CURVE
 
 ## We will start by taking a 100 day excerpt
-head(ZCB_CA)
-ZCBexcerpt <- ZCB_CA['2011-08-08/2011-12-30']
-yields <- 100*as.matrix(ZCBexcerpt)
+head(ZCB_CAD)
+ZCBexcerpt <- ZCB_CAD['2011-08-08/2011-12-30']
+yields <- as.matrix(ZCBexcerpt)
 dates <- time(ZCBexcerpt)
 maturities <- (1:120)*0.25
 
@@ -52,9 +52,9 @@ mtext("k3", side = 4, line = 3)
 par()
 
 ## Create a "zero-yields" object with 10 years of data now
-ZCB10yr <- ZCB_CA['2002-01-02/2011-12-30']
+ZCB10yr <- ZCB_CAD['2002-01-02/2011-12-30']
 
-yields <- 100*as.matrix(ZCB10yr)
+yields <- as.matrix(ZCB10yr)
 dates <- time(ZCB10yr)
 maturities <- (1:120)*0.25
 datazeroyields <- zeroyields(maturities, yields, dates)

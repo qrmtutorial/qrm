@@ -11,8 +11,7 @@ library(qrmdata)
 ## Data preparation
 data(ZCB_CAD)
 ZCB10yr <- ZCB_CAD['2002-01-02/2011-12-30'] # "zero-yields" object with 10 years of data
-yields <- 100 * ZCB10yr
-X <- returns(yields, method = "diff") # risk-factor changes
+X <- returns(ZCB10yr, method = "diff") # risk-factor changes
 
 ## PCA of daily changes in yields
 PCA <- prcomp(X)
