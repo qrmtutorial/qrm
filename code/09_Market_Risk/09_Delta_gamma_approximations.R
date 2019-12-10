@@ -1,144 +1,153 @@
-## By Alexander J. McNeil
+## By Alexander J. McNeil and Marius Hofert
+
+## Illustration of the quality of delta (linear) and delta-gamma (quadratic) approximations
+## for typical risk-factor changes
+
+
+### Setup ######################################################################
 
 library(xts)
 library(qrmtools)
 library(qrmdata)
 
-## Now we want to examine the quality of delta and delta-gamma approximations for typical risk-factor changes
 
-## First load some index return and implied volatility data
+### 1 Data preparation #########################################################
+
+## Load some index return data and implied volatility data
 data(SP500)
 data(VIX)
+
+## Visually check
 plot(SP500)
 plot(VIX)
-## Now compute log returns since 2000 and make bivariate dataset
-SP500.X <- diff(log(SP500))['1990-01-01/']
-VIX.X <- diff(log(VIX))['1990-01-01/']
-length(SP500.X)
-length(VIX.X)
-X <- as.matrix(merge(SP500.X, VIX.X))
+
+## Now compute log-returns since 2000 and make a bivariate dataset
+X1 <- returns(SP500)['1990-01-01/']
+X2 <- returns(VIX)['1990-01-01/']
+X. <- merge(X1, X2)
+any(is.na(X.))
+X <- as.matrix(na.fill(X., fill = "extend"))
+colnames(X) <- c("SP500", "VIX")
 plot(X)
 
+
+### 2 Losses and their approximations ##########################################
+
+### 2.1 Option at the money ####################################################
+
 ## Option characteristics
-K <- 100
-## Option currently "at the money"
-S <- 100
-## Interest rate fixed at 3%
-r <- 0.03
-## Annualized volatility 25%
-sigma <- 0.25
-## Maturity one year
-T <- 1
+T <- 1 # maturity one year
+K <- 100 # strike
+S <- 100 # stock price now => option currently "at the money"
+r <- 0.03 # interest rate 3%
+sigma <- 0.25 # annualized volatility 25%
+
+## Full revaluation with risk factor changes
+Delta.t <- 1/250
+V.t0 <- Black_Scholes(0, S = S, r = r, sigma = sigma, K = K, T = T, type = "call") # single value
+V.t1 <- Black_Scholes(Delta.t, S = exp(log(S) + X[,"SP500"]), # current value and vector of risk factor changes
+                      r = r,
+                      sigma = exp(log(sigma) + X[,"VIX"]), # current value and vector of risk factor changes
+                      K = K, T = T, type = "call") # time series
+L <- -(V.t1 - V.t0) # losses (implicit loss operator)
+
+## Visual check
+hist(L, probability = TRUE); box()
+
+## Delta approximation (linear loss operator)
+(Greeks <- Black_Scholes_Greeks(0, S = S, r = r, sigma = sigma, K = K, T = T))
+L.Delta <- -(Greeks[["delta"]] * X[,"SP500"] * S +
+             Greeks[["theta"]] * Delta.t +
+             Greeks[["vega"]]  * X[,"VIX"]   * sigma)
+
+## Visual comparison with full revaluation
+plot(L, L.Delta)
+abline(0, 1, col = "royalblue3")
+
+## Delta-Gamma approximation (quadratic loss operator)
+L.Delta.Gamma <- L.Delta - 0.5 * (Greeks[["gamma"]] * (X[,"SP500"] * S)^2 +
+                                  2 * Greeks[["vanna"]] * X[,"SP500"] * X[,"VIX"] * S * sigma +
+                                  Greeks[["vomma"]] * (X[,"VIX"] * sigma)^2)
+
+## Visual comparison with full revaluation
+plot(L, L.Delta.Gamma)
+abline(0, 1, col = "royalblue3")
 
 
-## Full revaluation (loss operator implicit)
-deltat <- 1/250
-V_t0 <- Black_Scholes(0, S, r, sigma, K, T, "call")
-V_t1 = Black_Scholes(deltat, exp(log(S)+X[,1]), r, exp(log(sigma)+X[,2]), K, T, "call")
-L = - (V_t1 - V_t0)
-hist(L)
+### 2.2 Option out of the money ################################################
 
-## Delta Approximation; linear loss operator
-(tmp <- Black_Scholes_Greeks(0, S, r, sigma, K, T))
-delta <- tmp[,"delta"]
-theta <- tmp[,"theta"]
-vega <- tmp[,"vega"]
-
-LDelta <- -(delta*X[,1]*S + theta*(deltat) + vega*X[,2]*sigma)
-plot(L,LDelta)
-abline(0, 1, col = 2)
-
-## Delta-Gamma Approximation; quadratic loss operator
-gamma <- tmp[,"gamma"]
-vanna <- tmp[,"vanna"]
-vomma <- tmp[,"vomma"]
-
-
-LDeltaGamma <- LDelta -0.5*(gamma*(X[,1]*S)^2 + 2*vanna*X[,1]*X[,2]*S*sigma + vomma*(X[,2]*sigma)^2)
-plot(L, LDeltaGamma)
-abline(0, 1, col = 2)
-
-## Now for an option that is out of the money
 ## Option characteristics
-K <- 100
-S <- 70
-r <- 0.03
-sigma <- 0.25
-T <- 1
-(tmp <- Black_Scholes_Greeks(0, S, r, sigma, K, T))
-delta <- tmp[,"delta"]
-theta <- tmp[,"theta"]
-vega <- tmp[,"vega"]
-gamma <- tmp[,"gamma"]
-vanna <- tmp[,"vanna"]
-vomma <- tmp[,"vomma"]
+S <- 70 # stock price now => option currently "out of the money"
 
-V_t0 <- Black_Scholes(0, S, r, sigma, K, T, "call")
-V_t1 <- Black_Scholes(deltat, exp(log(S)+X[,1]), r, exp(log(sigma)+X[,2]), K, T, "call")
-L <- -(V_t1 - V_t0)
-LDelta <- -(delta*X[,1]*S + theta*(deltat) + vega*X[,2]*sigma)
-plot(L, LDelta)
-abline(0, 1, col = 2)
-LDeltaGamma <- LDelta -0.5*(gamma*(X[,1]*S)^2 + 2*vanna*X[,1]*X[,2]*S*sigma + vomma*(X[,2]*sigma)^2)
-plot(L, LDeltaGamma)
-abline(0, 1, col = 2)
+## Full revaluation with risk factor changes
+V.t0 <- Black_Scholes(0, S = S, r = r, sigma = sigma, K = K, T = T, type = "call") # single value
+V.t1 <- Black_Scholes(Delta.t, S = exp(log(S) + X[,"SP500"]), # current value and vector of risk factor changes
+                      r = r,
+                      sigma = exp(log(sigma) + X[,"VIX"]), # current value and vector of risk factor changes
+                      K = K, T = T, type = "call") # time series
+L <- -(V.t1 - V.t0) # losses (implicit loss operator)
 
+## Delta approximation (linear loss operator)
+(Greeks <- Black_Scholes_Greeks(0, S = S, r = r, sigma = sigma, K = K, T = T))
+L.Delta <- -(Greeks[["delta"]] * X[,"SP500"] * S +
+             Greeks[["theta"]] * Delta.t +
+             Greeks[["vega"]]  * X[,"VIX"]   * sigma)
 
-## THE EXAMPLE IN TEXTBOOK (Example 9.1)
+## Visual comparison with full revaluation
+plot(L, L.Delta)
+abline(0, 1, col = "royalblue3")
 
-t <- 0
-T <- 1
-S <- 110
-K <- 100
-r <- 0.02
-sigma <- 0.2
+## Delta-Gamma approximation (quadratic loss operator)
+L.Delta.Gamma <- L.Delta - 0.5 * (Greeks[["gamma"]] * (X[,"SP500"] * S)^2 +
+                                  2 * Greeks[["vanna"]] * X[,"SP500"] * X[,"VIX"] * S * sigma +
+                                  Greeks[["vomma"]] * (X[,"VIX"] * sigma)^2)
 
-delta.S <- 0.05
-delta.sigma <- 0.02
-delta.t <- 1/250
-delta.r <- 0.001
-
-(tmp <- Black_Scholes_Greeks(0, S, r, sigma, K, T))
-delta <- tmp[,"delta"]
-theta <- tmp[,"theta"]
-vega <- tmp[,"vega"]
-rho <- tmp[,"rho"]
-gamma <- tmp[,"gamma"]
-vanna <- tmp[,"vanna"]
-vomma <- tmp[,"vomma"]
-
-(delta.term <- delta*S*delta.S)
-(vega.term <- vega*delta.sigma)
-(theta.term <- theta*delta.t)
-(rho.term <- rho*delta.r)
-
-## ignore rho from now on
-## linear.loss = theta.term + rho.term + vega.term
-linear.loss <- theta.term + vega.term
-linear.loss
-
-Vt <- S*delta - Black_Scholes(t, S, r, sigma, K, T, "call")
-Snew <- exp(log(S)+delta.S)
-Vt1 <- Snew*delta - Black_Scholes((t+1/250), Snew, r, sigma+delta.sigma, K, T, "call")
-Vt
-Vt1
-trueloss <- (Vt-Vt1)
-trueloss
+## Visual comparison with full revaluation
+plot(L, L.Delta.Gamma)
+abline(0, 1, col = "royalblue3")
 
 
-(gamma.term <- 0.5*gamma*S^2*delta.S^2)
-linear.loss + gamma.term
+### 3 MFE (2015, Example 9.1) ##################################################
 
-(vanna.term <- vanna*S*delta.S*delta.sigma)
-linear.loss + gamma.term + vanna.term
+## Option characteristics
+t <- 0 # time now
+T <- 1 # maturity one year
+K <- 100 # strike
+S <- 110 # stock price now => option currently in the money
+r <- 0.02 # interest rate 2%
+sigma <- 0.2 # annualized volatility 20%
 
-(vomma.term <- 0.5*vomma*delta.sigma^2)
-quadratic.loss <- linear.loss + gamma.term + vanna.term + vomma.term
-quadratic.loss
+## Ingredients for loss operators
+delta.S   <- 0.05 # change in stock price = X_{t+1,1}
+delta.sig <- 0.02 # change in implied volatility = X_{t+1,2}
+Delta.t  <- 1/250
+Delta.rho <- 0.001
+(Greeks <- Black_Scholes_Greeks(0, S = S, r = r, sigma = sigma, K = K, T = T))
 
-c(trueloss, linear.loss, quadratic.loss)
+## Full revaluation with one new risk factor change (provided by specifying 'S.new')
+V.t0 <- S * Greeks[["delta"]] - Black_Scholes(t, S = S, r = r, sigma = sigma, K = K, T = T)
+S.new <- exp(log(S) + delta.S)
+V.t1 <- S.new * Greeks[["delta"]] - Black_Scholes(t + Delta.t, S = S.new, r = r,
+                                                  sigma = sigma + delta.sig, K = K, T = T)
+L <- -(V.t1 - V.t0) # losses (implicit loss operator)
 
-(trueloss-linear.loss) / trueloss
-(trueloss-quadratic.loss) / trueloss
+## Delta approximation
+delta.term <- Greeks[["delta"]] * S * delta.S
+vega.term  <- Greeks[["vega"]]  * delta.sig
+theta.term <- Greeks[["theta"]] * Delta.t
+rho.term   <- Greeks[["rho"]]   * Delta.rho
+## => L.Delta = theta.term + rho.term + vega.term (but we ignore the rho term)
+(L.Delta <- theta.term + vega.term)
 
+## Delta-Gamma approximation
+gamma.term <- 0.5 * Greeks[["gamma"]] * S^2 * delta.S^2
+vanna.term <- Greeks[["vanna"]] * S * delta.S * delta.sig
+vomma.term <- 0.5 * Greeks[["vomma"]] * delta.sig^2
+L.Delta + gamma.term
+L.Delta + vanna.term
+(L.Delta.Gamma <- L.Delta + gamma.term + vanna.term + vomma.term)
 
+## Comparison
+c(L, L.Delta, L.Delta.Gamma)
+abs(L - L.Delta)/abs(L) # relative error of L.Delta
+abs(L - L.Delta.Gamma)/abs(L) # relative error of L.Delta.Gamma
