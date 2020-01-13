@@ -97,7 +97,7 @@
 ## Simple manipulations
 1/2
 1/0 # in R, Inf and -Inf exist and R can often deal with them correctly
-1/-0
+1/-0 # but careful: 0*Inf = NaN although (c/n) * n -> c (R cannot know *how* limits appear)
 0/0 # ... also NaN = 'not a number' is available; 0/0, 0*Inf, Inf-Inf lead to NaN
 x <- 0/0 # store the result in 'x'
 class(x) # the class/type of 'x'; => NaN is still of mode 'numeric'
@@ -133,7 +133,7 @@ x - y # numerically not 0
 n <- 0
 1:n # not the empty sequence but c(1, 0); caution in 'for loops': for(i in 1:n) ...!
 seq_len(n) # better: => empty sequence
-seq_along(c(3, 4, 2)) # 1:3; helpful to 'go along' objects
+seq_along(c(3, 4, 2)) # 1:3; helpful to 'go along' objects; equal to seq_len(length(c(3, 4, 2)))
 
 ## Watch out
 1:3-1 # ':' has higher priority; note also: the '-1' is recycled to the length of 1:3
@@ -143,7 +143,7 @@ seq_along(c(3, 4, 2)) # 1:3; helpful to 'go along' objects
 (x <- c(3, 4, 2))
 length(x) # as seen above
 rev(x) # change order
-sort(x) # sort in increasing order
+sort(x) # sort in increasing order (compute the order statistics of x)
 sort(x, decreasing = TRUE) # sort in decreasing order
 ii <- order(x) # create the indices which sort x
 x[ii] # => sorted
@@ -152,9 +152,12 @@ x^2 # component-wise squares
 sum(x) # sum all numbers
 cumsum(x) # compute the *cumulative* sum
 prod(x) # multiply all numbers
+max(x) # maximum of all numbers
 seq(1, 7, by = 2) # 1, 3, 5, 7
 rep(1:3, each = 3, times = 2) # 1 1 1 2 2 2 3 3 3  1 1 1 2 2 2 3 3 3
 tail(x, n = 1) # get the last element of a vector
+head(x, n = 1) # get the first element of a vector
+tail(x, n = -1) # get all but the first element
 head(x, n = -1) # get all but the last element
 
 ## Logical vectors
@@ -172,13 +175,15 @@ ii && !ii # logical AND applied to all values (are all entries TRUE?)
 class(NA) # NA = 'not available' is 'logical' as well (used for missing data)
 z <- 1:3; z[5] <- 4 # two statements in one line (';'-separated)
 z # => 4th element 'not available' (NA)
+max(z) # maximum
+max(z, na.rm = TRUE) # maximum after dropping NAs
 (z <- c(z, NaN, Inf)) # append NaN and Inf
-class(z) # still numeric (although is.numeric(NA) is FALSE)
+class(z) # still numeric (although is.numeric(NA) is FALSE => NA is NA_real_ here)
 is.na(z) # check for NA or NaN
 is.nan(z) # check for just NaN
 is.infinite(z) # check for +/-Inf
 z[(!is.na(z)) &  is.finite(z) &  z >= 2] # pick out all finite numbers >= 2
-z[(!is.na(z)) && is.finite(z) && z >= 2] # watch out; used to fail; R >= 3.6.0: z[TRUE] => z
+z[(!is.na(z)) && is.finite(z) && z >= 2] # watch out; used to fail; R >= 3.6.0: z[TRUE] is z and z[FALSE] is empty
 
 ## Character vectors
 character(0) # the empty character vector
