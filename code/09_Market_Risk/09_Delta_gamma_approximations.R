@@ -21,9 +21,9 @@ data(VIX)
 plot(SP500)
 plot(VIX)
 
-## Now compute log-returns since 2000 and make a bivariate dataset
+## Now compute log-returns and make a bivariate dataset
 X1 <- returns(SP500)['1990-01-01/']
-X2 <- returns(VIX)['1990-01-01/']
+X2 <- returns(VIX/100, method = "diff")['1990-01-01/'] # note: VIX is in % (matters for 'diff')
 X. <- merge(X1, X2)
 any(is.na(X.))
 X <- as.matrix(na.fill(X., fill = "extend"))

@@ -40,12 +40,12 @@ legend("topleft", bty = "n", lty = rep(1, nrate), col = cols, legend = rating)
 
 ## Simple moment estimator (for 'B')
 pY <- momest(defaults[,"B"], firms[,"B"])
-rhoY <- (pY[2]-pY[1]^2) / (pY[1]-pY[1]^2)
+rhoY <- (pY[2]-pY[1]^2) / (pY[1]-pY[1]^2) # (11.3)
 
 ## Binomial model
 mod0 <- fit.binomial(defaults[,"B"], firms[,"B"])
 
-## One-factor model
+## One-factor model (p. 438)
 mod1 <- fit.binomialProbitnorm(defaults[,"B"], firms[,"B"])
 
 ## Compare the latter two models
@@ -64,10 +64,10 @@ tail(df, n = 10)
 (mod <- glmer(cbind(df$defaults, df$firms - df$defaults) ~ -1 + df$rating + (1 | df$year),
               family = binomial(probit)))
 
-## Compute implied PDs and asset correlation
+## Compute implied asset correlation beta
 sigma <- mod@theta
-beta <- sigma^2/(1+sigma^2)
+beta <- sigma^2 / (1 + sigma^2) # see last line of Example 11.11 (solved for \beta_i)
 
-## Asset correlation. Much smaller than the numbers coming out of equity analysis
+## Compute implied default probability p (much smaller than the numbers coming out of equity analysis)
 mu <- mod@beta
-(PD <- pnorm(mu * sqrt(1 - beta)))
+(PD <- pnorm(mu * sqrt(1 - beta))) # see last line of Example 11.11 (solved for p_i)

@@ -23,6 +23,8 @@ Gamma <- PCA$rotation # principal axes (jth column is orthonormal eigenvector of
 mu <- PCA$center # estimated centers
 Y <- PCA$x # estimated principal components of X or 'scores'; (2012, 10)-matrix
 var <- PCA$sdev^2 # explained variances per principal component
+## Note: var equals the sorted eigenvalues of Cov(X) since diag(<sorted sigma^2>)
+##       = Cov(Y) = Cov(Gamma^T (X - mu)) = Gamma^T Cov(X) Gamma = diag(<sorted lambda>)
 
 ## Proportion of variability explained by the first three principal axes
 npr <- 3
