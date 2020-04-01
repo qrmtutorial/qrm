@@ -1,0 +1,9 @@
+R scripts of "The QRM Exercise Book"
+
+As for all other code provided on qrmtutorial.org, in case some code does not run
+for you, please make sure you have the very latest versions of the involved R packages
+installed from their corresponding development server (typically R-Forge). For example:
+install.packages("qrmtools", repos = "http://R-Forge.R-project.org")
+
+Cheers,
+The QRM Tutorial Team
