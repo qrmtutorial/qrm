@@ -98,12 +98,12 @@ alpha <- c(0.99, 0.995)
 ## Empirical tail probabilities with Smith estimator overlaid
 ## u = 10
 tail_plot(fire, threshold = u10, shape = shape.u10, scale = scale.u10)
-abline(h = 1-alpha[1], v = VaR.u10[1], lty = 2) # 0.99, VaR_0.99
-abline(h = 1-alpha[1], v = ES.u10[1],  lty = 2) # 0.99, ES_0.99
+abline(h = 1-alpha[1], v = VaR.u10[1], lty = 2) # 0.01, VaR_0.99
+abline(h = 1-alpha[1], v = ES.u10[1],  lty = 2) # 0.01, ES_0.99
 ## u = 20
 tail_plot(fire, threshold = u20, shape = shape.u20, scale = scale.u20)
-abline(h = 1-alpha[1], v = VaR.u20[1], lty = 2) # 0.99, VaR_0.99
-abline(h = 1-alpha[1], v = ES.u20[1],  lty = 2) # 0.99, ES_0.99
+abline(h = 1-alpha[1], v = VaR.u20[1], lty = 2) # 0.01, VaR_0.99
+abline(h = 1-alpha[1], v = ES.u20[1],  lty = 2) # 0.01, ES_0.99
 
 ## A version including confidence intervals for VaR_0.99 and ES_0.99
 ## u = 10
