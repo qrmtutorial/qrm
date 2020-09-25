@@ -4,7 +4,9 @@
 ### Setup ######################################################################
 
 library(xts)
+library(qrmdata)
 library(qrmtools)
+
 data(fire)
 
 
