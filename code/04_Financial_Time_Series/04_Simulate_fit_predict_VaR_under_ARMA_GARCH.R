@@ -38,8 +38,8 @@ x <- ugarchpath(spec, n.sim = n, m.sim = 1, rseed = 271) # n.sim length of simul
 ## Extract the resulting series
 X <- fitted(x) # simulated process X_t = mu_t + epsilon_t for epsilon_t = sigma_t * Z_t
 sig <- sigma(x) # volatilities sigma_t (conditional standard deviations)
-eps <- x@path$residSim # unstandardized residuals epsilon_t = sigma_t * Z_t
-## Note: There are no extraction methods for the unstandardized residuals epsilon_t
+eps <- x@path$residSim # nonstandardized residuals epsilon_t = sigma_t * Z_t
+## Note: There are no extraction methods for the nonstandardized residuals epsilon_t
 
 ## Sanity checks (=> fitted() and sigma() grab out the right quantities)
 stopifnot(all.equal(X,   x@path$seriesSim, check.attributes = FALSE),
@@ -78,7 +78,7 @@ legend("bottomright", bty = "n", lty = c(1,1),
        col = c("black", adjustcolor("blue", alpha.f = 0.5)),
        legend = c(expression(X[t]), expression(hat(mu)[t])))
 
-## Plot the unstandardized residuals epsilon_t
+## Plot the nonstandardized residuals epsilon_t
 resi <- as.numeric(residuals(fit))
 stopifnot(all.equal(fit@fit$residuals, resi))
 plot(resi, type = "l", xlab = "t", ylab = expression(epsilon[t])) # check residuals epsilon_t

@@ -99,7 +99,7 @@ bootstrap <- function(x, B, level, method = c("VaR", "ES"))
 ## the performance of the estimators)
 th <- 2 # Pareto parameter (true underlying distribution; *just* infinite Var)
 set.seed(271) # set a seed (for reproducibility)
-L <- rPar(n, shape = th) # simulate losses with the 'inversion method'
+L <- rPar(n, shape = th) # simulate losses with the 'inversion method'; F(x) = 1-(1+x)^{-th}
 plot(L)
 
 

@@ -110,7 +110,7 @@ risk_measure <- function(S, lambda, alpha,
                stopifnot(hasArg(N)) # check if the number 'N' of MC replications has been provided (via '...')
                N <- list(...)$N # pick out N from '...'
                mu.hat <- colMeans(X) # estimate the mean vector mu
-               Sigma.hat  <- var(X) # estimate the covariance matrix Sigma
+               Sigma.hat <- var(X) # estimate the covariance matrix Sigma
                X. <- rNorm(N, loc = mu.hat, scale = Sigma.hat) # simulate risk-factor changes
                L <- loss_operator(X., weights = w.) # compute corresponding (simulated) losses
                ## Compute VaR and ES and return
@@ -215,7 +215,7 @@ hist(L, breaks = "Scott", probability = TRUE, xlim = c(0, max(L, rm)), main = ""
 lty <- c(3, 2, 1, 4, 5)
 lwd <- c(1.6, 2, 1, 1.2, 1.2)
 for(k in seq_len(nrow(rm)))
-    abline(v = rm[k,], lty = lty[k], lwd = lwd[k]) # colored vertical lines indicating VaR and ES
+    abline(v = rm[k,], lty = lty[k], lwd = lwd[k]) # vertical lines indicating VaR and ES
 legend("topright", bty = "n", inset = 0.02, lty = lty, lwd = lwd, legend = rownames(rm),
        title = as.expression(substitute(widehat(VaR)[a] <= widehat(ES)[a], list(a = alpha)))) # legend
 

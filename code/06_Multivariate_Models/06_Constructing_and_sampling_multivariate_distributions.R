@@ -32,7 +32,7 @@ stopifnot(all.equal(P., P))
 
 ## The Cholesky decomposition
 A. <- t(chol(Sigma)) # the Cholesky factor (lower triangular with real entries > 0)
-stopifnot(all.equal(A. %*% t(A.) , Sigma), # checking decomposition
+stopifnot(all.equal(A. %*% t(A.), Sigma), # checking decomposition
           all.equal(A., A)) # checking uniqueness of the Cholesky decomposition
 
 ## Other decompositions of Sigma than A %*% t(A) are possible, too
