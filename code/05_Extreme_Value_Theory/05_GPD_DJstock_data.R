@@ -58,12 +58,12 @@ scale.u <- fit$par[["scale"]]
 
 ## Plot empirical excess df vs fitted GPD
 res <- edf_plot(excess, log = "x")
-z <- tail(res$t, n = -1)
+z <- tail(sort(as.numeric(excess)), n = -1)
 lines(z, pGPD(z, shape = shape.u, scale = scale.u)) # fitted GPD
 
 ## Plot empirical exceedance df vs shifted fitted GPD
 res <- edf_plot(exceed, log = "x")
-z <- tail(res$t, n = -1)
+z <- tail(sort(as.numeric(exceed)), n = -1)
 lines(z, pGPD(z-u, shape = shape.u, scale = scale.u)) # shifted fitted GPD
 
 ## Corresponding Q-Q plots (more meaningful)

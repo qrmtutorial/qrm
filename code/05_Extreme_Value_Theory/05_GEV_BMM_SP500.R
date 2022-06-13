@@ -33,7 +33,8 @@ stopifnot(all.equal(L, -diff(log(S))[-1], check.attributes = FALSE))
 L['1987-10-16'] # ~=  5.3%; risk-factor change on the Friday before Black Monday
 L['1987-10-19'] # ~= 22.9%; risk-factor change on Black Monday!
 
-## Let's briefly consider negative classical instead of -log-returns
+## Let's briefly consider negative classical returns Y_t instead of
+## -log-returns X_t.
 ## Note: A change of beta from yesterday's value to today's satisfies
 ##       S_t = (1 + beta) * S_{t-1} => Y_t = -(S_t/S_{t-1}-1) = -beta
 ##       => The negative classical returns Y_t give exactly the drop beta (= -beta)
@@ -48,7 +49,7 @@ Y['1987-10-19'] # ~= 20.47% (drop)
 ## so negative classical returns can be obtained from -log-returns via -expm1(-.)
 stopifnot(all.equal(-expm1(-L['1987-10-16']), Y['1987-10-16'], check.attributes = FALSE))
 stopifnot(all.equal(-expm1(-L['1987-10-19']), Y['1987-10-19'], check.attributes = FALSE))
-## ... and over a time period: The drop (= loss) from (end of) Mon 1987-10-12
+## And over a time period: The drop (= loss) from (end of) Mon 1987-10-12
 ## to (end of) Fri 1987-10-16 can be obtained via -expm1(-sum(.)):
 ## Note: S_t/S_{t-4} = S_t/S_{t-1} * S_{t-1}/S_{t-2} ... * S_{t-3}/S_{t-4}
 ##       = exp(-L_t) * exp(-L_{t-1}) * ... * exp(-L_{t-3}) = exp(-sum(L_i, i=t-3,..,t))

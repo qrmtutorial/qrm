@@ -49,21 +49,21 @@ scale.u20 <- fit.u20$par[["scale"]]
 ## Plot empiricial excess df vs fitted GPD G_{xi,beta}
 ## u = 10
 res <- edf_plot(excess.u10)
-z <- tail(res$t, n = -1)
+z <- tail(sort(as.numeric(excess.u10)), n = -1)
 lines(z, pGPD(z, shape = shape.u10, scale = scale.u10)) # fitted GPD
 ## u = 20
 res <- edf_plot(excess.u20)
-z <- tail(res$t, n = -1)
+z <- tail(sort(as.numeric(excess.u20)), n = -1)
 lines(z, pGPD(z, shape = shape.u20, scale = scale.u20)) # fitted GPD
 
 ## Plot empiricial exceedance df vs shifted fitted GPD G_{xi,beta}(x-u)
 ## u = 10
 res <- edf_plot(exceed.u10)
-z <- tail(res$t, n = -1)
+z <- tail(sort(as.numeric(exceed.u10)), n = -1)
 lines(z, pGPD(z-u10, shape = shape.u10, scale = scale.u10)) # shifted fitted GPD
 ## u = 20
 res <- edf_plot(exceed.u20)
-z <- tail(res$t, n = -1)
+z <- tail(sort(as.numeric(exceed.u20)), n = -1)
 lines(z, pGPD(z-u20, shape = shape.u20, scale = scale.u20)) # shifted fitted GPD
 
 ## Corresponding Q-Q plots (more meaningful)
